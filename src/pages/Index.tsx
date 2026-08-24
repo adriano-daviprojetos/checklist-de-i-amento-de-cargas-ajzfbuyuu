@@ -10,10 +10,17 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          <span className="text-xs text-slate-400">Carregando DAVI PROJETOS CHECKLIST...</span>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white p-4">
+        <div className="flex flex-col items-center gap-4 max-w-xs text-center">
+          <img
+            src="/logo.svg"
+            alt="DAVI PROJETOS CHECKLIST"
+            className="w-48 h-auto object-contain animate-pulse"
+          />
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+            <span>Carregando sistema...</span>
+          </div>
         </div>
       </div>
     )

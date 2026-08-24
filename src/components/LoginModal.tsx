@@ -59,11 +59,14 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
 
       <div className="w-full max-w-md z-10 space-y-6">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mb-2">
-            <HardHat className="w-8 h-8 text-white" />
+        <div className="text-center space-y-3">
+          <div className="flex justify-center">
+            <img
+              src="/logo.svg"
+              alt="DAVI PROJETOS CHECKLIST"
+              className="w-full max-w-[320px] h-auto object-contain drop-shadow-xl"
+            />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">DAVI PROJETOS CHECKLIST</h1>
           <p className="text-sm text-slate-400">Checklist e Gestão de Içamento de Cargas Pesadas</p>
           <div className="flex items-center justify-center gap-2 pt-1">
             <Badge variant="outline" className="border-blue-500/30 text-blue-400 text-xs">

@@ -89,12 +89,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row antialiased">
       {/* Mobile Topbar */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-600 rounded-lg text-white">
-            <HardHat className="w-5 h-5" />
-          </div>
-          <span className="font-bold text-white text-base">DAVI PROJETOS CHECKLIST</span>
+      <header className="md:hidden flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
+        <div className="flex items-center">
+          <img
+            src="/logo.svg"
+            alt="DAVI PROJETOS CHECKLIST"
+            className="h-9 w-auto object-contain rounded-md"
+          />
         </div>
         <div className="flex items-center gap-2">
           <OfflineSyncBar />
@@ -118,23 +119,19 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
         {/* Brand / Company Header */}
         <div className="p-4 border-b border-slate-800">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-600 rounded-xl text-white shadow-md shadow-blue-500/20">
-                <HardHat className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="font-bold text-white text-base tracking-tight leading-tight">
-                  DAVI PROJETOS CHECKLIST
-                </div>
-                <div className="text-[11px] text-slate-400">Içamento Seguro</div>
-              </div>
-            </div>
+            <Link to="/" className="block w-full focus:outline-none">
+              <img
+                src="/logo.svg"
+                alt="DAVI PROJETOS CHECKLIST"
+                className="w-full h-auto max-h-14 object-contain rounded-lg shadow-sm"
+              />
+            </Link>
             {mobileMenuOpen && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setMobileMenuOpen(false)}
-                className="md:hidden text-slate-400"
+                className="md:hidden text-slate-400 shrink-0 ml-2"
               >
                 <X className="w-5 h-5" />
               </Button>
