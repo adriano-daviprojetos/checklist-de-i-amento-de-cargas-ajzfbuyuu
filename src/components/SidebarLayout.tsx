@@ -92,12 +92,12 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       <header className="md:hidden flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <img
-            src="/logo.png"
+            src="/logo.svg"
             alt="DAVI PROJETOS DE RIGGING"
             className="h-8 w-auto object-contain rounded-md"
           />
           <img
-            src="/seal-10-years.png"
+            src="/seal-10-years.svg"
             alt="10 Anos"
             className="h-7 w-7 object-contain drop-shadow"
           />
@@ -127,13 +127,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
             <Link to="/" className="block w-full focus:outline-none group">
               <div className="flex flex-col items-center gap-2">
                 <img
-                  src="/logo.png"
+                  src="/logo.svg"
                   alt="DAVI PROJETOS DE RIGGING"
                   className="w-full h-auto max-h-16 object-contain rounded-lg shadow-sm transition group-hover:scale-[1.02]"
                 />
                 <div className="flex items-center justify-center gap-1.5 w-full bg-slate-950/70 border border-amber-500/20 rounded-md py-1 px-2">
                   <img
-                    src="/seal-10-years.png"
+                    src="/seal-10-years.svg"
                     alt="10 Anos"
                     className="w-5 h-5 object-contain shrink-0"
                   />

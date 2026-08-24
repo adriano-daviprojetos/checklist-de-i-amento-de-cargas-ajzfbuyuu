@@ -63,14 +63,14 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
         <div className="text-center space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="DAVI PROJETOS DE RIGGING"
               className="w-full max-w-[260px] sm:max-w-[280px] h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
             />
             <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/30 to-amber-600/30 rounded-full blur-md group-hover:blur-lg transition duration-300" />
               <img
-                src="/seal-10-years.png"
+                src="/seal-10-years.svg"
                 alt="10 Anos DAVI PROJETOS (2016-2026)"
                 className="relative w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-2xl hover:rotate-3 transition-transform duration-300"
               />

@@ -14,12 +14,12 @@ export default function Index() {
         <div className="flex flex-col items-center gap-5 max-w-sm text-center">
           <div className="flex items-center justify-center gap-3">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="DAVI PROJETOS DE RIGGING"
               className="w-52 h-auto object-contain animate-pulse drop-shadow-xl"
             />
             <img
-              src="/seal-10-years.png"
+              src="/seal-10-years.svg"
               alt="10 Anos"
               className="w-14 h-14 object-contain animate-pulse drop-shadow-xl shrink-0"
             />
