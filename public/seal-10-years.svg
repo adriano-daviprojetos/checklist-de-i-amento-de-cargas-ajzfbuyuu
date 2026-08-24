@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+  <defs>
+    <!-- Gold Foil Gradients -->
+    <linearGradient id="goldRadial" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+      <stop offset="0%" stop-color="#fffbeb" />
+      <stop offset="25%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="85%" stop-color="#b45309" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+
+    <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="35%" stop-color="#d97706" />
+      <stop offset="70%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#92400e" />
+    </linearGradient>
+
+    <linearGradient id="navyCenter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#0b192c" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+
+    <linearGradient id="goldText" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="40%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="sealShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <g filter="url(#sealShadow)">
+    <!-- Outer Starburst / Scalloped Ring (Sunburst Teeth) -->
+    <path d="
+      M 120 12 
+      L 128 20 L 139 14 L 145 23 L 157 20 L 161 30 L 173 29 L 175 40 L 187 41 L 186 52 L 197 55 L 194 66 L 204 71 L 198 81 L 207 88 L 199 98 L 206 106 L 196 114 L 201 124 L 189 130 L 192 141 L 179 145 L 180 156 L 167 158 L 166 169 L 153 169 L 150 179 L 137 176 L 132 186 L 120 180 L 108 186 L 103 176 L 90 179 L 87 169 L 74 169 L 73 158 L 60 156 L 61 145 L 48 141 L 51 130 L 39 124 L 44 114 L 34 106 L 41 98 L 33 88 L 42 81 L 36 71 L 46 66 L 43 55 L 54 52 L 53 41 L 65 40 L 67 29 L 79 30 L 83 20 L 95 23 L 101 14 L 112 20 Z" 
+      fill="url(#goldRim)" 
+      stroke="#78350f" 
+      stroke-width="1.5"
+    />
+
+    <!-- Main Outer Circle -->
+    <circle cx="120" cy="100" r="82" fill="url(#goldRadial)" stroke="#fef08a" stroke-width="2" />
+
+    <!-- Beaded Ring Dots -->
+    <circle cx="120" cy="100" r="76" fill="none" stroke="#78350f" stroke-width="2.5" stroke-dasharray="2 6" stroke-linecap="round" />
+
+    <!-- Inner Blue Dark Medallion Disc -->
+    <circle cx="120" cy="100" r="68" fill="url(#navyCenter)" stroke="url(#goldRim)" stroke-width="3" />
+
+    <!-- Circular Ribbons / Text along paths -->
+    <path id="topCurve" d="M 64 100 A 56 56 0 0 1 176 100" fill="none" />
+    <path id="bottomCurve" d="M 176 100 A 56 56 0 0 1 64 100" fill="none" />
+
+    <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="900" letter-spacing="2.2" fill="#fef08a">
+      <textPath href="#topCurve" startOffset="50%" text-anchor="middle">
+        ★ DAVI PROJETOS ★
+      </textPath>
+    </text>
+
+    <!-- Center Giant Number 10 -->
+    <!-- Laurel Wreath Leaves Left -->
+    <g fill="#f59e0b" opacity="0.85">
+      <path d="M 68 104 C 64 96 66 88 72 84 C 72 90 70 98 68 104 Z" />
+      <path d="M 68 116 C 63 110 64 102 70 98 C 71 104 70 111 68 116 Z" />
+      <path d="M 73 126 C 68 122 68 114 74 110 C 76 116 75 122 73 126 Z" />
+    </g>
+    <!-- Laurel Wreath Leaves Right -->
+    <g fill="#f59e0b" opacity="0.85">
+      <path d="M 172 104 C 176 96 174 88 168 84 C 168 90 170 98 172 104 Z" />
+      <path d="M 172 116 C 177 110 176 102 170 98 C 169 104 170 111 172 116 Z" />
+      <path d="M 167 126 C 172 122 172 114 166 110 C 164 116 165 122 167 126 Z" />
+    </g>
+
+    <!-- "10" -->
+    <text x="120" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="40" font-weight="900" letter-spacing="-1" fill="url(#goldText)" text-anchor="middle" filter="url(#glow)">
+      10
+    </text>
+
+    <!-- "ANOS" Banner -->
+    <rect x="88" y="112" width="64" height="15" rx="3" fill="url(#goldRim)" />
+    <text x="120" y="123" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="900" letter-spacing="2.5" fill="#0f172a" text-anchor="middle">
+      ANOS
+    </text>
+
+    <!-- "2016 - 2026" -->
+    <text x="120" y="137" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="8" font-weight="800" letter-spacing="1.5" fill="#fef08a" text-anchor="middle">
+      2016 • 2026
+    </text>
+
+    <!-- Subtitle Bottom Ribbon -->
+    <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="7.5" font-weight="800" letter-spacing="1.8" fill="#e2e8f0">
+      <textPath href="#bottomCurve" startOffset="50%" text-anchor="middle">
+        EXCELÊNCIA EM RIGGING
+      </textPath>
+    </text>
+
+    <!-- Lower Ribbon Banner -->
+    <g transform="translate(45, 170)">
+      <!-- Ribbon Tails -->
+      <polygon points="0,12 18,0 18,24" fill="#92400e" />
+      <polygon points="150,12 132,0 132,24" fill="#92400e" />
+      <!-- Ribbon Center -->
+      <rect x="15" y="2" width="120" height="20" rx="3" fill="url(#goldRim)" stroke="#78350f" stroke-width="1" />
+      <text x="75" y="15.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="8.5" font-weight="900" letter-spacing="1" fill="#0f172a" text-anchor="middle">
+        SELO COMEMORATIVO
+      </text>
+    </g>
+  </g>
+</svg>

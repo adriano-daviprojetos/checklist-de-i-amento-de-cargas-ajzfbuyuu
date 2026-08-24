@@ -1,121 +1,98 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 130" width="100%" height="100%">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f1f38" />
-      <stop offset="50%" stop-color="#1e3a5f" />
-      <stop offset="100%" stop-color="#142842" />
+    <linearGradient id="daviNavyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b192c" />
+      <stop offset="100%" stop-color="#1e3e62" />
     </linearGradient>
-
-    <!-- Blue Accent Gradient -->
-    <linearGradient id="blueAccent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#60a5fa" />
-      <stop offset="100%" stop-color="#2563eb" />
+    <linearGradient id="daviRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e63946" />
+      <stop offset="100%" stop-color="#c1121f" />
     </linearGradient>
-
-    <!-- Hook Metallic Gradient -->
-    <linearGradient id="hookGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="daviGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="hookSteel" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="50%" stop-color="#93c5fd" />
-      <stop offset="100%" stop-color="#3b82f6" />
+      <stop offset="50%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#64748b" />
     </linearGradient>
-
-    <!-- Subtle Glow Filter -->
-    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    <filter id="shadowGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.5" />
     </filter>
   </defs>
 
-  <!-- Background Card -->
-  <rect width="600" height="200" rx="20" fill="url(#bgGrad)" />
-  <rect width="598" height="198" x="1" y="1" rx="19" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-opacity="0.3" />
-
-  <!-- Rigging / Crane Graphic Element (Left Icon Emblem) -->
-  <g transform="translate(32, 22)">
-    <!-- Icon Container Box -->
-    <rect x="0" y="0" width="156" height="156" rx="18" fill="#0d1b2e" stroke="#2563eb" stroke-width="2" stroke-opacity="0.6" />
+  <!-- Brand Emblem (Left) -->
+  <g transform="translate(15, 10)" filter="url(#shadowGlow)">
+    <!-- Hexagonal / Shield Geometric Base -->
+    <path d="M 55 5 L 98 28 L 98 82 L 55 105 L 12 82 L 12 28 Z" fill="url(#daviNavyGrad)" stroke="#38bdf8" stroke-width="2.5" />
     
-    <!-- Top Crane Beam / Trolley -->
-    <rect x="24" y="24" width="108" height="14" rx="4" fill="url(#blueAccent)" />
-    <!-- Beam Rivets / Industrial Dots -->
-    <circle cx="34" cy="31" r="2.5" fill="#ffffff" opacity="0.9" />
-    <circle cx="56" cy="31" r="2.5" fill="#ffffff" opacity="0.9" />
-    <circle cx="78" cy="31" r="2.5" fill="#ffffff" opacity="0.9" />
-    <circle cx="100" cy="31" r="2.5" fill="#ffffff" opacity="0.9" />
-    <circle cx="122" cy="31" r="2.5" fill="#ffffff" opacity="0.9" />
+    <!-- Top Crane Boom Graphic Accent -->
+    <path d="M 28 32 L 82 32 L 75 42 L 35 42 Z" fill="url(#daviRedGrad)" />
+    
+    <!-- Crane Boom Lattice Truss Lines -->
+    <line x1="40" y1="32" x2="48" y2="42" stroke="#ffffff" stroke-width="1.5" />
+    <line x1="55" y1="32" x2="63" y2="42" stroke="#ffffff" stroke-width="1.5" />
+    <line x1="70" y1="32" x2="75" y2="42" stroke="#ffffff" stroke-width="1.5" />
 
-    <!-- Cable / Sheave Block Structure -->
-    <!-- Steel Wire Rope Lines -->
-    <line x1="68" y1="38" x2="68" y2="58" stroke="#93c5fd" stroke-width="3" stroke-linecap="round" />
-    <line x1="88" y1="38" x2="88" y2="58" stroke="#93c5fd" stroke-width="3" stroke-linecap="round" />
+    <!-- Hoist Wire Rope -->
+    <line x1="55" y1="42" x2="55" y2="58" stroke="#94a3b8" stroke-width="2.5" />
 
-    <!-- Pulley / Traveling Block -->
-    <rect x="60" y="58" width="36" height="26" rx="5" fill="url(#blueAccent)" stroke="#93c5fd" stroke-width="1.5" />
-    <!-- Pulley Sheave Center Bolt -->
-    <circle cx="78" cy="71" r="5" fill="#0d1b2e" stroke="#ffffff" stroke-width="2" />
-
-    <!-- Rigging Crane Hook (Heavy Duty Swivel Hook) -->
-    <!-- Swivel Neck -->
-    <rect x="74" y="84" width="8" height="8" rx="2" fill="#ffffff" />
-    <!-- Hook Body Path -->
-    <path d="M 78 92 
-             C 78 98, 79 104, 82 108 
-             C 86 114, 94 117, 98 113 
-             C 103 108, 102 99, 94 93 
-             C 90 90, 85 90, 83 94
-             C 83 94, 89 97, 91 100
-             C 93 103, 91 107, 87 107
-             C 81 107, 72 100, 72 90
-             C 72 82, 78 78, 78 78" 
+    <!-- Rigging Hook -->
+    <circle cx="55" cy="62" r="3.5" fill="#ffffff" />
+    <path d="M 55 64 
+             C 55 70, 56 75, 59 78 
+             C 62 82, 69 84, 73 80 
+             C 76 77, 75 70, 68 66 
+             C 65 64, 61 64, 60 67
+             C 60 67, 64 69, 65 71
+             C 66 73, 65 76, 62 76
+             C 57 76, 50 71, 50 63
+             C 50 58, 55 55, 55 55" 
           fill="none" 
-          stroke="url(#hookGrad)" 
-          stroke-width="7" 
+          stroke="url(#hookSteel)" 
+          stroke-width="4.5" 
           stroke-linecap="round" 
           stroke-linejoin="round" />
-
-    <!-- Safety Latch -->
-    <line x1="77" y1="94" x2="92" y2="103" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" />
-
-    <!-- Rigging Sling Accent Line (Load Sling) -->
-    <path d="M 86 116 L 70 138 M 88 116 L 104 138" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="2 3" opacity="0.8" />
+    <!-- Safety Latch in Gold -->
+    <line x1="54" y1="65" x2="65" y2="72" stroke="url(#daviGoldGrad)" stroke-width="2" stroke-linecap="round" />
   </g>
 
-  <!-- Typography & Brand Text -->
-  <g transform="translate(210, 42)">
+  <!-- Typography: DAVI PROJETOS DE RIGGING -->
+  <g transform="translate(135, 12)">
     <!-- DAVI -->
-    <text x="0" y="46" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="44" font-weight="900" letter-spacing="2" fill="#ffffff">
+    <text x="0" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="44" font-weight="900" letter-spacing="2" fill="#ffffff">
       DAVI
     </text>
 
     <!-- PROJETOS -->
-    <text x="135" y="46" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="44" font-weight="900" letter-spacing="2" fill="#38bdf8">
+    <text x="132" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="44" font-weight="900" letter-spacing="2" fill="#e63946">
       PROJETOS
     </text>
 
-    <!-- Accent Divider Line with Industrial Node -->
-    <rect x="0" y="64" width="355" height="3" rx="1.5" fill="url(#blueAccent)" />
-    <circle cx="355" cy="65.5" r="3.5" fill="#38bdf8" />
+    <!-- Dynamic Graphic Slash & Underline -->
+    <rect x="0" y="56" width="370" height="3.5" rx="1.75" fill="url(#daviGoldGrad)" />
+    <circle cx="370" cy="57.75" r="3.5" fill="#e63946" />
 
-    <!-- SUBTITLE: CHECKLIST & IÇAMENTO DE CARGAS -->
-    <g transform="translate(0, 84)">
-      <!-- Badge-style container for CHECKLIST -->
-      <rect x="0" y="0" width="168" height="26" rx="6" fill="#2563eb" />
-      <text x="84" y="18" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="800" letter-spacing="3" fill="#ffffff" text-anchor="middle">
-        CHECKLIST
+    <!-- DE RIGGING SUBHEADER -->
+    <g transform="translate(0, 72)">
+      <!-- Badge-style container for RIGGING -->
+      <rect x="0" y="0" width="150" height="24" rx="5" fill="#1e3e62" stroke="#38bdf8" stroke-width="1" />
+      <text x="75" y="16.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12.5" font-weight="800" letter-spacing="3" fill="#ffffff" text-anchor="middle">
+        DE RIGGING
       </text>
 
-      <!-- Descriptor Text -->
-      <text x="180" y="18" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="600" letter-spacing="1.5" fill="#94a3b8">
-        RIGGING &amp; IÇAMENTO
+      <!-- Engineering & Safety Subtext -->
+      <text x="162" y="16" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" letter-spacing="1.5" fill="#94a3b8">
+        ENGENHARIA &amp; IÇAMENTO
       </text>
     </g>
 
-    <!-- Safety / Engineering Standard Indicator -->
-    <g transform="translate(0, 118)">
+    <!-- Standards descriptor -->
+    <g transform="translate(0, 102)">
       <circle cx="4" cy="4" r="3" fill="#10b981" />
-      <text x="14" y="7" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="10.5" font-weight="600" letter-spacing="1" fill="#64748b">
-        NR-11 • NR-12 • GESTÃO OPERACIONAL
+      <text x="13" y="7" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.8" fill="#64748b">
+        PLANOS DE RIGGING • NR-11 • NR-12 • INSPEÇÃO DE ACESSÓRIOS
       </text>
     </g>
   </g>
