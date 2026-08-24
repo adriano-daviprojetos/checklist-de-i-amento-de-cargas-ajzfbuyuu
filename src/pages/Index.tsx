@@ -11,12 +11,19 @@ export default function Index() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white p-4">
-        <div className="flex flex-col items-center gap-4 max-w-xs text-center">
-          <img
-            src="/logo.svg"
-            alt="DAVI PROJETOS CHECKLIST"
-            className="w-48 h-auto object-contain animate-pulse"
-          />
+        <div className="flex flex-col items-center gap-5 max-w-sm text-center">
+          <div className="flex items-center justify-center gap-3">
+            <img
+              src="/logo.png"
+              alt="DAVI PROJETOS DE RIGGING"
+              className="w-52 h-auto object-contain animate-pulse drop-shadow-xl"
+            />
+            <img
+              src="/seal-10-years.png"
+              alt="10 Anos"
+              className="w-14 h-14 object-contain animate-pulse drop-shadow-xl shrink-0"
+            />
+          </div>
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
             <span>Carregando sistema...</span>
