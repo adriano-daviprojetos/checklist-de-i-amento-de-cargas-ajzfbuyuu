@@ -94,7 +94,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           <div className="p-1.5 bg-blue-600 rounded-lg text-white">
             <HardHat className="w-5 h-5" />
           </div>
-          <span className="font-bold text-white text-base">Rigging Master</span>
+          <span className="font-bold text-white text-base">DAVI PROJETOS CHECKLIST</span>
         </div>
         <div className="flex items-center gap-2">
           <OfflineSyncBar />
@@ -124,7 +124,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
               </div>
               <div>
                 <div className="font-bold text-white text-base tracking-tight leading-tight">
-                  Rigging Master
+                  DAVI PROJETOS CHECKLIST
                 </div>
                 <div className="text-[11px] text-slate-400">Içamento Seguro</div>
               </div>

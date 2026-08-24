@@ -13,7 +13,7 @@ export default function Index() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          <span className="text-xs text-slate-400">Carregando Rigging Master...</span>
+          <span className="text-xs text-slate-400">Carregando DAVI PROJETOS CHECKLIST...</span>
         </div>
       </div>
     )

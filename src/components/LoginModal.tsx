@@ -63,7 +63,7 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           <div className="inline-flex items-center justify-center p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mb-2">
             <HardHat className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Rigging Master</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">DAVI PROJETOS CHECKLIST</h1>
           <p className="text-sm text-slate-400">Checklist e Gestão de Içamento de Cargas Pesadas</p>
           <div className="flex items-center justify-center gap-2 pt-1">
             <Badge variant="outline" className="border-blue-500/30 text-blue-400 text-xs">
