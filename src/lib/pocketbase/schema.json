@@ -1,0 +1,913 @@
+{
+  "generatedAt": "2026-08-24T21:20:34.961Z",
+  "collections": [
+    {
+      "name": "users",
+      "type": "auth",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "avatar",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "cpf",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "role",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "superadmin",
+            "admin",
+            "gestor",
+            "supervisor",
+            "rigger",
+            "sinaleiro",
+            "operador"
+          ]
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "required": false,
+          "system": false
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
+        "CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users` (`email`) WHERE `email` != ''"
+      ]
+    },
+    {
+      "name": "companies",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "trade_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cnpj",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "city",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "state",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_companies_name ON companies (name)"]
+    },
+    {
+      "name": "clients",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "trade_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "document",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "contact_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "city",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "state",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_clients_company ON clients (company_id)",
+        "CREATE INDEX idx_clients_name ON clients (name)"
+      ]
+    },
+    {
+      "name": "equipment",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "Guindaste",
+            "Munck",
+            "Caminhão",
+            "Empilhadeira",
+            "Plataforma Elevatória",
+            "Outro"
+          ]
+        },
+        {
+          "name": "manufacturer",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "model",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "capacity",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "license_plate",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "serial_number",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "year",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["Operacional", "Em Manutenção", "Inativo", "Aguardando Inspeção"]
+        },
+        {
+          "name": "last_inspection",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_equipment_company ON equipment (company_id)",
+        "CREATE INDEX idx_equipment_type ON equipment (type)"
+      ]
+    },
+    {
+      "name": "materials",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "Cinta",
+            "Cabos de Aço",
+            "Manilhas",
+            "Ganchos",
+            "Olhais",
+            "Moitões",
+            "Estropos",
+            "Balancim",
+            "Outro"
+          ]
+        },
+        {
+          "name": "tag",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "manufacturer",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "model",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "capacity",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "diameter_or_length",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "Disponível",
+            "Em Uso",
+            "Em Inspeção",
+            "Danificado / Descarte",
+            "Quarentena"
+          ]
+        },
+        {
+          "name": "last_inspection",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "validity_date",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_materials_company ON materials (company_id)",
+        "CREATE INDEX idx_materials_tag ON materials (tag)"
+      ]
+    },
+    {
+      "name": "checklist_templates",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "category",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "Guindaste",
+            "Munck",
+            "Acessórios e Materiais",
+            "Plano de Rigging",
+            "Segurança e Sinalização",
+            "Geral de Içamento"
+          ]
+        },
+        {
+          "name": "target_role",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["Todos", "Operador", "Rigger", "Sinaleiro", "Supervisor"]
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "version",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_templates_company ON checklist_templates (company_id)",
+        "CREATE INDEX idx_templates_category ON checklist_templates (category)"
+      ]
+    },
+    {
+      "name": "checklist_template_items",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "template_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "checklist_templates"
+        },
+        {
+          "name": "section",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "conforme_nao_conforme",
+            "sim_nao_na",
+            "texto",
+            "numero",
+            "foto_obrigatoria"
+          ]
+        },
+        {
+          "name": "is_mandatory",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "is_critical",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "order_num",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_items_template ON checklist_template_items (template_id)",
+        "CREATE INDEX idx_items_order ON checklist_template_items (template_id, order_num)"
+      ]
+    },
+    {
+      "name": "checklists",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "template_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "checklist_templates"
+        },
+        {
+          "name": "client_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "clients"
+        },
+        {
+          "name": "equipment_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "equipment"
+        },
+        {
+          "name": "material_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "materials"
+        },
+        {
+          "name": "user_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "code",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "location",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "operation_type",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "scheduled_date",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "started_at",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "completed_at",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Pendente", "Em Andamento", "Concluído", "Reprovado"]
+        },
+        {
+          "name": "risk_level",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["Baixo", "Médio", "Alto", "Crítico"]
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "inspector_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "signature_data",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "sync_status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["synced", "pending_sync", "conflict"]
+        },
+        {
+          "name": "local_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_checklists_company ON checklists (company_id)",
+        "CREATE INDEX idx_checklists_status ON checklists (status)",
+        "CREATE INDEX idx_checklists_user ON checklists (user_id)"
+      ]
+    },
+    {
+      "name": "checklist_responses",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "checklist_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "checklists"
+        },
+        {
+          "name": "item_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "checklist_template_items"
+        },
+        {
+          "name": "item_title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "item_section",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["C", "NC", "NA", "SIM", "NAO", "PENDENTE"]
+        },
+        {
+          "name": "observation",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "photo_url",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "value",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "is_critical_fail",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_responses_checklist ON checklist_responses (checklist_id)"]
+    }
+  ]
+}
