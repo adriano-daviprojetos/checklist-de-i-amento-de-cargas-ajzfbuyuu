@@ -395,24 +395,47 @@ export class AppDataService {
     return []
   }
 
-  static async saveUser(user: Partial<AppUser> & { password?: string }): Promise<AppUser> {
+  static async saveUser(
+    user: Partial<AppUser> & { password?: string; newPassword?: string },
+  ): Promise<AppUser> {
     const userCompId = user.company_id || (pb.authStore.record as any)?.company_id || ''
     const userWithCompany = { ...user, company_id: userCompId }
 
     if (!userWithCompany.id) {
-      const { id, ...createFields } = userWithCompany
+      const { id, newPassword, ...createFields } = userWithCompany
+      const initialPassword = user.password || newPassword || 'Skip@Pass'
       const res = await pb.collection('users').create({
         ...createFields,
-        password: user.password || 'Skip@Pass',
-        passwordConfirm: user.password || 'Skip@Pass',
+        password: initialPassword,
+        passwordConfirm: initialPassword,
         emailVisibility: true,
       })
       return res as unknown as AppUser
     } else {
-      const { id, password, ...updateFields } = userWithCompany
-      const res = await pb.collection('users').update(id, updateFields)
+      const { id, password, newPassword, ...updateFields } = userWithCompany
+      const payload: Record<string, any> = { ...updateFields }
+
+      // If a new password or password is provided on edit, include it
+      const passToSet = newPassword || password
+      if (passToSet && passToSet.trim().length >= 8) {
+        payload.password = passToSet.trim()
+        payload.passwordConfirm = passToSet.trim()
+      }
+
+      const res = await pb.collection('users').update(id, payload)
       return res as unknown as AppUser
     }
+  }
+
+  static async resetUserPassword(userId: string, newPass: string): Promise<void> {
+    if (!pb.authStore.isValid) throw new Error('Não autenticado.')
+    if (!newPass || newPass.trim().length < 8) {
+      throw new Error('A nova senha deve possuir no mínimo 8 caracteres.')
+    }
+    await pb.collection('users').update(userId, {
+      password: newPass.trim(),
+      passwordConfirm: newPass.trim(),
+    })
   }
 
   static async deleteUser(id: string): Promise<void> {

@@ -7,9 +7,130 @@ import React, {
   useCallback,
 } from 'react'
 import pb from '@/lib/pocketbase/client'
-import { AppUser, Company, UserRole } from '@/types'
+import {
+  AppUser,
+  Company,
+  UserRole,
+  SystemModuleKey,
+  ModulePermission,
+  UserPermissions,
+} from '@/types'
 import { syncService } from '@/lib/offline/sync-service'
 import { dbGetAll, dbGetById, dbPut } from '@/lib/offline/db'
+
+export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
+  superadmin: {
+    checklists: { read: true, edit: true, delete: true },
+    templates: { read: true, edit: true, delete: true },
+    equipment: { read: true, edit: true, delete: true },
+    materials: { read: true, edit: true, delete: true },
+    clients: { read: true, edit: true, delete: true },
+    users: { read: true, edit: true, delete: true },
+    company: { read: true, edit: true, delete: true },
+  },
+  admin: {
+    checklists: { read: true, edit: true, delete: true },
+    templates: { read: true, edit: true, delete: true },
+    equipment: { read: true, edit: true, delete: true },
+    materials: { read: true, edit: true, delete: true },
+    clients: { read: true, edit: true, delete: true },
+    users: { read: true, edit: true, delete: true },
+    company: { read: true, edit: true, delete: true },
+  },
+  gestor: {
+    checklists: { read: true, edit: true, delete: true },
+    templates: { read: true, edit: true, delete: true },
+    equipment: { read: true, edit: true, delete: true },
+    materials: { read: true, edit: true, delete: true },
+    clients: { read: true, edit: true, delete: true },
+    users: { read: true, edit: true, delete: true },
+    company: { read: true, edit: false, delete: false },
+  },
+  supervisor: {
+    checklists: { read: true, edit: true, delete: true },
+    templates: { read: true, edit: true, delete: false },
+    equipment: { read: true, edit: true, delete: false },
+    materials: { read: true, edit: true, delete: false },
+    clients: { read: true, edit: true, delete: false },
+    users: { read: true, edit: false, delete: false },
+    company: { read: true, edit: false, delete: false },
+  },
+  rigger: {
+    checklists: { read: true, edit: true, delete: false },
+    templates: { read: true, edit: false, delete: false },
+    equipment: { read: true, edit: false, delete: false },
+    materials: { read: true, edit: true, delete: false },
+    clients: { read: true, edit: false, delete: false },
+    users: { read: false, edit: false, delete: false },
+    company: { read: false, edit: false, delete: false },
+  },
+  sinaleiro: {
+    checklists: { read: true, edit: true, delete: false },
+    templates: { read: true, edit: false, delete: false },
+    equipment: { read: true, edit: false, delete: false },
+    materials: { read: true, edit: false, delete: false },
+    clients: { read: true, edit: false, delete: false },
+    users: { read: false, edit: false, delete: false },
+    company: { read: false, edit: false, delete: false },
+  },
+  operador: {
+    checklists: { read: true, edit: true, delete: false },
+    templates: { read: true, edit: false, delete: false },
+    equipment: { read: true, edit: false, delete: false },
+    materials: { read: true, edit: false, delete: false },
+    clients: { read: true, edit: false, delete: false },
+    users: { read: false, edit: false, delete: false },
+    company: { read: false, edit: false, delete: false },
+  },
+}
+
+export function getUserEffectivePermissions(user: AppUser | null): UserPermissions {
+  if (!user) {
+    return {
+      checklists: { read: false, edit: false, delete: false },
+      templates: { read: false, edit: false, delete: false },
+      equipment: { read: false, edit: false, delete: false },
+      materials: { read: false, edit: false, delete: false },
+      clients: { read: false, edit: false, delete: false },
+      users: { read: false, edit: false, delete: false },
+      company: { read: false, edit: false, delete: false },
+    }
+  }
+
+  const role = (user.role as UserRole) || 'operador'
+  const defaultForRole = DEFAULT_ROLE_PERMISSIONS[role] || DEFAULT_ROLE_PERMISSIONS.operador
+
+  if (role === 'superadmin' || role === 'admin') {
+    return DEFAULT_ROLE_PERMISSIONS.admin
+  }
+
+  // If custom granular permissions are defined on user record, merge them
+  if (user.permissions && typeof user.permissions === 'object') {
+    const modules: SystemModuleKey[] = [
+      'checklists',
+      'templates',
+      'equipment',
+      'materials',
+      'clients',
+      'users',
+      'company',
+    ]
+
+    const merged: Partial<UserPermissions> = {}
+    for (const mod of modules) {
+      const customMod = user.permissions[mod]
+      const fallback = defaultForRole[mod]
+      merged[mod] = {
+        read: customMod?.read ?? fallback?.read ?? false,
+        edit: customMod?.edit ?? fallback?.edit ?? false,
+        delete: customMod?.delete ?? fallback?.delete ?? false,
+      }
+    }
+    return merged as UserPermissions
+  }
+
+  return defaultForRole
+}
 
 interface AuthContextType {
   user: AppUser | null
@@ -18,6 +139,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   role: UserRole
+  permissions: UserPermissions
   isSuperAdmin: boolean
   isAdmin: boolean
   isGestor: boolean
@@ -27,6 +149,7 @@ interface AuthContextType {
   canManageTemplates: boolean
   canManageAssets: boolean
   canCreateChecklist: boolean
+  hasModulePermission: (module: SystemModuleKey, action?: 'read' | 'edit' | 'delete') => boolean
   login: (emailOrCpf: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   switchCompany: (companyId: string) => Promise<void>
@@ -47,11 +170,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isGestor = role === 'gestor' || isAdmin
   const isSupervisor = role === 'supervisor' || isGestor
 
-  const canManageCompanies = isAdmin
-  const canManageUsers = isAdmin || role === 'gestor'
-  const canManageTemplates = isAdmin || role === 'gestor' || role === 'supervisor'
-  const canManageAssets = isAdmin || role === 'gestor' || role === 'supervisor'
-  const canCreateChecklist = true // All operational roles (Admin, Gestor, Supervisor, Rigger, Sinaleiro, Operador) can start / fill checklists
+  const permissions = getUserEffectivePermissions(user)
+
+  const hasModulePermission = useCallback(
+    (mod: SystemModuleKey, action: 'read' | 'edit' | 'delete' = 'read') => {
+      if (isAdmin) return true
+      return !!permissions?.[mod]?.[action]
+    },
+    [isAdmin, permissions],
+  )
+
+  const canManageCompanies = isAdmin || hasModulePermission('company', 'edit')
+  const canManageUsers = isAdmin || hasModulePermission('users', 'edit')
+  const canManageTemplates = isAdmin || hasModulePermission('templates', 'edit')
+  const canManageAssets =
+    isAdmin || hasModulePermission('equipment', 'edit') || hasModulePermission('materials', 'edit')
+  const canCreateChecklist = isAdmin || hasModulePermission('checklists', 'edit')
 
   // Load current user and company from memory / IndexedDB
   const loadUserContext = useCallback(async () => {
@@ -221,6 +355,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!user,
         isLoading,
         role,
+        permissions,
         isSuperAdmin,
         isAdmin,
         isGestor,
@@ -230,6 +365,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         canManageTemplates,
         canManageAssets,
         canCreateChecklist,
+        hasModulePermission,
         login,
         logout,
         switchCompany,

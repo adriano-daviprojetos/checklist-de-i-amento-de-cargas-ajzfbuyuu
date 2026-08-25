@@ -22,6 +22,23 @@ export type UserRole =
   | 'sinaleiro'
   | 'operador'
 
+export type SystemModuleKey =
+  | 'checklists'
+  | 'templates'
+  | 'equipment'
+  | 'materials'
+  | 'clients'
+  | 'users'
+  | 'company'
+
+export interface ModulePermission {
+  read: boolean
+  edit: boolean
+  delete: boolean
+}
+
+export type UserPermissions = Record<SystemModuleKey, ModulePermission>
+
 export interface AppUser {
   id: string
   email: string
@@ -32,6 +49,7 @@ export interface AppUser {
   cpf?: string
   phone?: string
   active?: boolean
+  permissions?: UserPermissions
   created?: string
   updated?: string
 }
