@@ -5,7 +5,7 @@
 // 3. Exact CPF match using digits only (e.g. "13536552889")
 // If found, replaces e.identity with the record's email before authentication.
 
-onRecordAuthRequest('users', (e) => {
+onRecordAuthRequest((e) => {
   const identity = (e.identity || '').trim()
 
   if (identity && !identity.includes('@')) {
@@ -72,4 +72,4 @@ onRecordAuthRequest('users', (e) => {
   }
 
   e.next()
-})
+}, 'users')
