@@ -411,7 +411,7 @@ export async function generateChecklistPdf({
     doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
     doc.setLineWidth(0.25)
 
-    const boxHeight = 27
+    const boxHeight = 44
     doc.roundedRect(margin, startY, contentWidth, boxHeight, 1.5, 1.5, 'FD')
 
     // Section title inside box
@@ -424,41 +424,28 @@ export async function generateChecklistPdf({
     doc.setDrawColor(226, 232, 240)
     doc.line(margin, startY + 6.5, margin + contentWidth, startY + 6.5)
 
-    // 2-row x 3-column grid
-    const col1X = margin + 3.5
-    const col2X = margin + contentWidth / 3 + 2
-    const col3X = margin + (contentWidth / 3) * 2 + 2
-
-    const row1Y = startY + 11.5
-    const row2Y = startY + 19.5
-
-    // Equipment string
-    const eqObj = equipment || checklist?.expand?.equipment_id
-    const eqStr = eqObj
-      ? `${eqObj.type || ''} ${eqObj.manufacturer || ''} ${eqObj.model || ''} (${eqObj.capacity || 'S/ Cap'})`.trim()
-      : 'Não especificado'
-
-    // Material string
-    const matObj = material || checklist?.expand?.material_id
-    const matStr = matObj
-      ? `TAG: ${matObj.tag || ''} - ${matObj.type || ''} (${matObj.capacity || 'S/ Cap'})`.trim()
-      : 'Não especificado'
-
     // Cell helper
-    const drawCell = (x: number, y: number, label: string, val: string, maxLen = 32) => {
+    const drawCell = (x: number, y: number, label: string, val: string, maxLen = 36) => {
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(7)
+      doc.setFontSize(6.8)
       doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
       doc.text(label, x, y)
 
       doc.setFont('helvetica', 'normal')
-      doc.setFontSize(8)
+      doc.setFontSize(7.8)
       doc.setTextColor(darkText[0], darkText[1], darkText[2])
-      const safeVal = val || '-'
+      const safeVal = val || '—'
       const textToDraw =
         safeVal.length > maxLen ? safeVal.substring(0, maxLen - 2) + '...' : safeVal
-      doc.text(textToDraw, x, y + 4)
+      doc.text(textToDraw, x, y + 3.8)
     }
+
+    // Grid columns (3 columns for general info)
+    const col1X = margin + 3.5
+    const col2X = margin + contentWidth / 3 + 2
+    const col3X = margin + (contentWidth / 3) * 2 + 2
+
+    const row1Y = startY + 11
 
     drawCell(
       col1X,
@@ -466,7 +453,7 @@ export async function generateChecklistPdf({
       'DATA / HORA PROGRAMADA',
       formatDateTime(checklist?.scheduled_date || checklist?.created),
     )
-    drawCell(col2X, row1Y, 'LOCAL / FRENTE DE SERVIÇO', checklist?.location || 'Não informado')
+    drawCell(col2X, row1Y, 'LOCAL / FRENTE DE SERVIÇO', checklist?.location || '—')
     drawCell(
       col3X,
       row1Y,
@@ -474,13 +461,48 @@ export async function generateChecklistPdf({
       checklist?.operation_type || checklist?.title || 'Içamento de Carga',
     )
 
-    drawCell(col1X, row2Y, 'EQUIPAMENTO UTILIZADO', eqStr)
-    drawCell(col2X, row2Y, 'ACESSÓRIOS / MATERIAIS', matStr)
+    // Divider line between General info and Equipment/Materials details
+    doc.setDrawColor(235, 238, 243)
+    doc.line(margin + 2, startY + 17.5, margin + contentWidth - 2, startY + 17.5)
+
+    // Equipment object & details
+    const eqObj = equipment || checklist?.expand?.equipment_id
+    const eqType = eqObj?.type || '—'
+    const eqManufacturer = eqObj?.manufacturer || '—'
+    const eqModel = eqObj?.model || '—'
+    const eqCapacity = eqObj?.capacity || '—'
+    const eqPlate = eqObj?.license_plate || '—'
+
+    // Subheader: DADOS DO EQUIPAMENTO
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(7.2)
+    doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
+    doc.text('EQUIPAMENTO UTILIZADO', margin + 3.5, startY + 22)
+
+    // 5-column layout for equipment parameters
+    const eqColW = (contentWidth - 7) / 5
+    const eqRowY = startY + 27.5
+
+    drawCell(margin + 3.5 + eqColW * 0, eqRowY, 'TIPO', eqType, 22)
+    drawCell(margin + 3.5 + eqColW * 1, eqRowY, 'FABRICANTE', eqManufacturer, 22)
+    drawCell(margin + 3.5 + eqColW * 2, eqRowY, 'MODELO', eqModel, 22)
+    drawCell(margin + 3.5 + eqColW * 3, eqRowY, 'CAPACIDADE', eqCapacity, 20)
+    drawCell(margin + 3.5 + eqColW * 4, eqRowY, 'PLACA', eqPlate, 18)
+
+    // Row 3: Acessórios/Materiais & Responsável pelo preenchimento
+    const matObj = material || checklist?.expand?.material_id
+    const matStr = matObj
+      ? `TAG: ${matObj.tag || '—'} | ${matObj.type || '—'} (${matObj.capacity || 'S/ Cap'})`.trim()
+      : '—'
+
+    const row3Y = startY + 36.5
+    drawCell(col1X, row3Y, 'ACESSÓRIOS / MATERIAIS', matStr, 48)
     drawCell(
       col3X,
-      row2Y,
+      row3Y,
       'RESP. PELO PREENCHIMENTO',
-      checklist?.filled_by_name || checklist?.inspector_name || 'Não informado',
+      checklist?.filled_by_name || checklist?.inspector_name || '—',
+      38,
     )
 
     return startY + boxHeight + 4
