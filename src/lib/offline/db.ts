@@ -8,6 +8,7 @@ export interface DBStoreSchema {
   equipment: string
   materials: string
   checklist_templates: string
+  checklist_item_groups: string
   checklist_template_items: string
   checklists: string
   checklist_responses: string
@@ -43,8 +44,13 @@ export async function getDB(): Promise<IDBDatabase> {
       createStore('equipment', 'id', [{ name: 'company_id', keyPath: 'company_id' }])
       createStore('materials', 'id', [{ name: 'company_id', keyPath: 'company_id' }])
       createStore('checklist_templates', 'id', [{ name: 'company_id', keyPath: 'company_id' }])
+      createStore('checklist_item_groups', 'id', [
+        { name: 'template', keyPath: 'template' },
+        { name: 'company', keyPath: 'company' },
+      ])
       createStore('checklist_template_items', 'id', [
         { name: 'template_id', keyPath: 'template_id' },
+        { name: 'group', keyPath: 'group' },
       ])
       createStore('checklists', 'id', [
         { name: 'company_id', keyPath: 'company_id' },

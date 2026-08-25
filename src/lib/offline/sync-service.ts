@@ -89,12 +89,22 @@ class SyncService {
         console.warn('Sync templates failed', err)
       }
 
+      // 5.1 Checklist Item Groups
+      try {
+        const itemGroups = await pb.collection('checklist_item_groups').getFullList<any>({
+          sort: 'sort_order',
+        })
+        await dbPutMany('checklist_item_groups', itemGroups)
+      } catch (err) {
+        console.warn('Sync item groups failed', err)
+      }
+
       // 6. Checklist Template Items
       try {
         const templateItems = await pb
           .collection('checklist_template_items')
           .getFullList<ChecklistTemplateItem>({
-            sort: 'order_num',
+            sort: 'sort_order,order_num',
           })
         await dbPutMany('checklist_template_items', templateItems)
       } catch (err) {
@@ -179,6 +189,7 @@ class SyncService {
         equipment: 1,
         materials: 1,
         templates: 1,
+        checklist_item_groups: 1,
         checklists: 2,
         checklist_responses: 3,
       }

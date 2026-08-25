@@ -6,6 +6,7 @@ import {
   ChecklistResponse,
   ChecklistTemplate,
   ChecklistTemplateItem,
+  ChecklistItemGroup,
   Equipment,
   Material,
   Client,
@@ -274,6 +275,95 @@ export class AppDataService {
     return filtered
   }
 
+  // --- Item Groups ---
+  static async getItemGroups(templateId: string, isOnline = true): Promise<ChecklistItemGroup[]> {
+    const local = await dbGetByIndex<ChecklistItemGroup>(
+      'checklist_item_groups',
+      'template',
+      templateId,
+    )
+
+    if (isOnline && pb.authStore.isValid && !templateId.startsWith('tpl_')) {
+      try {
+        const list = await pb.collection('checklist_item_groups').getFullList<ChecklistItemGroup>({
+          filter: `template='${templateId}'`,
+          sort: 'sort_order,created',
+        })
+        await dbPutMany('checklist_item_groups', list)
+        return list
+      } catch (err) {
+        console.warn('Online item groups fetch failed:', err)
+      }
+    }
+    return local.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+  }
+
+  static async saveItemGroup(
+    group: Partial<ChecklistItemGroup>,
+    isOnline = true,
+  ): Promise<ChecklistItemGroup> {
+    const groupId = group.id || `grp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+    const fullGroup: ChecklistItemGroup = {
+      id: groupId,
+      company: group.company,
+      template: group.template || '',
+      name: group.name || 'Novo Grupo',
+      sort_order: group.sort_order ?? 0,
+    }
+
+    await dbPut('checklist_item_groups', fullGroup)
+
+    if (isOnline && pb.authStore.isValid && !group.template?.startsWith('tpl_')) {
+      try {
+        if (!group.id || group.id.startsWith('grp_')) {
+          const { id: _ignoredId, ...createData } = fullGroup
+          const created = await pb.collection('checklist_item_groups').create(createData)
+          await dbDelete('checklist_item_groups', groupId)
+          await dbPut('checklist_item_groups', created as unknown as ChecklistItemGroup)
+          return created as unknown as ChecklistItemGroup
+        } else {
+          const { id: _ignoredId, ...updateData } = fullGroup
+          const updated = await pb.collection('checklist_item_groups').update(group.id, updateData)
+          await dbPut('checklist_item_groups', updated as unknown as ChecklistItemGroup)
+          return updated as unknown as ChecklistItemGroup
+        }
+      } catch (err) {
+        console.warn('Online save item group failed:', err)
+      }
+    }
+    return fullGroup
+  }
+
+  static async deleteItemGroup(groupId: string, isOnline = true): Promise<void> {
+    await dbDelete('checklist_item_groups', groupId)
+
+    // Unassign group from items locally
+    const items = await dbGetByIndex<ChecklistTemplateItem>(
+      'checklist_template_items',
+      'group',
+      groupId,
+    )
+    for (const item of items) {
+      item.group = undefined
+      await dbPut('checklist_template_items', item)
+    }
+
+    if (isOnline && pb.authStore.isValid && !groupId.startsWith('grp_')) {
+      try {
+        // Also update items on backend if any
+        const onlineItems = await pb.collection('checklist_template_items').getFullList({
+          filter: `group='${groupId}'`,
+        })
+        for (const item of onlineItems) {
+          await pb.collection('checklist_template_items').update(item.id, { group: null })
+        }
+        await pb.collection('checklist_item_groups').delete(groupId)
+      } catch (err) {
+        console.warn('Online delete item group failed:', err)
+      }
+    }
+  }
+
   static async getTemplateItems(
     templateId: string,
     isOnline = true,
@@ -290,7 +380,8 @@ export class AppDataService {
           .collection('checklist_template_items')
           .getFullList<ChecklistTemplateItem>({
             filter: `template_id='${templateId}'`,
-            sort: 'order_num',
+            sort: 'sort_order,order_num',
+            expand: 'group',
           })
         await dbPutMany('checklist_template_items', list)
         return list
@@ -298,13 +389,16 @@ export class AppDataService {
         console.warn('Online template items fetch failed:', err)
       }
     }
-    return local.sort((a, b) => (a.order_num || 0) - (b.order_num || 0))
+    return local.sort(
+      (a, b) => (a.sort_order ?? a.order_num ?? 0) - (b.sort_order ?? b.order_num ?? 0),
+    )
   }
 
   static async saveTemplate(
     template: Partial<ChecklistTemplate>,
     items: Partial<ChecklistTemplateItem>[],
     isOnline: boolean,
+    groups?: Partial<ChecklistItemGroup>[],
   ): Promise<ChecklistTemplate> {
     const userCompId = template.company_id || (pb.authStore.record as any)?.company_id || ''
     const tplId = template.id || `tpl_${Date.now()}`
@@ -339,36 +433,63 @@ export class AppDataService {
       }
     }
 
+    // Save groups if provided
+    const groupIdMap = new Map<string, string>()
+    if (groups && groups.length > 0) {
+      for (let gIdx = 0; gIdx < groups.length; gIdx++) {
+        const grp = groups[gIdx]
+        const oldGrpId = grp.id
+        const savedGrp = await AppDataService.saveItemGroup(
+          {
+            ...grp,
+            template: finalTplId,
+            company: userCompId || undefined,
+            sort_order: grp.sort_order !== undefined ? grp.sort_order : gIdx + 1,
+          },
+          isOnline,
+        )
+        if (oldGrpId) {
+          groupIdMap.set(oldGrpId, savedGrp.id)
+        }
+      }
+    }
+
     // Save items
     for (let i = 0; i < items.length; i++) {
       const it = items[i]
       const itemId = it.id || `item_${Date.now()}_${i}`
+      const targetGroupId = it.group ? groupIdMap.get(it.group) || it.group : undefined
       const fullItem: ChecklistTemplateItem = {
         id: itemId,
         template_id: finalTplId,
         section: it.section || 'Geral',
+        group:
+          targetGroupId && targetGroupId !== 'none' && targetGroupId !== ''
+            ? targetGroupId
+            : undefined,
         title: it.title || 'Item de Verificação',
         description: it.description || '',
         type: it.type || 'conforme_nao_conforme',
         is_mandatory: it.is_mandatory ?? true,
         is_critical: it.is_critical ?? false,
         order_num: i + 1,
+        sort_order: it.sort_order !== undefined ? it.sort_order : i + 1,
       }
 
       await dbPut('checklist_template_items', fullItem)
 
       if (isOnline && pb.authStore.isValid) {
         try {
+          const { id: _ignoredItemId, expand: _ignoredExpand, ...itemPayload } = fullItem
+          if (itemPayload.group === '' || itemPayload.group === 'none') {
+            itemPayload.group = null as any
+          }
           if (!it.id || it.id.startsWith('item_')) {
-            const { id: _ignoredItemId, ...createItemData } = fullItem
-            const createdItem = await pb
-              .collection('checklist_template_items')
-              .create(createItemData)
+            const createdItem = await pb.collection('checklist_template_items').create(itemPayload)
             await dbDelete('checklist_template_items', itemId)
             await dbPut('checklist_template_items', createdItem as unknown as ChecklistTemplateItem)
           } else {
-            const { id: _ignoredItemId, ...updateItemData } = fullItem
-            await pb.collection('checklist_template_items').update(it.id, updateItemData)
+            await pb.collection('checklist_template_items').update(it.id, itemPayload)
           }
         } catch (itemErr) {
           console.warn('Failed saving template item online:', itemErr)
@@ -381,7 +502,7 @@ export class AppDataService {
 
   static async deleteTemplate(id: string, isOnline: boolean): Promise<void> {
     await dbDelete('checklist_templates', id)
-    // Delete associated template items in local DB
+    // Delete associated template items and groups in local DB
     const localItems = await dbGetByIndex<ChecklistTemplateItem>(
       'checklist_template_items',
       'template_id',
@@ -389,6 +510,15 @@ export class AppDataService {
     )
     for (const item of localItems) {
       await dbDelete('checklist_template_items', item.id)
+    }
+
+    const localGroups = await dbGetByIndex<ChecklistItemGroup>(
+      'checklist_item_groups',
+      'template',
+      id,
+    )
+    for (const group of localGroups) {
+      await dbDelete('checklist_item_groups', group.id)
     }
 
     if (isOnline && !id.startsWith('tpl_')) {

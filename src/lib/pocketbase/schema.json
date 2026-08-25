@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T16:55:49.033Z",
+  "generatedAt": "2026-08-25T17:08:44.433Z",
   "collections": [
     {
       "name": "users",
@@ -670,6 +670,19 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "group",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "checklist_item_groups"
+        },
+        {
+          "name": "sort_order",
+          "type": "number",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
@@ -999,6 +1012,63 @@
         "CREATE INDEX idx_audit_logs_action ON audit_logs (action)",
         "CREATE INDEX idx_audit_logs_module ON audit_logs (module)",
         "CREATE INDEX idx_audit_logs_created ON audit_logs (created DESC)"
+      ]
+    },
+    {
+      "name": "checklist_item_groups",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "company",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "template",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "checklist_templates"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "sort_order",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_groups_template ON checklist_item_groups (template)",
+        "CREATE INDEX idx_groups_sort ON checklist_item_groups (template, sort_order)"
       ]
     }
   ]

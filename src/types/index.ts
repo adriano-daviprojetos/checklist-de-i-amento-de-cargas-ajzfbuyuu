@@ -161,18 +161,33 @@ export interface ChecklistTemplate {
   updated?: string
 }
 
+export interface ChecklistItemGroup {
+  id: string
+  company?: string
+  template: string
+  name: string
+  sort_order?: number
+  created?: string
+  updated?: string
+}
+
 export interface ChecklistTemplateItem {
   id: string
   template_id: string
   section?: string
+  group?: string
   title: string
   description?: string
   type: ItemType
   is_mandatory?: boolean
   is_critical?: boolean
   order_num?: number
+  sort_order?: number
   created?: string
   updated?: string
+  expand?: {
+    group?: ChecklistItemGroup
+  }
 }
 
 export type ChecklistStatus = 'Pendente' | 'Em Andamento' | 'Concluído' | 'Reprovado'
@@ -233,7 +248,14 @@ export interface ChecklistResponse {
 
 export interface OfflineSyncQueueItem {
   id: string
-  entity: 'checklists' | 'checklist_responses' | 'equipment' | 'materials' | 'clients' | 'templates'
+  entity:
+    | 'checklists'
+    | 'checklist_responses'
+    | 'equipment'
+    | 'materials'
+    | 'clients'
+    | 'templates'
+    | 'checklist_item_groups'
   action: 'create' | 'update' | 'delete'
   payload: any
   timestamp: number

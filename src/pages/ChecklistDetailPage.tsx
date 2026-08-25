@@ -379,12 +379,12 @@ export const ChecklistDetailPage: React.FC = () => {
     }
   }
 
-  // Group items by section
+  // Group items by section/group
   const sections: { sectionName: string; items: ChecklistTemplateItem[] }[] = []
   const sectionMap = new Map<string, ChecklistTemplateItem[]>()
 
   templateItems.forEach((it) => {
-    const sName = it.section || 'Itens Gerais'
+    const sName = it.section || it.expand?.group?.name || 'Geral'
     if (!sectionMap.has(sName)) {
       sectionMap.set(sName, [])
     }
@@ -392,7 +392,12 @@ export const ChecklistDetailPage: React.FC = () => {
   })
 
   sectionMap.forEach((items, sectionName) => {
-    sections.push({ sectionName, items })
+    sections.push({
+      sectionName,
+      items: items.sort(
+        (a, b) => (a.sort_order ?? a.order_num ?? 0) - (b.sort_order ?? b.order_num ?? 0),
+      ),
+    })
   })
 
   const totalItems = templateItems.length
