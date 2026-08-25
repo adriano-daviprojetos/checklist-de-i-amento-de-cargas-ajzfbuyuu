@@ -566,13 +566,19 @@ export const TemplatesPage: React.FC = () => {
     group: ChecklistItemGroup | null // null means "Geral"
     name: string
     id: string
+    groupNumber: number | null // 1, 2, 3... or null if "Geral" (no group)
     items: ChecklistTemplateItem[]
   }
 
   const displayGroups: DisplayGroup[] = []
 
-  // Add defined groups
-  templateGroups.forEach((grp) => {
+  // Ensure templateGroups are ordered by sort_order
+  const sortedTemplateGroups = [...templateGroups].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  )
+
+  // Add defined groups with sequential numbering
+  sortedTemplateGroups.forEach((grp, gIdx) => {
     const itemsInGroup = templateItems
       .filter((it) => it.group === grp.id)
       .sort((a, b) => (a.sort_order ?? a.order_num ?? 0) - (b.sort_order ?? b.order_num ?? 0))
@@ -580,6 +586,7 @@ export const TemplatesPage: React.FC = () => {
       group: grp,
       name: grp.name,
       id: grp.id,
+      groupNumber: gIdx + 1,
       items: itemsInGroup,
     })
   })
@@ -595,6 +602,7 @@ export const TemplatesPage: React.FC = () => {
       group: null,
       name: 'Geral',
       id: 'none',
+      groupNumber: null,
       items: unassignedItems,
     })
   }
@@ -802,7 +810,9 @@ export const TemplatesPage: React.FC = () => {
                           <Folder className="w-4 h-4 text-blue-400 shrink-0" />
                           <div>
                             <span className="font-semibold text-sm text-white flex items-center gap-2">
-                              {displayGrp.name}
+                              {displayGrp.groupNumber !== null
+                                ? `${displayGrp.groupNumber}. ${displayGrp.name}`
+                                : displayGrp.name}
                               {displayGrp.group === null && (
                                 <Badge
                                   variant="outline"
@@ -889,7 +899,9 @@ export const TemplatesPage: React.FC = () => {
                             <div className="space-y-1 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-slate-400 font-mono text-[11px] font-medium">
-                                  {itemIdx + 1}.
+                                  {displayGrp.groupNumber !== null
+                                    ? `${displayGrp.groupNumber}.${itemIdx + 1}`
+                                    : `${itemIdx + 1}.`}
                                 </span>
                                 <span className="font-medium text-white text-xs">{item.title}</span>
                                 {item.is_critical && (
@@ -941,9 +953,9 @@ export const TemplatesPage: React.FC = () => {
                                     </SelectTrigger>
                                     <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
                                       <SelectItem value="none">Geral</SelectItem>
-                                      {templateGroups.map((g) => (
+                                      {templateGroups.map((g, grpIdx) => (
                                         <SelectItem key={g.id} value={g.id}>
-                                          {g.name}
+                                          {grpIdx + 1}. {g.name}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
@@ -1126,7 +1138,9 @@ export const TemplatesPage: React.FC = () => {
                     className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between gap-2"
                   >
                     <div className="flex items-center gap-2 flex-1">
-                      <span className="text-[10px] text-slate-500 font-mono">{gIdx + 1}.</span>
+                      <span className="text-xs font-semibold text-blue-400 font-mono shrink-0">
+                        {gIdx + 1}.
+                      </span>
                       <Input
                         placeholder="Nome do grupo (ex: Cabos de Aço, Inspeção Visual)..."
                         value={grp.name || ''}
@@ -1199,102 +1213,138 @@ export const TemplatesPage: React.FC = () => {
               </div>
 
               <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                {editItems.map((item, idx) => (
-                  <div
-                    key={item.id || idx}
-                    className="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                        <span className="text-[10px] text-slate-500 font-mono">{idx + 1}.</span>
-                        {/* Group Selection for this item */}
-                        <Select
-                          value={item.group || 'none'}
-                          onValueChange={(val) => {
-                            const updated = [...editItems]
-                            updated[idx].group = val === 'none' ? undefined : val
-                            const foundG = editGroups.find((g) => g.id === val)
-                            if (foundG) {
-                              updated[idx].section = foundG.name
-                            } else {
-                              updated[idx].section = 'Geral'
-                            }
-                            setEditItems(updated)
-                          }}
-                        >
-                          <SelectTrigger className="h-7 text-xs bg-slate-900 border-slate-800 text-slate-300 w-44">
-                            <SelectValue placeholder="Selecionar Grupo" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
-                            <SelectItem value="none">Geral (Sem grupo)</SelectItem>
-                            {editGroups.map((g) => (
-                              <SelectItem key={g.id} value={g.id || ''}>
-                                {g.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                {editItems.map((item, idx) => {
+                  // Determine item sequence label in edit modal based on group
+                  let itemNumberLabel = `${idx + 1}.`
+                  if (item.group) {
+                    const groupIdx = editGroups.findIndex((g) => g.id === item.group)
+                    if (groupIdx !== -1) {
+                      // Find index of this item among items of the same group
+                      const sameGroupItems = editItems.filter((it) => it.group === item.group)
+                      const itemIdxInGroup = sameGroupItems.findIndex(
+                        (it) => it === item || (it.id && it.id === item.id),
+                      )
+                      const subIdx = itemIdxInGroup !== -1 ? itemIdxInGroup + 1 : idx + 1
+                      itemNumberLabel = `${groupIdx + 1}.${subIdx}`
+                    } else {
+                      // Group not found in editGroups, treat as Geral
+                      const unassigned = editItems.filter(
+                        (it) => !it.group || !editGroups.some((g) => g.id === it.group),
+                      )
+                      const unassignedIdx = unassigned.findIndex(
+                        (it) => it === item || (it.id && it.id === item.id),
+                      )
+                      itemNumberLabel = `${unassignedIdx !== -1 ? unassignedIdx + 1 : idx + 1}.`
+                    }
+                  } else {
+                    const unassigned = editItems.filter(
+                      (it) => !it.group || !editGroups.some((g) => g.id === it.group),
+                    )
+                    const unassignedIdx = unassigned.findIndex(
+                      (it) => it === item || (it.id && it.id === item.id),
+                    )
+                    itemNumberLabel = `${unassignedIdx !== -1 ? unassignedIdx + 1 : idx + 1}.`
+                  }
 
-                        <Select
-                          value={item.type || 'conforme_nao_conforme'}
-                          onValueChange={(val: any) => {
-                            const updated = [...editItems]
-                            updated[idx].type = val
-                            setEditItems(updated)
-                          }}
-                        >
-                          <SelectTrigger className="h-7 text-xs bg-slate-900 border-slate-800 text-slate-300 w-36">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
-                            <SelectItem value="conforme_nao_conforme">C / NC / NA</SelectItem>
-                            <SelectItem value="sim_nao_na">Sim / Não / NA</SelectItem>
-                            <SelectItem value="numero">Numérico</SelectItem>
-                            <SelectItem value="foto_obrigatoria">Foto</SelectItem>
-                            <SelectItem value="texto">Texto</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1 text-[11px] text-red-400 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={item.is_critical || false}
-                            onChange={(e) => {
+                  return (
+                    <div
+                      key={item.id || idx}
+                      className="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                          <span className="text-xs font-semibold text-blue-400 font-mono shrink-0 min-w-[28px]">
+                            {itemNumberLabel}
+                          </span>
+                          {/* Group Selection for this item */}
+                          <Select
+                            value={item.group || 'none'}
+                            onValueChange={(val) => {
                               const updated = [...editItems]
-                              updated[idx].is_critical = e.target.checked
+                              updated[idx].group = val === 'none' ? undefined : val
+                              const foundG = editGroups.find((g) => g.id === val)
+                              if (foundG) {
+                                updated[idx].section = foundG.name
+                              } else {
+                                updated[idx].section = 'Geral'
+                              }
                               setEditItems(updated)
                             }}
-                            className="rounded bg-slate-900 border-slate-800"
-                          />
-                          Crítico
-                        </label>
+                          >
+                            <SelectTrigger className="h-7 text-xs bg-slate-900 border-slate-800 text-slate-300 w-48">
+                              <SelectValue placeholder="Selecionar Grupo" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                              <SelectItem value="none">Geral (Sem grupo)</SelectItem>
+                              {editGroups.map((g, grpIdx) => (
+                                <SelectItem key={g.id || grpIdx} value={g.id || ''}>
+                                  {grpIdx + 1}. {g.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
 
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeItemInModal(idx)}
-                          className="h-7 w-7 text-slate-500 hover:text-red-400"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                          <Select
+                            value={item.type || 'conforme_nao_conforme'}
+                            onValueChange={(val: any) => {
+                              const updated = [...editItems]
+                              updated[idx].type = val
+                              setEditItems(updated)
+                            }}
+                          >
+                            <SelectTrigger className="h-7 text-xs bg-slate-900 border-slate-800 text-slate-300 w-36">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                              <SelectItem value="conforme_nao_conforme">C / NC / NA</SelectItem>
+                              <SelectItem value="sim_nao_na">Sim / Não / NA</SelectItem>
+                              <SelectItem value="numero">Numérico</SelectItem>
+                              <SelectItem value="foto_obrigatoria">Foto</SelectItem>
+                              <SelectItem value="texto">Texto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-1 text-[11px] text-red-400 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={item.is_critical || false}
+                              onChange={(e) => {
+                                const updated = [...editItems]
+                                updated[idx].is_critical = e.target.checked
+                                setEditItems(updated)
+                              }}
+                              className="rounded bg-slate-900 border-slate-800"
+                            />
+                            Crítico
+                          </label>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItemInModal(idx)}
+                            className="h-7 w-7 text-slate-500 hover:text-red-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
 
-                    <Input
-                      placeholder="Item a ser verificado..."
-                      value={item.title || ''}
-                      onChange={(e) => {
-                        const updated = [...editItems]
-                        updated[idx].title = e.target.value
-                        setEditItems(updated)
-                      }}
-                      className="bg-slate-900 border-slate-800 text-white text-xs h-8"
-                    />
-                  </div>
-                ))}
+                      <Input
+                        placeholder="Item a ser verificado..."
+                        value={item.title || ''}
+                        onChange={(e) => {
+                          const updated = [...editItems]
+                          updated[idx].title = e.target.value
+                          setEditItems(updated)
+                        }}
+                        className="bg-slate-900 border-slate-800 text-white text-xs h-8"
+                      />
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -1378,9 +1428,9 @@ export const TemplatesPage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
                   <SelectItem value="none">Geral (Sem grupo específico)</SelectItem>
-                  {templateGroups.map((grp) => (
+                  {templateGroups.map((grp, grpIdx) => (
                     <SelectItem key={grp.id} value={grp.id}>
-                      {grp.name}
+                      {grpIdx + 1}. {grp.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
