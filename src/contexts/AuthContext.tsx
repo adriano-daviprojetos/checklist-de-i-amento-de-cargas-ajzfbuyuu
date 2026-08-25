@@ -266,23 +266,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     password: string,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      let loginIdentifier = emailOrCpf.trim()
-
-      // If user typed a CPF (contains dots or is only numbers / not an email)
-      if (!loginIdentifier.includes('@')) {
-        const cleanedCpf = loginIdentifier.replace(/\D/g, '')
-        // Search user by CPF via PB first if online
-        try {
-          const matchedUsers = await pb.collection('users').getFullList<AppUser>({
-            filter: `cpf ~ '${loginIdentifier}' || cpf ~ '${cleanedCpf}'`,
-          })
-          if (matchedUsers.length > 0 && matchedUsers[0].email) {
-            loginIdentifier = matchedUsers[0].email
-          }
-        } catch (cpfLookupErr) {
-          console.warn('CPF lookup failed:', cpfLookupErr)
-        }
-      }
+      const loginIdentifier = emailOrCpf.trim()
 
       const authData = await pb.collection('users').authWithPassword(loginIdentifier, password)
       const appUser = authData.record as unknown as AppUser
