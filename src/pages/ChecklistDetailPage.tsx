@@ -53,8 +53,11 @@ import {
   Calendar,
   RotateCcw,
   Folder,
+  FileDown,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { generateChecklistPdf } from '@/lib/checklistPdfGenerator'
 
 export const ChecklistDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -105,6 +108,7 @@ export const ChecklistDetailPage: React.FC = () => {
   const [createdAt, setCreatedAt] = useState<string | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
   useEffect(() => {
     const targetCompId = selectedCompanyId || company?.id
     loadPrerequisites(targetCompId)
@@ -349,6 +353,87 @@ export const ChecklistDetailPage: React.FC = () => {
     }
   }
 
+  const isFinalized = status === 'Concluído' || status === 'Reprovado'
+
+  const handleExportPdf = async () => {
+    if (!isFinalized) {
+      toast.warning('Finalize o checklist antes de exportar o PDF.')
+      return
+    }
+
+    setExportingPdf(true)
+    try {
+      const selectedComp =
+        companies.find((c) => c.id === (selectedCompanyId || company?.id)) || company
+      const selectedCli =
+        clientId && clientId !== 'none' ? clientsList.find((c) => c.id === clientId) : null
+      const selectedEq =
+        equipmentId && equipmentId !== 'none'
+          ? equipmentList.find((e) => e.id === equipmentId)
+          : null
+      const selectedMat =
+        materialId && materialId !== 'none' ? materialsList.find((m) => m.id === materialId) : null
+
+      const checklistObj: Checklist = {
+        id: id || 'local',
+        company_id: selectedCompanyId || company?.id || '',
+        template_id: selectedTemplateId,
+        client_id: clientId === 'none' ? undefined : clientId,
+        equipment_id: equipmentId === 'none' ? undefined : equipmentId,
+        material_id: materialId === 'none' ? undefined : materialId,
+        user_id: user?.id || '',
+        code,
+        title,
+        location,
+        operation_type: operationType,
+        scheduled_date: createdAt,
+        completed_at: completedAt,
+        status,
+        risk_level: riskLevel,
+        notes,
+        inspector_name: inspectorName,
+        signature_data: signatureData,
+        filled_by_name: filledByName,
+        filled_by_signature: filledBySignature,
+        created: createdAt,
+      }
+
+      const responsesList = Object.values(responsesMap).map(
+        (r) =>
+          ({
+            id: r.id || `resp_${Date.now()}`,
+            checklist_id: id || '',
+            item_id: r.item_id,
+            item_title: r.item_title || '',
+            item_section: r.item_section,
+            status: r.status || 'PENDENTE',
+            observation: r.observation,
+            value: r.value,
+            photo_url: r.photo_url,
+            is_critical_fail: r.is_critical_fail,
+          }) as ChecklistResponse,
+      )
+
+      await generateChecklistPdf({
+        checklist: checklistObj,
+        responses: responsesList,
+        items: templateItems,
+        groups: templateGroups,
+        company: selectedComp,
+        client: selectedCli,
+        equipment: selectedEq,
+        material: selectedMat,
+      })
+
+      toast.success('Relatório PDF gerado e baixado com sucesso!')
+    } catch (err: any) {
+      console.error('Error generating PDF:', err)
+      toast.error('Erro ao gerar relatório PDF: ' + (err?.message || 'Erro desconhecido'))
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   const handleSaveDraft = async () => {
     const effectiveCompId = selectedCompanyId || company?.id
     if (!effectiveCompId) {
@@ -534,10 +619,26 @@ export const ChecklistDetailPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {isFinalized && (
+            <Button
+              variant="outline"
+              onClick={handleExportPdf}
+              disabled={exportingPdf || saving}
+              className="border-blue-600 bg-blue-950/40 text-blue-300 hover:bg-blue-900/60 text-xs font-semibold shadow-sm"
+            >
+              {exportingPdf ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <FileDown className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+              )}
+              Exportar PDF
+            </Button>
+          )}
+
           <Button
             variant="outline"
             onClick={handleSaveDraft}
-            disabled={saving}
+            disabled={saving || exportingPdf}
             className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800 text-xs"
           >
             <Save className="w-3.5 h-3.5 mr-1.5" /> Salvar Rascunho
@@ -545,7 +646,7 @@ export const ChecklistDetailPage: React.FC = () => {
 
           <Button
             onClick={() => handleOpenFinalizeModal('Concluído')}
-            disabled={saving}
+            disabled={saving || exportingPdf}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-md shadow-emerald-600/20"
           >
             <PenLine className="w-3.5 h-3.5 mr-1.5" /> Assinar & Liberar Operação
@@ -553,7 +654,7 @@ export const ChecklistDetailPage: React.FC = () => {
 
           <Button
             onClick={() => handleOpenFinalizeModal('Reprovado')}
-            disabled={saving}
+            disabled={saving || exportingPdf}
             variant="destructive"
             className="text-xs bg-red-600/90 hover:bg-red-600 font-medium"
           >
@@ -1219,13 +1320,29 @@ export const ChecklistDetailPage: React.FC = () => {
             </span>
           )}
         </div>
-
         <div className="flex items-center gap-2">
+          {isFinalized && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPdf}
+              disabled={exportingPdf || saving}
+              className="border-blue-600 bg-blue-950/40 text-blue-300 hover:bg-blue-900/60 text-xs font-semibold"
+            >
+              {exportingPdf ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <FileDown className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+              )}
+              Exportar PDF
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
             onClick={handleSaveDraft}
-            disabled={saving}
+            disabled={saving || exportingPdf}
             className="border-slate-800 bg-slate-900 text-slate-300 text-xs"
           >
             Salvar Rascunho
@@ -1234,12 +1351,12 @@ export const ChecklistDetailPage: React.FC = () => {
           <Button
             size="sm"
             onClick={() => handleOpenFinalizeModal('Concluído')}
-            disabled={saving}
+            disabled={saving || exportingPdf}
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20"
           >
-            <PenLine className="w-3.5 h-3.5 mr-1" /> Finalizar & Liberar Operação
+            <PenLine className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar Operação
           </Button>
-        </div>
+        </div>{' '}
       </div>
 
       {/* Finalization Modal with Mandatory Digital Signature */}

@@ -33,8 +33,11 @@ import {
   ExternalLink,
   Trash2,
   PenLine,
+  FileDown,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { generateChecklistPdf } from '@/lib/checklistPdfGenerator'
 
 export const ChecklistsPage: React.FC = () => {
   const { company, companies, hasModulePermission } = useAuth()
@@ -48,6 +51,7 @@ export const ChecklistsPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('todos')
+  const [exportingId, setExportingId] = useState<string | null>(null)
 
   useEffect(() => {
     loadChecklists()
@@ -69,6 +73,61 @@ export const ChecklistsPage: React.FC = () => {
       toast.error('Erro ao carregar checklists')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleExportPdfFromList = async (e: React.MouseEvent, chk: Checklist) => {
+    e.stopPropagation()
+    if (chk.status !== 'Concluído' && chk.status !== 'Reprovado') {
+      toast.warning('Finalize o checklist antes de exportar o PDF.')
+      return
+    }
+
+    setExportingId(chk.id)
+    try {
+      // Fetch full checklist responses, template items and groups
+      const { checklist: fullChecklist, responses } = await AppDataService.getChecklistById(
+        chk.id,
+        isOnline,
+      )
+      const targetChecklist = fullChecklist || chk
+
+      const [items, groups, companiesList, clientsList, equipmentList, materialsList] =
+        await Promise.all([
+          targetChecklist.template_id
+            ? AppDataService.getTemplateItems(targetChecklist.template_id, isOnline)
+            : Promise.resolve([]),
+          targetChecklist.template_id
+            ? AppDataService.getItemGroups(targetChecklist.template_id, isOnline)
+            : Promise.resolve([]),
+          AppDataService.getCompanies(isOnline),
+          AppDataService.getClients(targetChecklist.company_id, isOnline),
+          AppDataService.getEquipment(targetChecklist.company_id, isOnline),
+          AppDataService.getMaterials(targetChecklist.company_id, isOnline),
+        ])
+
+      const foundComp = companiesList.find((c) => c.id === targetChecklist.company_id) || company
+      const foundClient = clientsList.find((c) => c.id === targetChecklist.client_id)
+      const foundEquipment = equipmentList.find((e) => e.id === targetChecklist.equipment_id)
+      const foundMaterial = materialsList.find((m) => m.id === targetChecklist.material_id)
+
+      await generateChecklistPdf({
+        checklist: targetChecklist,
+        responses,
+        items,
+        groups,
+        company: foundComp,
+        client: foundClient,
+        equipment: foundEquipment,
+        material: foundMaterial,
+      })
+
+      toast.success('Relatório PDF exportado com sucesso!')
+    } catch (err: any) {
+      console.error('Error generating PDF from list:', err)
+      toast.error('Erro ao gerar relatório PDF: ' + (err?.message || 'Erro desconhecido'))
+    } finally {
+      setExportingId(null)
     }
   }
 
@@ -307,6 +366,24 @@ export const ChecklistsPage: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                {(chk.status === 'Concluído' || chk.status === 'Reprovado') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => handleExportPdfFromList(e, chk)}
+                    disabled={exportingId === chk.id}
+                    title="Exportar Relatório PDF"
+                    className="bg-slate-950 border-blue-600/50 text-blue-400 hover:bg-blue-900/40 text-xs font-semibold"
+                  >
+                    {exportingId === chk.id ? (
+                      <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <FileDown className="w-3.5 h-3.5 mr-1 text-blue-400" />
+                    )}
+                    PDF
+                  </Button>
+                )}
+
                 <Button
                   size="sm"
                   className="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/20 text-xs"
