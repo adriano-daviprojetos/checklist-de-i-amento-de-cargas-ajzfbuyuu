@@ -130,12 +130,14 @@ export class AppDataService {
 
     if (isOnline && pb.authStore.isValid) {
       if (!itemWithCompany.id || itemWithCompany.id.startsWith('eq_')) {
-        const res = await pb.collection('equipment').create(itemWithCompany)
+        const { id: _ignoredId, ...createData } = itemWithCompany
+        const res = await pb.collection('equipment').create(createData)
         await dbDelete('equipment', id)
         await dbPut('equipment', res as unknown as Equipment)
         return res as unknown as Equipment
       } else {
-        const res = await pb.collection('equipment').update(itemWithCompany.id, itemWithCompany)
+        const { id: updateId, ...updateData } = itemWithCompany
+        const res = await pb.collection('equipment').update(updateId!, updateData)
         await dbPut('equipment', res as unknown as Equipment)
         return res as unknown as Equipment
       }
@@ -179,12 +181,14 @@ export class AppDataService {
 
     if (isOnline && pb.authStore.isValid) {
       if (!itemWithCompany.id || itemWithCompany.id.startsWith('mat_')) {
-        const res = await pb.collection('materials').create(itemWithCompany)
+        const { id: _ignoredId, ...createData } = itemWithCompany
+        const res = await pb.collection('materials').create(createData)
         await dbDelete('materials', id)
         await dbPut('materials', res as unknown as Material)
         return res as unknown as Material
       } else {
-        const res = await pb.collection('materials').update(itemWithCompany.id, itemWithCompany)
+        const { id: updateId, ...updateData } = itemWithCompany
+        const res = await pb.collection('materials').update(updateId!, updateData)
         await dbPut('materials', res as unknown as Material)
         return res as unknown as Material
       }
@@ -228,12 +232,14 @@ export class AppDataService {
 
     if (isOnline && pb.authStore.isValid) {
       if (!itemWithCompany.id || itemWithCompany.id.startsWith('cli_')) {
-        const res = await pb.collection('clients').create(itemWithCompany)
+        const { id: _ignoredId, ...createData } = itemWithCompany
+        const res = await pb.collection('clients').create(createData)
         await dbDelete('clients', id)
         await dbPut('clients', res as unknown as Client)
         return res as unknown as Client
       } else {
-        const res = await pb.collection('clients').update(itemWithCompany.id, itemWithCompany)
+        const { id: updateId, ...updateData } = itemWithCompany
+        const res = await pb.collection('clients').update(updateId!, updateData)
         await dbPut('clients', res as unknown as Client)
         return res as unknown as Client
       }
@@ -316,14 +322,20 @@ export class AppDataService {
     await dbPut('checklist_templates', fullTpl)
 
     let finalTplId = tplId
+    let resultTpl = fullTpl
     if (isOnline && pb.authStore.isValid) {
       if (!template.id || template.id.startsWith('tpl_')) {
-        const res = await pb.collection('checklist_templates').create(fullTpl)
+        const { id: _ignoredId, ...createTplData } = fullTpl
+        const res = await pb.collection('checklist_templates').create(createTplData)
         finalTplId = res.id
+        resultTpl = res as unknown as ChecklistTemplate
         await dbDelete('checklist_templates', tplId)
-        await dbPut('checklist_templates', res as unknown as ChecklistTemplate)
+        await dbPut('checklist_templates', resultTpl)
       } else {
-        await pb.collection('checklist_templates').update(template.id, fullTpl)
+        const { id: _ignoredId, ...updateTplData } = fullTpl
+        const res = await pb.collection('checklist_templates').update(template.id, updateTplData)
+        resultTpl = res as unknown as ChecklistTemplate
+        await dbPut('checklist_templates', resultTpl)
       }
     }
 
@@ -348,11 +360,15 @@ export class AppDataService {
       if (isOnline && pb.authStore.isValid) {
         try {
           if (!it.id || it.id.startsWith('item_')) {
-            const createdItem = await pb.collection('checklist_template_items').create(fullItem)
+            const { id: _ignoredItemId, ...createItemData } = fullItem
+            const createdItem = await pb
+              .collection('checklist_template_items')
+              .create(createItemData)
             await dbDelete('checklist_template_items', itemId)
             await dbPut('checklist_template_items', createdItem as unknown as ChecklistTemplateItem)
           } else {
-            await pb.collection('checklist_template_items').update(it.id, fullItem)
+            const { id: _ignoredItemId, ...updateItemData } = fullItem
+            await pb.collection('checklist_template_items').update(it.id, updateItemData)
           }
         } catch (itemErr) {
           console.warn('Failed saving template item online:', itemErr)
@@ -360,7 +376,7 @@ export class AppDataService {
       }
     }
 
-    return fullTpl
+    return resultTpl
   }
 
   // --- Users ---
@@ -422,11 +438,13 @@ export class AppDataService {
 
   static async saveCompany(comp: Partial<Company>): Promise<Company> {
     if (!comp.id) {
-      const res = await pb.collection('companies').create(comp)
+      const { id: _ignoredId, ...createData } = comp
+      const res = await pb.collection('companies').create(createData)
       await dbPut('companies', res as unknown as Company)
       return res as unknown as Company
     } else {
-      const res = await pb.collection('companies').update(comp.id, comp)
+      const { id, ...updateData } = comp
+      const res = await pb.collection('companies').update(id, updateData)
       await dbPut('companies', res as unknown as Company)
       return res as unknown as Company
     }

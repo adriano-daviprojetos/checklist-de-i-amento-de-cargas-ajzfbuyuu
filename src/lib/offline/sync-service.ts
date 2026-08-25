@@ -164,7 +164,7 @@ class SyncService {
       for (const item of sortedQueue) {
         try {
           if (item.action === 'create') {
-            const { local_id, ...payloadData } = item.payload
+            const { id: _ignoredId, local_id, expand, sync_status, ...payloadData } = item.payload
             const res = await pb.collection(item.entity).create(payloadData)
 
             // If it was a checklist, update references and responses with server id
@@ -188,7 +188,8 @@ class SyncService {
               await dbPut('checklist_responses', { ...item.payload, id: res.id })
             }
           } else if (item.action === 'update') {
-            await pb.collection(item.entity).update(item.id, item.payload)
+            const { id: _ignoredId, expand, sync_status, ...updatePayloadData } = item.payload
+            await pb.collection(item.entity).update(item.id, updatePayloadData)
             if (item.entity === 'checklists') {
               const localChk = await dbGetById<Checklist>('checklists', item.id)
               if (localChk) {
@@ -290,7 +291,7 @@ class SyncService {
         // Attempt direct PocketBase upload
         let serverChkId = checklistId
         if (isNew) {
-          const { expand, sync_status, ...createPayload } = fullChecklist
+          const { id: _ignoredId, expand, sync_status, ...createPayload } = fullChecklist
           const createdChk = await pb.collection('checklists').create(createPayload)
           serverChkId = createdChk.id
           fullChecklist.id = createdChk.id
@@ -298,7 +299,7 @@ class SyncService {
           await dbDelete('checklists', checklistId)
           await dbPut('checklists', fullChecklist)
         } else {
-          const { expand, sync_status, ...updatePayload } = fullChecklist
+          const { id: _ignoredId, expand, sync_status, ...updatePayload } = fullChecklist
           await pb.collection('checklists').update(checklistId, updatePayload)
         }
 
@@ -306,9 +307,8 @@ class SyncService {
         for (let i = 0; i < savedResponses.length; i++) {
           const resp = savedResponses[i]
           const isRespNew = !resp.id || resp.id.startsWith('local_')
-          const respPayload = {
+          const respPayload: Record<string, any> = {
             checklist_id: serverChkId,
-            item_id: resp.item_id,
             item_title: resp.item_title,
             item_section: resp.item_section,
             status: resp.status,
@@ -316,6 +316,14 @@ class SyncService {
             photo_url: resp.photo_url,
             value: resp.value,
             is_critical_fail: resp.is_critical_fail,
+          }
+          // PocketBase relation item_id: only send if it's a valid remote ID, not a local one
+          if (
+            resp.item_id &&
+            !resp.item_id.startsWith('item_') &&
+            !resp.item_id.startsWith('local_')
+          ) {
+            respPayload.item_id = resp.item_id
           }
 
           if (isRespNew) {
