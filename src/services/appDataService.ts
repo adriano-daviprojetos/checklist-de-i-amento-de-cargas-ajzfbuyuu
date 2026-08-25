@@ -518,4 +518,11 @@ export class AppDataService {
       return res as unknown as Company
     }
   }
+
+  static async deleteCompany(companyId: string): Promise<void> {
+    if (pb.authStore.isValid) {
+      await pb.collection('companies').delete(companyId)
+    }
+    await dbDelete('companies', companyId)
+  }
 }

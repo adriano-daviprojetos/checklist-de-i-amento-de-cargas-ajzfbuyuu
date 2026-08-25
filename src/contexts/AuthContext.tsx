@@ -194,31 +194,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const rawUser = pb.authStore.record as unknown as AppUser
         setUser(rawUser)
 
-        // Load companies from local DB or backend
-        let localCompanies = await dbGetAll<Company>('companies')
-        if (localCompanies.length === 0) {
-          try {
-            localCompanies = await pb.collection('companies').getFullList<Company>({ sort: 'name' })
-            for (const c of localCompanies) {
-              await dbPut('companies', c)
-            }
-          } catch (e) {
-            console.warn('Could not fetch companies online', e)
+        // Load companies from online backend if available, fallback to local DB
+        let currentCompanies: Company[] = []
+        try {
+          currentCompanies = await pb.collection('companies').getFullList<Company>({ sort: 'name' })
+          for (const c of currentCompanies) {
+            await dbPut('companies', c)
           }
+        } catch (e) {
+          console.warn('Could not fetch companies online, fallback to local DB', e)
+          currentCompanies = await dbGetAll<Company>('companies')
         }
-        setCompanies(localCompanies)
+        setCompanies(currentCompanies)
 
         // Find active company
-        const userCompId = rawUser.company_id || localCompanies[0]?.id
+        const userCompId = rawUser.company_id || currentCompanies[0]?.id
         if (userCompId) {
-          const comp = localCompanies.find((c) => c.id === userCompId)
+          const comp = currentCompanies.find((c) => c.id === userCompId)
           if (comp) {
             setCompany(comp)
+          } else if (currentCompanies.length > 0) {
+            setCompany(currentCompanies[0])
           } else {
-            // try by ID
-            const fetched = await dbGetById<Company>('companies', userCompId)
-            if (fetched) setCompany(fetched)
+            setCompany(null)
           }
+        } else if (currentCompanies.length > 0) {
+          setCompany(currentCompanies[0])
+        } else {
+          setCompany(null)
         }
       } else {
         // Check offline cached user
@@ -332,6 +335,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   const refreshProfile = async () => {
+    try {
+      if (pb.authStore.isValid) {
+        const freshCompanies = await pb
+          .collection('companies')
+          .getFullList<Company>({ sort: 'name' })
+        setCompanies(freshCompanies)
+        for (const c of freshCompanies) {
+          await dbPut('companies', c)
+        }
+      }
+    } catch (e) {
+      console.warn('Could not refresh companies online', e)
+    }
     await loadUserContext()
   }
 

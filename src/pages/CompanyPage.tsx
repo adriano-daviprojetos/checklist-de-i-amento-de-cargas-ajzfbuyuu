@@ -27,6 +27,9 @@ import {
   MapPin,
   Globe,
   Layers,
+  Trash2,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -53,6 +56,10 @@ export const CompanyPage: React.FC = () => {
   const [newCompPhone, setNewCompPhone] = useState('')
   const [newCompEmail, setNewCompEmail] = useState('')
   const [newCompCity, setNewCompCity] = useState('')
+
+  // Delete company modal state
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (company) {
@@ -117,10 +124,36 @@ export const CompanyPage: React.FC = () => {
 
       toast.success(`Nova empresa "${created.name}" criada no ambiente centralizado!`)
       setIsNewTenantModalOpen(false)
+      setNewCompName('')
+      setNewCompTrade('')
+      setNewCompCnpj('')
+      setNewCompPhone('')
+      setNewCompEmail('')
+      setNewCompCity('')
       await refreshProfile()
       await switchCompany(created.id)
     } catch (err: any) {
       toast.error('Erro ao criar empresa: ' + err.message)
+    }
+  }
+
+  const handleDeleteCompany = async () => {
+    if (!companyToDelete) return
+
+    const targetCompany = companyToDelete
+    const targetName = targetCompany.trade_name || targetCompany.name
+
+    setIsDeleting(true)
+    try {
+      await AppDataService.deleteCompany(targetCompany.id)
+      toast.success(`Empresa ${targetName} excluída com sucesso`)
+      setCompanyToDelete(null)
+      await refreshProfile()
+    } catch (err: any) {
+      console.error('Error deleting company:', err)
+      toast.error('Erro ao excluir empresa: ' + (err.message || 'Erro desconhecido'))
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -343,20 +376,101 @@ export const CompanyPage: React.FC = () => {
                 </p>
               </div>
 
-              {company?.id !== c.id && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => switchCompany(c.id)}
-                  className="border-slate-800 bg-slate-950 text-blue-400 hover:text-white hover:bg-blue-600 text-xs h-8"
-                >
-                  Alternar para esta Empresa
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {company?.id !== c.id && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => switchCompany(c.id)}
+                    className="border-slate-800 bg-slate-950 text-blue-400 hover:text-white hover:bg-blue-600 text-xs h-8"
+                  >
+                    Alternar para esta Empresa
+                  </Button>
+                )}
+
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCompanyToDelete(c)}
+                    className="border-red-900/50 bg-red-950/20 text-red-400 hover:bg-red-600 hover:text-white text-xs h-8 px-2.5 transition"
+                    title={`Excluir ${c.trade_name || c.name}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    <span className="hidden sm:inline">Excluir</span>
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </CardContent>
       </Card>
+
+      {/* Modal: Confirmation for Cascade Deleting Company */}
+      <Dialog
+        open={!!companyToDelete}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setCompanyToDelete(null)
+          }
+        }}
+      >
+        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <DialogTitle className="text-white text-base">Excluir Empresa</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="py-3 text-slate-300 text-sm leading-relaxed space-y-3">
+            <p>
+              Tem certeza que deseja excluir a empresa{' '}
+              <strong className="text-white font-semibold">
+                {companyToDelete?.trade_name || companyToDelete?.name}
+              </strong>
+              ?
+            </p>
+            <div className="p-3 rounded-md bg-red-950/30 border border-red-900/40 text-red-300 text-xs flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <span>
+                Esta ação é irreversível e removerá todos os dados vinculados: usuários, checklists,
+                equipamentos e materiais.
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setCompanyToDelete(null)}
+              disabled={isDeleting}
+              className="border-slate-800 bg-slate-950 text-slate-300 text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDeleteCompany}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  Excluir Empresa
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal: New Tenant */}
       <Dialog open={isNewTenantModalOpen} onOpenChange={setIsNewTenantModalOpen}>
