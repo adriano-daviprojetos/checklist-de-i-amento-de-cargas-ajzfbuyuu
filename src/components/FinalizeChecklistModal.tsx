@@ -91,11 +91,19 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
       return
     }
 
-    const currentSig = signatureData || signaturePadRef.current?.getSignatureDataUrl()
+    // Se o usuário ainda não clicou em "Finalizar Assinatura", tenta chamar o finalize explicitamente ou verifica se está finalizado
+    let currentSig = signatureData
+    if (!currentSig && signaturePadRef.current) {
+      if (!signaturePadRef.current.isFinalized()) {
+        currentSig = signaturePadRef.current.finalize()
+      } else {
+        currentSig = signaturePadRef.current.getSignatureDataUrl()
+      }
+    }
 
-    if (!currentSig || signaturePadRef.current?.isEmpty()) {
+    if (!currentSig) {
       setSignatureError(
-        'A assinatura digital do responsável logado é obrigatória para finalizar o checklist.',
+        'A assinatura digital do responsável logado é obrigatória. Desenhe e clique em "Finalizar Assinatura".',
       )
       return
     }
@@ -244,7 +252,8 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
               onSignatureChange={handleSignatureChange}
               signerName={authenticatedName}
               date={currentDate}
-              strokeColor="#1e3a5f" // Azul Davi Projetos #1e3a5f
+              strokeColor="#000000" // Cor preta para inspetor
+              title="Área de Assinatura do Inspetor / Responsável Técnico"
               height={170}
             />
 
@@ -279,14 +288,14 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
             }`}
           >
             {saving ? (
-              'Processando Assinatura...'
+              'Processando Checklist...'
             ) : isCompleted ? (
               <>
-                <CheckCircle2 className="w-4 h-4 mr-1.5" /> Assinar & Liberar Operação
+                <CheckCircle2 className="w-4 h-4 mr-1.5" /> Liberar Operação
               </>
             ) : (
               <>
-                <XCircle className="w-4 h-4 mr-1.5" /> Assinar & Reprovar
+                <XCircle className="w-4 h-4 mr-1.5" /> Confirmar Reprovação
               </>
             )}
           </Button>

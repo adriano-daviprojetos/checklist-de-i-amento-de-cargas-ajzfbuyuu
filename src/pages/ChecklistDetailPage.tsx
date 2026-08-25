@@ -810,6 +810,7 @@ export const ChecklistDetailPage: React.FC = () => {
                 ref={filledByPadRef}
                 height={150}
                 strokeColor="#1e3a5f"
+                title="Área de Assinatura do Responsável pelo Preenchimento"
                 signerName={filledByName || user?.name || ''}
                 onSignatureChange={(_isEmpty, dataUrl) => {
                   setFilledBySignature(dataUrl || undefined)

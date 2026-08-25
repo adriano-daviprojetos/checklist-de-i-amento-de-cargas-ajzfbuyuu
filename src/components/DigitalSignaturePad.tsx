@@ -7,16 +7,19 @@ import React, {
   forwardRef,
 } from 'react'
 import { Button } from '@/components/ui/button'
-import { RotateCcw, CheckCircle, AlertCircle, PenLine } from 'lucide-react'
+import { RotateCcw, CheckCircle, AlertCircle, PenLine, Check, Edit3 } from 'lucide-react'
 
 export interface DigitalSignaturePadRef {
   clear: () => void
   isEmpty: () => boolean
   getSignatureDataUrl: () => string | null
+  finalize: () => string | null
+  isFinalized: () => boolean
 }
 
 interface DigitalSignaturePadProps {
   onSignatureChange?: (isEmpty: boolean, dataUrl: string | null) => void
+  onFinalize?: (dataUrl: string) => void
   signerName?: string
   date?: string | Date
   strokeColor?: string
@@ -24,12 +27,14 @@ interface DigitalSignaturePadProps {
   height?: number
   disabled?: boolean
   className?: string
+  title?: string
 }
 
 export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSignaturePadProps>(
   (
     {
       onSignatureChange,
+      onFinalize,
       signerName,
       date,
       strokeColor = '#1e3a5f', // Azul Davi Projetos
@@ -37,12 +42,15 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
       height = 180,
       disabled = false,
       className = '',
+      title = 'Área de Assinatura Digital',
     },
     ref,
   ) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const [isDrawing, setIsDrawing] = useState(false)
     const [hasDrawn, setHasDrawn] = useState(false)
+    const [isFinalized, setIsFinalized] = useState(false)
+    const [savedDataUrl, setSavedDataUrl] = useState<string | null>(null)
     const [lastPoint, setLastPoint] = useState<{ x: number; y: number } | null>(null)
 
     // Clear canvas
@@ -54,6 +62,8 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       setHasDrawn(false)
+      setIsFinalized(false)
+      setSavedDataUrl(null)
       if (onSignatureChange) {
         onSignatureChange(true, null)
       }
@@ -61,12 +71,38 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
 
     // Get current drawing data URL (PNG)
     const getSignatureDataUrl = useCallback((): string | null => {
+      if (savedDataUrl) return savedDataUrl
       const canvas = canvasRef.current
       if (!canvas || !hasDrawn) return null
       return canvas.toDataURL('image/png')
-    }, [hasDrawn])
+    }, [hasDrawn, savedDataUrl])
 
-    const isEmpty = useCallback(() => !hasDrawn, [hasDrawn])
+    // Finalize signature explicitly
+    const handleFinalizeSignature = useCallback(() => {
+      const canvas = canvasRef.current
+      if (!canvas || !hasDrawn) return null
+
+      const dataUrl = canvas.toDataURL('image/png')
+      setIsFinalized(true)
+      setSavedDataUrl(dataUrl)
+
+      if (onSignatureChange) {
+        onSignatureChange(false, dataUrl)
+      }
+      if (onFinalize) {
+        onFinalize(dataUrl)
+      }
+
+      return dataUrl
+    }, [hasDrawn, onSignatureChange, onFinalize])
+
+    // Unlock to allow further drawing / editing
+    const handleEditSignature = useCallback(() => {
+      setIsFinalized(false)
+    }, [])
+
+    const isEmpty = useCallback(() => !hasDrawn || !isFinalized, [hasDrawn, isFinalized])
+    const getIsFinalized = useCallback(() => isFinalized, [isFinalized])
 
     useImperativeHandle(
       ref,
@@ -74,8 +110,10 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
         clear: clearCanvas,
         isEmpty,
         getSignatureDataUrl,
+        finalize: handleFinalizeSignature,
+        isFinalized: getIsFinalized,
       }),
-      [clearCanvas, isEmpty, getSignatureDataUrl],
+      [clearCanvas, isEmpty, getSignatureDataUrl, handleFinalizeSignature, getIsFinalized],
     )
 
     // Adjust canvas resolution for high-DPI displays and container width
@@ -147,7 +185,7 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
     const startDrawing = (
       e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
     ) => {
-      if (disabled) return
+      if (disabled || isFinalized) return
       // Prevent scrolling on touch screens when signing
       if ('touches' in e) {
         e.preventDefault()
@@ -170,7 +208,7 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
     }
 
     const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-      if (!isDrawing || disabled) return
+      if (!isDrawing || disabled || isFinalized) return
       if ('touches' in e) {
         e.preventDefault()
       }
@@ -199,14 +237,7 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
       if (!isDrawing) return
       setIsDrawing(false)
       setLastPoint(null)
-
-      if (hasDrawn && onSignatureChange) {
-        const canvas = canvasRef.current
-        if (canvas) {
-          const dataUrl = canvas.toDataURL('image/png')
-          onSignatureChange(false, dataUrl)
-        }
-      }
+      // Note: We do NOT auto-finalize here. The user can lift their finger and continue drawing!
     }
 
     return (
@@ -216,9 +247,11 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
           className={`relative w-full rounded-xl border-2 transition-colors overflow-hidden ${
             disabled
               ? 'border-slate-800 bg-slate-950 opacity-60'
-              : hasDrawn
-                ? 'border-blue-500/70 bg-white shadow-inner shadow-slate-200'
-                : 'border-dashed border-slate-700 bg-slate-950/80 hover:border-slate-500'
+              : isFinalized
+                ? 'border-emerald-500/80 bg-white shadow-md shadow-emerald-500/10'
+                : hasDrawn
+                  ? 'border-blue-500/80 bg-white shadow-inner shadow-slate-200'
+                  : 'border-dashed border-slate-700 bg-slate-950/80 hover:border-slate-500'
           }`}
           style={{ minHeight: `${height}px` }}
         >
@@ -227,15 +260,22 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
             <div className="flex items-center justify-between">
               <span
                 className={`text-[11px] font-medium tracking-wide flex items-center gap-1 ${
-                  hasDrawn ? 'text-slate-500' : 'text-slate-400'
+                  hasDrawn || isFinalized ? 'text-slate-600' : 'text-slate-400'
                 }`}
               >
-                <PenLine className="w-3.5 h-3.5 text-blue-500" />
-                Área de Assinatura Digital do Responsável
+                <PenLine
+                  className="w-3.5 h-3.5"
+                  style={{ color: strokeColor === '#000000' ? '#334155' : strokeColor }}
+                />
+                {title}
               </span>
-              {hasDrawn ? (
-                <span className="text-[10px] font-semibold text-emerald-700 flex items-center gap-1 bg-emerald-100 px-2 py-0.5 rounded-full">
-                  <CheckCircle className="w-3 h-3" /> Assinado
+              {isFinalized ? (
+                <span className="text-[10px] font-semibold text-emerald-800 flex items-center gap-1 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                  <CheckCircle className="w-3 h-3 text-emerald-600" /> Assinatura Finalizada
+                </span>
+              ) : hasDrawn ? (
+                <span className="text-[10px] font-medium text-blue-800 flex items-center gap-1 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-300">
+                  <PenLine className="w-3 h-3 text-blue-600" /> Em edição (clique em Finalizar)
                 </span>
               ) : (
                 <span className="text-[10px] text-amber-400 flex items-center gap-1 bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-800/50">
@@ -250,8 +290,8 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
 
           <canvas
             ref={canvasRef}
-            className={`w-full touch-none cursor-crosshair relative z-10 ${
-              disabled ? 'cursor-not-allowed' : ''
+            className={`w-full touch-none relative z-10 ${
+              disabled || isFinalized ? 'cursor-not-allowed' : 'cursor-crosshair'
             }`}
             style={{ height: `${height}px`, display: 'block' }}
             onMouseDown={startDrawing}
@@ -263,6 +303,15 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
             onTouchEnd={stopDrawing}
             onTouchCancel={stopDrawing}
           />
+
+          {/* Overlay badge when finalized */}
+          {isFinalized && (
+            <div className="absolute bottom-2 right-2 z-20 pointer-events-none">
+              <span className="inline-flex items-center gap-1 bg-emerald-700/90 text-white text-[10px] px-2 py-0.5 rounded shadow">
+                <Check className="w-3 h-3" /> Confirmada
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Info & Action Bar below canvas */}
@@ -285,18 +334,45 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
           </div>
 
           {!disabled && (
-            <div className="flex items-center gap-2 self-end sm:self-auto">
+            <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+              {/* Botão Limpar / Refazer */}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={clearCanvas}
-                disabled={!hasDrawn}
+                disabled={!hasDrawn && !isFinalized}
                 className="h-8 px-2.5 text-xs border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                Limpar Assinatura
+                Limpar
               </Button>
+
+              {/* Botão Editar / Continuar Desenhando (quando já finalizou) */}
+              {isFinalized ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEditSignature}
+                  className="h-8 px-3 text-xs border-blue-600/60 bg-blue-950/40 text-blue-300 hover:bg-blue-900/60 hover:text-white"
+                >
+                  <Edit3 className="w-3.5 h-3.5 mr-1 text-blue-400" />
+                  Continuar Desenhando
+                </Button>
+              ) : (
+                /* Botão Finalizar Assinatura */
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleFinalizeSignature}
+                  disabled={!hasDrawn}
+                  className="h-8 px-3.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/30"
+                >
+                  <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                  Finalizar Assinatura
+                </Button>
+              )}
             </div>
           )}
         </div>
