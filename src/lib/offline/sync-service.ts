@@ -187,8 +187,14 @@ class SyncService {
               local_id,
               expand,
               sync_status,
-              ...payloadData
+              created,
+              updated,
+              collectionId,
+              collectionName,
+              ...rawPayloadData
             } = item.payload || {}
+
+            const payloadData: Record<string, any> = { ...rawPayloadData }
 
             // If payload has checklist_id that was created locally, remap it to server ID
             if (payloadData.checklist_id && idMap.has(payloadData.checklist_id)) {
@@ -198,6 +204,21 @@ class SyncService {
             // Clean item_id relation if local or invalid
             if (payloadData.item_id && isLocalId(payloadData.item_id)) {
               delete payloadData.item_id
+            }
+
+            // Clean empty string relation fields
+            for (const relField of [
+              'client_id',
+              'equipment_id',
+              'material_id',
+              'item_id',
+              'template_id',
+              'user_id',
+              'company_id',
+            ]) {
+              if (payloadData[relField] === '') {
+                delete payloadData[relField]
+              }
             }
 
             const res = await pb.collection(item.entity).create(payloadData)
@@ -236,7 +257,33 @@ class SyncService {
               await dbPut('checklist_responses', { ...item.payload, id: res.id })
             }
           } else if (item.action === 'update') {
-            const { id: _ignoredId, expand, sync_status, ...updatePayloadData } = item.payload || {}
+            const {
+              id: _ignoredId,
+              expand,
+              sync_status,
+              created,
+              updated,
+              collectionId,
+              collectionName,
+              ...rawUpdatePayloadData
+            } = item.payload || {}
+
+            const updatePayloadData: Record<string, any> = { ...rawUpdatePayloadData }
+
+            // Clean empty string relation fields
+            for (const relField of [
+              'client_id',
+              'equipment_id',
+              'material_id',
+              'item_id',
+              'template_id',
+              'user_id',
+              'company_id',
+            ]) {
+              if (updatePayloadData[relField] === '') {
+                delete updatePayloadData[relField]
+              }
+            }
 
             // Resolve real server ID: check idMap, targetLocalId, or item.id
             let serverId = idMap.get(targetLocalId) || idMap.get(item.id) || targetLocalId
@@ -366,7 +413,19 @@ class SyncService {
         // Attempt direct PocketBase upload
         let serverChkId = checklistId
         if (isNew) {
-          const { id: _ignoredId, expand, sync_status, ...createPayload } = fullChecklist
+          const {
+            id: _ignoredId,
+            expand,
+            sync_status,
+            created,
+            updated,
+            ...rawCreatePayload
+          } = fullChecklist as any
+          const createPayload: Record<string, any> = { ...rawCreatePayload }
+          if (createPayload.client_id === '') delete createPayload.client_id
+          if (createPayload.equipment_id === '') delete createPayload.equipment_id
+          if (createPayload.material_id === '') delete createPayload.material_id
+
           const createdChk = await pb.collection('checklists').create(createPayload)
           serverChkId = createdChk.id
           fullChecklist.id = createdChk.id
@@ -374,7 +433,19 @@ class SyncService {
           await dbDelete('checklists', checklistId)
           await dbPut('checklists', fullChecklist)
         } else {
-          const { id: _ignoredId, expand, sync_status, ...updatePayload } = fullChecklist
+          const {
+            id: _ignoredId,
+            expand,
+            sync_status,
+            created,
+            updated,
+            ...rawUpdatePayload
+          } = fullChecklist as any
+          const updatePayload: Record<string, any> = { ...rawUpdatePayload }
+          if (updatePayload.client_id === '') delete updatePayload.client_id
+          if (updatePayload.equipment_id === '') delete updatePayload.equipment_id
+          if (updatePayload.material_id === '') delete updatePayload.material_id
+
           await pb.collection('checklists').update(checklistId, updatePayload)
         }
 
