@@ -406,19 +406,32 @@ export class AppDataService {
       const initialPassword = user.password || newPassword || 'Skip@Pass'
       const finalPasswordConfirm = passwordConfirm || initialPassword
       const formattedUsername = createFields.username ? createFields.username.trim() : ''
-      const res = await pb.collection('users').create({
+      const payload: Record<string, any> = {
         ...createFields,
         username: formattedUsername,
         password: initialPassword,
         passwordConfirm: finalPasswordConfirm,
         emailVisibility: true,
-      })
+      }
+      if (!payload.email || !payload.email.trim()) {
+        delete payload.email
+      } else {
+        payload.email = payload.email.trim()
+      }
+      const res = await pb.collection('users').create(payload)
       return res as unknown as AppUser
     } else {
       const { id, password, newPassword, passwordConfirm, ...updateFields } = userWithCompany
       const payload: Record<string, any> = { ...updateFields }
       if (payload.username !== undefined) {
         payload.username = payload.username ? payload.username.trim() : ''
+      }
+      if (payload.email !== undefined) {
+        if (!payload.email || !payload.email.trim()) {
+          payload.email = ''
+        } else {
+          payload.email = payload.email.trim()
+        }
       }
 
       // If a new password or password is provided on edit, include it

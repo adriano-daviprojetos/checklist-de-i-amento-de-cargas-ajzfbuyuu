@@ -287,10 +287,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           const cachedUser = JSON.parse(cachedUserStr) as AppUser
           if (
-            (cachedUser.email.toLowerCase() === emailOrCpf.toLowerCase() ||
+            ((cachedUser.email && cachedUser.email.toLowerCase() === emailOrCpf.toLowerCase()) ||
               (cachedUser.username &&
                 cachedUser.username.toLowerCase() === emailOrCpf.toLowerCase()) ||
-              cachedUser.cpf?.replace(/\D/g, '') === emailOrCpf.replace(/\D/g, '')) &&
+              (cachedUser.cpf &&
+                cachedUser.cpf.replace(/\D/g, '') === emailOrCpf.replace(/\D/g, ''))) &&
             password === 'Skip@Pass'
           ) {
             setUser(cachedUser)

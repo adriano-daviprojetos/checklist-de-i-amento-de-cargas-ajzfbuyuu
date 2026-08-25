@@ -43,7 +43,7 @@ export interface AppUser {
   id: string
   name: string
   username?: string
-  email: string
+  email?: string
   company_id?: string
   role: UserRole
   cpf?: string

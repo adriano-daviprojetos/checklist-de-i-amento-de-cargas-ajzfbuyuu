@@ -194,7 +194,7 @@ export const UsersPage: React.FC = () => {
     setSelectedCompanyId(isAdmin ? u.company_id || company?.id || '' : company?.id || '')
     setName(u.name || '')
     setUsername(u.username || '')
-    setEmail(u.email)
+    setEmail(u.email || '')
     setCpf(u.cpf || '')
     setPhone(u.phone || '')
     const userRole = u.role || 'operador'
@@ -294,7 +294,7 @@ export const UsersPage: React.FC = () => {
       toast.warning('Você não pode excluir seu próprio usuário logado.')
       return
     }
-    if (!confirm(`Deseja realmente remover o usuário "${u.name || u.email}"?`)) {
+    if (!confirm(`Deseja realmente remover o usuário "${u.name || u.username || u.email}"?`)) {
       return
     }
     try {
@@ -312,8 +312,8 @@ export const UsersPage: React.FC = () => {
       return
     }
 
-    if (!name.trim() || !email.trim()) {
-      toast.warning('Nome e e-mail são obrigatórios.')
+    if (!name.trim() || !username.trim() || !cpf.trim()) {
+      toast.warning('Nome, nome de usuário e CPF são obrigatórios.')
       return
     }
 
@@ -366,7 +366,7 @@ export const UsersPage: React.FC = () => {
         id: editingId || undefined,
         name: name.trim(),
         username: username.trim() || undefined,
-        email: email.trim(),
+        email: email.trim() || undefined,
         cpf: cpf.trim() || undefined,
         phone: phone.trim() || undefined,
         role,
@@ -443,7 +443,7 @@ export const UsersPage: React.FC = () => {
       (u) =>
         u.name?.toLowerCase().includes(search.toLowerCase()) ||
         u.username?.toLowerCase().includes(search.toLowerCase()) ||
-        u.email.toLowerCase().includes(search.toLowerCase()) ||
+        (u.email && u.email.toLowerCase().includes(search.toLowerCase())) ||
         u.cpf?.includes(search) ||
         u.role?.toLowerCase().includes(search.toLowerCase()),
     )
@@ -524,7 +524,11 @@ export const UsersPage: React.FC = () => {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-bold text-white text-base leading-tight">{u.name}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">{u.email}</p>
+                  {u.email ? (
+                    <p className="text-xs text-slate-400 mt-0.5">{u.email}</p>
+                  ) : (
+                    <p className="text-xs text-slate-500 italic mt-0.5">Sem e-mail</p>
+                  )}
                 </div>
                 {getRoleBadge(u.role)}
               </div>
@@ -631,7 +635,7 @@ export const UsersPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Nome de Usuário (username)</Label>
+                <Label className="text-xs text-slate-300">Nome de Usuário (username) *</Label>
                 <Input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -641,18 +645,18 @@ export const UsersPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">E-mail de Acesso *</Label>
+                <Label className="text-xs text-slate-300">E-mail (Opcional)</Label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="carlos@empresa.com.br"
+                  placeholder="carlos@empresa.com.br (Opcional)"
                   className="bg-slate-950 border-slate-800 text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">CPF (Login Alternativo)</Label>
+                <Label className="text-xs text-slate-300">CPF (Obrigatório) *</Label>
                 <Input
                   value={cpf}
                   onChange={(e) => setCpf(e.target.value)}

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T15:13:07.086Z",
+  "generatedAt": "2026-08-25T15:24:24.863Z",
   "collections": [
     {
       "name": "users",
@@ -48,7 +48,7 @@
         {
           "name": "cpf",
           "type": "text",
-          "required": false,
+          "required": true,
           "system": false
         },
         {
@@ -87,7 +87,7 @@
         {
           "name": "username",
           "type": "text",
-          "required": false,
+          "required": true,
           "system": false
         }
       ],
