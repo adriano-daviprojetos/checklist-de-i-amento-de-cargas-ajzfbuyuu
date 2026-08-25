@@ -55,6 +55,99 @@ function applyAutoTable(doc: jsPDF, options: any): void {
   }
 }
 
+const LOGO_URL =
+  'https://dagtlwojkqyivnjgveda.supabase.co/storage/v1/object/public/message-attachments/6e8232c6-c506-4bdf-99a5-77593c500309/logonovosite-2abaf.png'
+
+interface LoadedImage {
+  data: string
+  width: number
+  height: number
+  format: string
+}
+
+let cachedLogo: LoadedImage | null = null
+
+/**
+ * Loads an image from a URL or data URI and converts it to a base64 data URL along with its dimensions.
+ * Uses canvas or blob fetching with fallback.
+ */
+async function loadLogoImage(url: string): Promise<LoadedImage | null> {
+  if (cachedLogo) return cachedLogo
+
+  // Method 1: Fetch as blob and convert via FileReader (handles CORS cleanly)
+  try {
+    const response = await fetch(url, { mode: 'cors' })
+    if (response.ok) {
+      const blob = await response.blob()
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') resolve(reader.result)
+          else reject(new Error('FileReader result is not a string'))
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+
+      const dims = await getImageDimensions(base64Data)
+      cachedLogo = {
+        data: base64Data,
+        width: dims.width,
+        height: dims.height,
+        format: dims.format,
+      }
+      return cachedLogo
+    }
+  } catch (err) {
+    console.warn('Direct fetch for logo failed, falling back to Image element load:', err)
+  }
+
+  // Method 2: HTML Image load with crossorigin and canvas draw
+  try {
+    const loaded = await new Promise<LoadedImage | null>((resolve) => {
+      if (typeof window === 'undefined') {
+        resolve(null)
+        return
+      }
+      const img = new Image()
+      img.crossOrigin = 'Anonymous'
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = img.naturalWidth || img.width
+          canvas.height = img.naturalHeight || img.height
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(img, 0, 0)
+            const dataUrl = canvas.toDataURL('image/png')
+            resolve({
+              data: dataUrl,
+              width: canvas.width,
+              height: canvas.height,
+              format: 'PNG',
+            })
+            return
+          }
+        } catch (canvasErr) {
+          console.warn('Canvas export failed for logo:', canvasErr)
+        }
+        resolve(null)
+      }
+      img.onerror = () => resolve(null)
+      img.src = url
+    })
+
+    if (loaded) {
+      cachedLogo = loaded
+      return cachedLogo
+    }
+  } catch (err) {
+    console.warn('Image element fallback failed for logo:', err)
+  }
+
+  return null
+}
+
 /**
  * Helper to safely get image dimensions from base64 string
  */
@@ -270,7 +363,9 @@ export async function generateChecklistPdf({
     })
   }
 
-  // Pre-load signatures if present
+  // Pre-load logo and signatures asynchronously before building pages
+  const logoImage = await loadLogoImage(LOGO_URL)
+
   let inspectorSigDimensions: { width: number; height: number; format: string } | null = null
   let filledBySigDimensions: { width: number; height: number; format: string } | null = null
 
@@ -300,11 +395,12 @@ export async function generateChecklistPdf({
 
   const safeChecklistCode = checklist?.code || 'CHK-N/A'
 
-  // Header height
-  const headerHeight = 15 // Compact header: 15mm
+  // Header height (16.5mm to comfortably accommodate the logo, title, and metadata)
+  const headerHeight = 16.5
 
   // Render Compact Header on any page
   const renderHeader = (isFirstPage: boolean = true) => {
+    // Header background card
     doc.setFillColor(headerBgColor[0], headerBgColor[1], headerBgColor[2])
     doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
     doc.setLineWidth(0.25)
@@ -312,25 +408,56 @@ export async function generateChecklistPdf({
 
     // Left accent bar
     doc.setFillColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
-    doc.rect(margin, margin, 2.5, headerHeight, 'F')
+    doc.rect(margin, margin, 2.2, headerHeight, 'F')
 
-    // Row 1: Company Name (left) & Main Title (middle) & Code/Status (right)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8)
-    doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
-    const compText = companyName.toUpperCase()
-    const truncatedCompany = compText.length > 28 ? compText.substring(0, 26) + '...' : compText
-    doc.text(truncatedCompany, margin + 4.5, margin + 4.5)
+    // ----------------------------------------------------
+    // Logo Placement (Left side of header)
+    // ----------------------------------------------------
+    let textStartX = margin + 4.5
+    const logoMaxW = 24
+    const logoMaxH = 13.5
 
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-    const docTitle = isFirstPage
-      ? 'RELATÓRIO DE CHECKLIST DE IÇAMENTO'
-      : `RELATÓRIO DE CHECKLIST - ${safeChecklistCode}`
-    doc.text(docTitle, margin + 55, margin + 4.5)
+    if (logoImage) {
+      try {
+        const aspect = logoImage.width / logoImage.height
+        let logoW = logoMaxW
+        let logoH = logoW / aspect
+        if (logoH > logoMaxH) {
+          logoH = logoMaxH
+          logoW = logoH * aspect
+        }
+        const logoX = margin + 3.5
+        const logoY = margin + (headerHeight - logoH) / 2
+        doc.addImage(
+          logoImage.data,
+          logoImage.format,
+          logoX,
+          logoY,
+          logoW,
+          logoH,
+          undefined,
+          'FAST',
+        )
 
-    // Status Badge inside header
+        // Vertical divider line next to logo
+        doc.setDrawColor(203, 213, 225)
+        doc.setLineWidth(0.2)
+        doc.line(
+          logoX + logoW + 2.5,
+          margin + 1.8,
+          logoX + logoW + 2.5,
+          margin + headerHeight - 1.8,
+        )
+
+        textStartX = logoX + logoW + 5
+      } catch (err) {
+        console.warn('Error rendering logo in header, falling back to text only', err)
+      }
+    }
+
+    // ----------------------------------------------------
+    // Status Badge (Top Right)
+    // ----------------------------------------------------
     const isCompleted = checklist?.status === 'Concluído'
     const isRejected = checklist?.status === 'Reprovado'
     const stBadgeText = isCompleted
@@ -361,53 +488,82 @@ export async function generateChecklistPdf({
     doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 0.8, 0.8, 'FD')
     doc.text(stBadgeText, badgeX + badgeW / 2, badgeY + 2.9, { align: 'center' })
 
+    // ----------------------------------------------------
+    // Row 1: Company Name & Main Title
+    // ----------------------------------------------------
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(7.8)
+    doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
+    const compText = companyName.toUpperCase()
+    const truncatedCompany = compText.length > 32 ? compText.substring(0, 30) + '...' : compText
+    doc.text(truncatedCompany, textStartX, margin + 4.8)
+
+    // Title next to company or stacked if narrow
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8.2)
+    doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
+    const docTitle = isFirstPage
+      ? 'RELATÓRIO DE CHECKLIST DE IÇAMENTO'
+      : `RELATÓRIO DE CHECKLIST - ${safeChecklistCode}`
+
+    const titleX = Math.max(textStartX + 58, margin + 88)
+    // Only print title on same row if there's enough room before badge
+    if (titleX < badgeX - 4) {
+      doc.text(docTitle, titleX, margin + 4.8)
+    }
+
     // Horizontal thin divider in header
     doc.setDrawColor(226, 232, 240)
     doc.setLineWidth(0.15)
-    doc.line(margin + 3, margin + 7.2, margin + contentWidth - 1, margin + 7.2)
+    doc.line(textStartX, margin + 8.2, pageWidth - margin - 1.5, margin + 8.2)
 
-    // Row 2: Checklist Code, Client/Obra, Dates, Risk
+    // ----------------------------------------------------
+    // Row 2: Code, Client/Obra, Dates, Risk, Emission
+    // ----------------------------------------------------
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(6.8)
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-    doc.text('Cód: ', margin + 4.5, margin + 11.5)
+    doc.text('Cód: ', textStartX, margin + 12.8)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(darkText[0], darkText[1], darkText[2])
-    doc.text(safeChecklistCode, margin + 11.5, margin + 11.5)
+    doc.text(safeChecklistCode, textStartX + 6.5, margin + 12.8)
 
+    const clientStartX = textStartX + 26
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-    doc.text('Cliente/Obra: ', margin + 36, margin + 11.5)
+    doc.text('Cliente/Obra: ', clientStartX, margin + 12.8)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(darkText[0], darkText[1], darkText[2])
-    const maxClientLen = 32
+    const maxClientLen = 28
     const clientDisplay =
       clientName.length > maxClientLen
         ? clientName.substring(0, maxClientLen - 2) + '...'
         : clientName
-    doc.text(clientDisplay, margin + 53, margin + 11.5)
+    doc.text(clientDisplay, clientStartX + 16.5, margin + 12.8)
 
-    // Dates and Risk on Right side of row 2
+    // Dates and Risk
     const createdFormatted = formatDateTime(checklist?.scheduled_date || checklist?.created)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-    doc.text(`Data: ${createdFormatted}`, margin + 112, margin + 11.5)
+    const dateX = Math.max(clientStartX + 56, margin + 115)
+    doc.text(`Data: ${createdFormatted}`, dateX, margin + 12.8)
 
     if (checklist?.risk_level) {
-      doc.text(`Risco: `, margin + 152, margin + 11.5)
+      const riskX = dateX + 38
+      doc.text(`Risco: `, riskX, margin + 12.8)
       doc.setFont('helvetica', 'bold')
       if (checklist.risk_level === 'Alto' || checklist.risk_level === 'Crítico') {
         doc.setTextColor(185, 28, 28)
       } else {
         doc.setTextColor(darkText[0], darkText[1], darkText[2])
       }
-      doc.text(checklist.risk_level.toUpperCase(), margin + 161, margin + 11.5)
+      doc.text(checklist.risk_level.toUpperCase(), riskX + 8.5, margin + 12.8)
     }
 
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
     const emissionDateStr = new Date().toLocaleDateString('pt-BR')
-    doc.text(`Emissão: ${emissionDateStr}`, pageWidth - margin - 2, margin + 11.5, {
+    doc.text(`Emissão: ${emissionDateStr}`, pageWidth - margin - 2, margin + 12.8, {
       align: 'right',
     })
   }
