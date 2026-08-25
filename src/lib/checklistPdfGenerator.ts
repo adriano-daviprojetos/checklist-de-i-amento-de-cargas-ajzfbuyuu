@@ -558,17 +558,19 @@ export async function generateChecklistPdf({
             let fullTitle = item.title
             if (item.isCritical) fullTitle += ' [CRÍTICO]'
             if (item.isMandatory) fullTitle += ' (Obrigatório)'
-            if (item.description) fullTitle += `\n${item.description}`
-            if (item.value) fullTitle += `\nMedição: ${item.value}`
-            if (item.observation) fullTitle += `\nObs: ${item.observation}`
+            const pesoLabel = item.isCritical ? 'Crítico (Alto)' : 'Padrão'
+            const obsList: string[] = []
+            if (item.value) obsList.push(`Medição: ${item.value}`)
+            if (item.observation) obsList.push(item.observation)
+            const obsText = obsList.length > 0 ? obsList.join(' | ') : '—'
 
-            return [item.itemNumberLabel, fullTitle, item.statusText]
+            return [item.itemNumberLabel, fullTitle, pesoLabel, item.statusText, obsText]
           })
-        : [['-', 'Nenhum item cadastrado nesta seção', '-']]
+        : [['-', 'Nenhum item cadastrado nesta seção', '-', '-', '-']]
 
     applyAutoTable(doc, {
       startY: currentY,
-      head: [['Nº', 'ITEM DE VERIFICAÇÃO / DESCRIÇÃO / OBSERVAÇÕES', 'AVALIAÇÃO']],
+      head: [['Nº', 'ITEM DE VERIFICAÇÃO', 'PESO', 'RESULTADO', 'OBSERVAÇÕES']],
       body: tableBody,
       theme: 'grid',
       margin: { left: margin, right: margin, bottom: bottomFooterReserve + 2 },
@@ -584,7 +586,9 @@ export async function generateChecklistPdf({
       columnStyles: {
         0: { cellWidth: 10, halign: 'center', fontStyle: 'bold', fontSize: 7 },
         1: { cellWidth: 'auto', fontSize: 7 },
-        2: { cellWidth: 26, halign: 'center', fontStyle: 'bold', fontSize: 6.8 },
+        2: { cellWidth: 22, halign: 'center', fontSize: 6.8 },
+        3: { cellWidth: 26, halign: 'center', fontStyle: 'bold', fontSize: 6.8 },
+        4: { cellWidth: 48, fontSize: 6.8 },
       },
       styles: {
         cellPadding: 1.2,
@@ -594,8 +598,8 @@ export async function generateChecklistPdf({
         overflow: 'linebreak',
       },
       didParseCell: (data: any) => {
-        // Style evaluation column badge cells
-        if (data.section === 'body' && data.column.index === 2) {
+        // Style evaluation column badge cells (column index 3: RESULTADO)
+        if (data.section === 'body' && data.column.index === 3) {
           const rawText = data.cell.raw as string
           if (rawText === 'CONFORME') {
             data.cell.styles.fillColor = [209, 250, 229] // Emerald 100
