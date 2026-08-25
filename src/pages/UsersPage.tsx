@@ -102,8 +102,18 @@ const SYSTEM_MODULES: ModuleConfig[] = [
 ]
 
 export const UsersPage: React.FC = () => {
-  const { company, companies, canManageUsers, isAdmin, isGestor, user: currentUser } = useAuth()
+  const {
+    company,
+    companies,
+    isAdmin,
+    isGestor,
+    user: currentUser,
+    hasModulePermission,
+  } = useAuth()
   const { isOnline } = useOnlineStatus()
+
+  const canEditUsers = hasModulePermission('users', 'edit')
+  const canDeleteUsers = hasModulePermission('users', 'delete')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [loading, setLoading] = useState(true)
@@ -150,16 +160,24 @@ export const UsersPage: React.FC = () => {
     }
   }
 
-  // Permission helper to check if current logged-in user can edit/delete a specific user target
+  // Permission helper to check if current logged-in user can edit a specific user target
   const canEditTargetUser = (targetUser: AppUser) => {
-    if (!canManageUsers) return false
+    if (!canEditUsers) return false
     if (isAdmin) return true
     // Gestor can only edit users from their own company
     return company?.id ? targetUser.company_id === company.id : false
   }
 
+  // Permission helper to check if current logged-in user can delete a specific user target
+  const canDeleteTargetUser = (targetUser: AppUser) => {
+    if (!canDeleteUsers) return false
+    if (isAdmin) return true
+    // Gestor can only delete users from their own company
+    return company?.id ? targetUser.company_id === company.id : false
+  }
+
   const openNewModal = () => {
-    if (!canManageUsers) {
+    if (!canEditUsers) {
       toast.error('Você não tem permissão para cadastrar usuários.')
       return
     }
@@ -286,7 +304,7 @@ export const UsersPage: React.FC = () => {
   }
 
   const handleDeleteUser = async (u: AppUser) => {
-    if (!canEditTargetUser(u)) {
+    if (!canDeleteTargetUser(u)) {
       toast.error('Você não tem permissão para excluir este usuário.')
       return
     }
@@ -307,7 +325,7 @@ export const UsersPage: React.FC = () => {
   }
 
   const handleSave = async () => {
-    if (!canManageUsers) {
+    if (!canEditUsers) {
       toast.error('Você não tem permissão para cadastrar ou editar usuários.')
       return
     }
@@ -462,7 +480,7 @@ export const UsersPage: React.FC = () => {
           </p>
         </div>
 
-        {canManageUsers && (
+        {canEditUsers && (
           <Button
             onClick={openNewModal}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20 text-xs"
@@ -570,17 +588,19 @@ export const UsersPage: React.FC = () => {
                 </div>
               </div>
 
-              {canEditTargetUser(u) && (
+              {(canEditTargetUser(u) || (canDeleteTargetUser(u) && u.id !== currentUser?.id)) && (
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => openEditModal(u)}
-                    className="h-7 text-xs text-slate-300 hover:text-white"
-                  >
-                    <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
-                  </Button>
-                  {u.id !== currentUser?.id && (
+                  {canEditTargetUser(u) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => openEditModal(u)}
+                      className="h-7 text-xs text-slate-300 hover:text-white"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
+                    </Button>
+                  )}
+                  {canDeleteTargetUser(u) && u.id !== currentUser?.id && (
                     <Button
                       size="sm"
                       variant="ghost"

@@ -379,6 +379,27 @@ export class AppDataService {
     return resultTpl
   }
 
+  static async deleteTemplate(id: string, isOnline: boolean): Promise<void> {
+    await dbDelete('checklist_templates', id)
+    // Delete associated template items in local DB
+    const localItems = await dbGetByIndex<ChecklistTemplateItem>(
+      'checklist_template_items',
+      'template_id',
+      id,
+    )
+    for (const item of localItems) {
+      await dbDelete('checklist_template_items', item.id)
+    }
+
+    if (isOnline && !id.startsWith('tpl_')) {
+      try {
+        await pb.collection('checklist_templates').delete(id)
+      } catch (err) {
+        console.warn('Failed to delete template online:', err)
+      }
+    }
+  }
+
   // --- Users ---
   static async getUsers(companyId?: string, isOnline = true): Promise<AppUser[]> {
     if (isOnline && pb.authStore.isValid) {

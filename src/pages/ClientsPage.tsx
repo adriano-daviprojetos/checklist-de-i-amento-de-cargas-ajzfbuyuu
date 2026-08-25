@@ -20,8 +20,11 @@ import { Building2, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, FileText }
 import { toast } from 'sonner'
 
 export const ClientsPage: React.FC = () => {
-  const { company, companies, canManageAssets } = useAuth()
+  const { company, companies, hasModulePermission } = useAuth()
   const { isOnline } = useOnlineStatus()
+
+  const canEdit = hasModulePermission('clients', 'edit')
+  const canDelete = hasModulePermission('clients', 'delete')
 
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
@@ -162,7 +165,7 @@ export const ClientsPage: React.FC = () => {
           </p>
         </div>
 
-        {canManageAssets && (
+        {canEdit && (
           <Button
             onClick={openNewModal}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20 text-xs"
@@ -256,24 +259,28 @@ export const ClientsPage: React.FC = () => {
                 </p>
               )}
 
-              {canManageAssets && (
+              {(canEdit || canDelete) && (
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => openEditModal(c)}
-                    className="h-7 text-xs text-slate-300 hover:text-white"
-                  >
-                    <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDelete(c.id)}
-                    className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/20"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  {canEdit && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => openEditModal(c)}
+                      className="h-7 text-xs text-slate-300 hover:text-white"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDelete(c.id)}
+                      className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>

@@ -44,8 +44,11 @@ import {
 import { toast } from 'sonner'
 
 export const TemplatesPage: React.FC = () => {
-  const { company, companies, canManageTemplates } = useAuth()
+  const { company, companies, hasModulePermission } = useAuth()
   const { isOnline } = useOnlineStatus()
+
+  const canEdit = hasModulePermission('templates', 'edit')
+  const canDelete = hasModulePermission('templates', 'delete')
 
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<ChecklistTemplate | null>(null)
@@ -88,6 +91,22 @@ export const TemplatesPage: React.FC = () => {
       setTemplateItems(items)
     } catch (err) {
       console.error('Error loading template items:', err)
+    }
+  }
+
+  const handleDeleteTemplate = async (e: React.MouseEvent, tplId: string) => {
+    e.stopPropagation()
+    if (!confirm('Deseja realmente excluir este modelo de checklist?')) return
+    try {
+      await AppDataService.deleteTemplate(tplId, isOnline)
+      setTemplates((prev) => prev.filter((t) => t.id !== tplId))
+      if (selectedTemplate?.id === tplId) {
+        setSelectedTemplate(null)
+        setTemplateItems([])
+      }
+      toast.success('Modelo excluído com sucesso.')
+    } catch (err: any) {
+      toast.error('Erro ao excluir modelo: ' + err.message)
     }
   }
 
@@ -201,7 +220,7 @@ export const TemplatesPage: React.FC = () => {
           </p>
         </div>
 
-        {canManageTemplates && (
+        {canEdit && (
           <Button
             onClick={openNewTemplateModal}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20 text-xs"
@@ -243,9 +262,22 @@ export const TemplatesPage: React.FC = () => {
                   >
                     {tpl.category}
                   </Badge>
-                  <span className="text-[10px] text-slate-500">
-                    Perfil: {tpl.target_role || 'Todos'}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-slate-500">
+                      Perfil: {tpl.target_role || 'Todos'}
+                    </span>
+                    {canDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleDeleteTemplate(e, tpl.id)}
+                        className="h-5 w-5 text-slate-500 hover:text-red-400 hover:bg-red-950/20 ml-1"
+                        title="Excluir Modelo"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="mb-1">
                   <Badge
@@ -307,16 +339,28 @@ export const TemplatesPage: React.FC = () => {
                   )}
                 </div>
 
-                {canManageTemplates && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openEditModal(selectedTemplate)}
-                    className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
-                  >
-                    <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {canEdit && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEditModal(selectedTemplate)}
+                      className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => handleDeleteTemplate(e, selectedTemplate.id)}
+                      className="border-red-900/40 bg-red-950/20 text-red-400 hover:bg-red-950/40 hover:text-red-300 text-xs"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Excluir
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
 
               <CardContent className="p-4 space-y-4">

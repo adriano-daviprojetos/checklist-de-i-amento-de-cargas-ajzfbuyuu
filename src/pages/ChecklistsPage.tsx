@@ -36,9 +36,12 @@ import {
 import { toast } from 'sonner'
 
 export const ChecklistsPage: React.FC = () => {
-  const { company, companies } = useAuth()
+  const { company, companies, hasModulePermission } = useAuth()
   const { isOnline } = useOnlineStatus()
   const navigate = useNavigate()
+
+  const canEdit = hasModulePermission('checklists', 'edit')
+  const canDelete = hasModulePermission('checklists', 'delete')
 
   const [checklists, setChecklists] = useState<Checklist[]>([])
   const [loading, setLoading] = useState(true)
@@ -131,13 +134,15 @@ export const ChecklistsPage: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          onClick={() => navigate('/checklists/novo')}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Checklist de Campo
-        </Button>
+        {canEdit && (
+          <Button
+            onClick={() => navigate('/checklists/novo')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Checklist de Campo
+          </Button>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -270,14 +275,16 @@ export const ChecklistsPage: React.FC = () => {
                 >
                   Abrir Checklist
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => handleDelete(e, chk.id)}
-                  className="h-8 w-8 text-slate-500 hover:text-red-400 hover:bg-red-950/20"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                {canDelete && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => handleDelete(e, chk.id)}
+                    className="h-8 w-8 text-slate-500 hover:text-red-400 hover:bg-red-950/20"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -293,12 +300,14 @@ export const ChecklistsPage: React.FC = () => {
               Você pode iniciar uma nova verificação de içamento ou alterar os filtros de busca
               acima.
             </p>
-            <Button
-              onClick={() => navigate('/checklists/novo')}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs mt-2"
-            >
-              <Plus className="w-4 h-4 mr-1.5" /> Iniciar Checklist Agora
-            </Button>
+            {canEdit && (
+              <Button
+                onClick={() => navigate('/checklists/novo')}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs mt-2"
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> Iniciar Checklist Agora
+              </Button>
+            )}
           </div>
         )}
       </div>
