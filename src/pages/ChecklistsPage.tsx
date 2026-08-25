@@ -31,6 +31,7 @@ import {
   RefreshCw,
   ExternalLink,
   Trash2,
+  PenLine,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -252,6 +253,13 @@ export const ChecklistsPage: React.FC = () => {
                     <span className="text-slate-500">Inspetor:</span>
                     <strong className="text-slate-300">{chk.inspector_name || 'Inspetor'}</strong>
                   </div>
+
+                  {chk.signature_data && (
+                    <div className="flex items-center gap-1 text-emerald-400 font-medium">
+                      <PenLine className="w-3.5 h-3.5" />
+                      <span>Assinado Digitalmente</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

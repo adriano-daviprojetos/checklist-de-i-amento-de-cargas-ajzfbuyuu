@@ -14,6 +14,7 @@ import {
   ResponseStatus,
 } from '@/types'
 import { CompanySelect } from '@/components/CompanySelect'
+import { FinalizeChecklistModal } from '@/components/FinalizeChecklistModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,6 +45,10 @@ import {
   Check,
   X,
   Minus,
+  PenLine,
+  UserCheck,
+  Calendar,
+  RotateCcw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -77,6 +82,14 @@ export const ChecklistDetailPage: React.FC = () => {
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState<'Pendente' | 'Em Andamento' | 'Concluído' | 'Reprovado'>(
     'Em Andamento',
+  )
+  const [signatureData, setSignatureData] = useState<string | undefined>(undefined)
+  const [completedAt, setCompletedAt] = useState<string | undefined>(undefined)
+
+  // Modal State for Finalization with Digital Signature
+  const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false)
+  const [finalizeTargetStatus, setFinalizeTargetStatus] = useState<'Concluído' | 'Reprovado'>(
+    'Concluído',
   )
 
   // Answers Map: itemId -> ChecklistResponse
@@ -129,6 +142,8 @@ export const ChecklistDetailPage: React.FC = () => {
           setInspectorName(checklist.inspector_name || user?.name || '')
           setNotes(checklist.notes || '')
           setStatus(checklist.status)
+          setSignatureData(checklist.signature_data)
+          setCompletedAt(checklist.completed_at)
           setSelectedTemplateId(checklist.template_id)
 
           // Load template items
@@ -219,9 +234,89 @@ export const ChecklistDetailPage: React.FC = () => {
     })
   }
 
-  const handleSave = async (
-    targetStatus?: 'Pendente' | 'Em Andamento' | 'Concluído' | 'Reprovado',
-  ) => {
+  const handleOpenFinalizeModal = (target: 'Concluído' | 'Reprovado') => {
+    const effectiveCompId = selectedCompanyId || company?.id
+    if (!effectiveCompId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+    if (!selectedTemplateId) {
+      toast.warning('Selecione um modelo de checklist.')
+      return
+    }
+    if (!title.trim()) {
+      toast.warning('Informe um título para o checklist.')
+      return
+    }
+
+    setFinalizeTargetStatus(target)
+    setIsFinalizeModalOpen(true)
+  }
+
+  const handleConfirmFinalize = async (data: {
+    status: 'Concluído' | 'Reprovado'
+    inspectorName: string
+    signatureData: string
+    signedAt: string
+  }) => {
+    const effectiveCompId = selectedCompanyId || company?.id
+    if (!effectiveCompId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const checklistData: Partial<Checklist> = {
+        id: isNew ? undefined : id,
+        company_id: effectiveCompId,
+        template_id: selectedTemplateId,
+        client_id: clientId === 'none' ? undefined : clientId,
+        equipment_id: equipmentId === 'none' ? undefined : equipmentId,
+        material_id: materialId === 'none' ? undefined : materialId,
+        user_id: user?.id || '',
+        code,
+        title,
+        location,
+        operation_type: operationType,
+        status: data.status,
+        risk_level: riskLevel,
+        inspector_name: data.inspectorName,
+        signature_data: data.signatureData,
+        notes,
+        completed_at: data.signedAt,
+      }
+
+      const responsesList = Object.values(responsesMap).map((r) => ({
+        ...r,
+        checklist_id: isNew ? undefined : id,
+      }))
+
+      const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
+
+      setStatus(data.status)
+      setInspectorName(data.inspectorName)
+      setSignatureData(data.signatureData)
+      setCompletedAt(data.signedAt)
+      setIsFinalizeModalOpen(false)
+
+      toast.success(
+        data.status === 'Concluído'
+          ? 'Checklist finalizado com assinatura digital e operação liberada!'
+          : 'Checklist reprovado e registrado com assinatura do responsável.',
+      )
+
+      if (isNew && res.checklist.id) {
+        navigate(`/checklists/${res.checklist.id}`, { replace: true })
+      }
+    } catch (err: any) {
+      toast.error('Erro ao finalizar checklist: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSaveDraft = async () => {
     const effectiveCompId = selectedCompanyId || company?.id
     if (!effectiveCompId) {
       toast.warning('A seleção da empresa é obrigatória.')
@@ -238,18 +333,6 @@ export const ChecklistDetailPage: React.FC = () => {
 
     setSaving(true)
     try {
-      // Calculate final status if not explicitly given
-      let finalStatus = targetStatus || status
-
-      // Auto-reprove if critical item failed
-      const hasCriticalFail = Object.values(responsesMap).some((r) => r.is_critical_fail)
-      if (hasCriticalFail && targetStatus === 'Concluído') {
-        toast.error(
-          'Atenção: Existem não-conformidades críticas! O checklist será marcado como Reprovado.',
-        )
-        finalStatus = 'Reprovado'
-      }
-
       const checklistData: Partial<Checklist> = {
         id: isNew ? undefined : id,
         company_id: effectiveCompId,
@@ -262,14 +345,12 @@ export const ChecklistDetailPage: React.FC = () => {
         title,
         location,
         operation_type: operationType,
-        status: finalStatus,
+        status: status === 'Concluído' || status === 'Reprovado' ? status : 'Em Andamento',
         risk_level: riskLevel,
         inspector_name: inspectorName,
+        signature_data: signatureData,
         notes,
-        completed_at:
-          finalStatus === 'Concluído' || finalStatus === 'Reprovado'
-            ? new Date().toISOString()
-            : undefined,
+        completed_at: completedAt,
       }
 
       const responsesList = Object.values(responsesMap).map((r) => ({
@@ -280,15 +361,15 @@ export const ChecklistDetailPage: React.FC = () => {
       const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
       toast.success(
         isOnline
-          ? 'Checklist salvo e sincronizado com sucesso!'
-          : 'Checklist salvo no dispositivo (Offline). Será sincronizado ao reconectar.',
+          ? 'Rascunho do checklist salvo e sincronizado!'
+          : 'Rascunho salvo no dispositivo (Offline).',
       )
 
       if (isNew && res.checklist.id) {
         navigate(`/checklists/${res.checklist.id}`, { replace: true })
       }
     } catch (err: any) {
-      toast.error('Erro ao salvar checklist: ' + err.message)
+      toast.error('Erro ao salvar rascunho: ' + err.message)
     } finally {
       setSaving(false)
     }
@@ -361,7 +442,7 @@ export const ChecklistDetailPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => handleSave('Em Andamento')}
+            onClick={handleSaveDraft}
             disabled={saving}
             className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800 text-xs"
           >
@@ -369,15 +450,15 @@ export const ChecklistDetailPage: React.FC = () => {
           </Button>
 
           <Button
-            onClick={() => handleSave('Concluído')}
+            onClick={() => handleOpenFinalizeModal('Concluído')}
             disabled={saving}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-md shadow-emerald-600/20"
           >
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Liberar Operação (Concluir)
+            <PenLine className="w-3.5 h-3.5 mr-1.5" /> Assinar & Liberar Operação
           </Button>
 
           <Button
-            onClick={() => handleSave('Reprovado')}
+            onClick={() => handleOpenFinalizeModal('Reprovado')}
             disabled={saving}
             variant="destructive"
             className="text-xs bg-red-600/90 hover:bg-red-600 font-medium"
@@ -820,6 +901,96 @@ export const ChecklistDetailPage: React.FC = () => {
               </Select>
             </div>
           </div>
+
+          {/* Visualização da Assinatura Digital do Responsável quando concluído ou existente */}
+          {signatureData ? (
+            <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-blue-950/80 text-blue-400 border border-blue-800 text-xs px-2.5 py-1">
+                    <PenLine className="w-3.5 h-3.5 mr-1" /> Assinatura Digital do Responsável
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-700/60 text-emerald-400 text-xs"
+                  >
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Autenticada
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleOpenFinalizeModal(status === 'Reprovado' ? 'Reprovado' : 'Concluído')
+                    }
+                    className="h-7 text-[11px] border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800"
+                  >
+                    <RotateCcw className="w-3 h-3 mr-1" /> Refazer Assinatura
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950 p-4 rounded-xl border border-slate-800">
+                {/* Imagem da Assinatura */}
+                <div className="md:col-span-6 bg-white p-3 rounded-lg flex items-center justify-center border border-slate-300 shadow-inner">
+                  <img
+                    src={signatureData}
+                    alt="Assinatura Digital do Responsável"
+                    className="max-h-24 object-contain"
+                  />
+                </div>
+
+                {/* Metadados da Assinatura */}
+                <div className="md:col-span-6 space-y-1.5 text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <UserCheck className="w-4 h-4 text-blue-400" />
+                    <span>
+                      Signatário:{' '}
+                      <strong className="text-white font-semibold">
+                        {inspectorName || user?.name || 'Responsável Técnico'}
+                      </strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
+                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                    <span>
+                      Data / Hora:{' '}
+                      {completedAt
+                        ? new Date(completedAt).toLocaleString('pt-BR')
+                        : new Date().toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 pt-1">
+                    Chave de Integridade:{' '}
+                    <span className="font-mono text-slate-400">{code || 'CHK-OFFLINE'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-slate-950/60 rounded-xl border border-dashed border-slate-800">
+              <div className="space-y-0.5 text-center sm:text-left">
+                <span className="text-xs font-semibold text-slate-300 flex items-center justify-center sm:justify-start gap-1.5">
+                  <PenLine className="w-4 h-4 text-blue-400" />
+                  Assinatura Digital Pendente
+                </span>
+                <p className="text-[11px] text-slate-500">
+                  O checklist exige a assinatura digital na conclusão ou reprovação para ter
+                  validade técnica.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                onClick={() => handleOpenFinalizeModal('Concluído')}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shrink-0"
+              >
+                <PenLine className="w-3.5 h-3.5 mr-1.5" /> Coletar Assinatura Agora
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -841,7 +1012,7 @@ export const ChecklistDetailPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleSave('Em Andamento')}
+            onClick={handleSaveDraft}
             disabled={saving}
             className="border-slate-800 bg-slate-900 text-slate-300 text-xs"
           >
@@ -850,14 +1021,29 @@ export const ChecklistDetailPage: React.FC = () => {
 
           <Button
             size="sm"
-            onClick={() => handleSave('Concluído')}
+            onClick={() => handleOpenFinalizeModal('Concluído')}
             disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20"
           >
-            Finalizar & Liberar Operação
+            <PenLine className="w-3.5 h-3.5 mr-1" /> Finalizar & Liberar Operação
           </Button>
         </div>
       </div>
+
+      {/* Finalization Modal with Mandatory Digital Signature */}
+      <FinalizeChecklistModal
+        isOpen={isFinalizeModalOpen}
+        onClose={() => setIsFinalizeModalOpen(false)}
+        onConfirm={handleConfirmFinalize}
+        targetStatus={finalizeTargetStatus}
+        currentInspectorName={inspectorName || user?.name || ''}
+        checklistCode={code}
+        checklistTitle={title}
+        answeredCount={answeredCount}
+        totalItems={totalItems}
+        criticalFailsCount={criticalFailsCount}
+        saving={saving}
+      />
     </div>
   )
 }
