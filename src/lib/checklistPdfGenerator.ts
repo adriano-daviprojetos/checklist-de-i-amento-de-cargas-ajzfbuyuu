@@ -366,20 +366,7 @@ export async function generateChecklistPdf({
   // Pre-load logo and signatures asynchronously before building pages
   const logoImage = await loadLogoImage(LOGO_URL)
 
-  let inspectorSigDimensions: { width: number; height: number; format: string } | null = null
   let filledBySigDimensions: { width: number; height: number; format: string } | null = null
-
-  if (
-    checklist?.signature_data &&
-    typeof checklist.signature_data === 'string' &&
-    checklist.signature_data.startsWith('data:image')
-  ) {
-    try {
-      inspectorSigDimensions = await getImageDimensions(checklist.signature_data)
-    } catch (e) {
-      console.warn('Could not load inspector signature image dimensions', e)
-    }
-  }
 
   if (
     checklist?.filled_by_signature &&
@@ -642,8 +629,8 @@ export async function generateChecklistPdf({
     drawField(
       leftColX + opSubColW,
       row2Y,
-      'RESP. PREENCHIMENTO',
-      checklist?.filled_by_name || checklist?.inspector_name || '—',
+      'RESPONSÁVEL TÉCNICO',
+      checklist?.filled_by_name || '—',
       22,
     )
 
@@ -778,8 +765,7 @@ export async function generateChecklistPdf({
     currentY = ((doc as any).lastAutoTable?.finalY ?? currentY) + 2.5
   }
 
-  // --- Concluding Section: Technical Opinion, Notes & Side-by-Side Signatures ---
-  // Check if signatures block + notes fit on current page (approx 55mm needed)
+  // --- Concluding Section: Technical Opinion, Notes & Single Signature (Responsável pelo Preenchimento) ---
   const notesAndSignaturesHeight = 54
   if (currentY + notesAndSignaturesHeight > pageContentBottomLimit) {
     doc.addPage()
@@ -848,18 +834,17 @@ export async function generateChecklistPdf({
 
   currentY += notesBoxH + 2
 
-  // Signatures Side-by-Side (2 columns)
-  const sigBoxW = (contentWidth - 4) / 2
+  // Signature Box: Responsável pelo Preenchimento (Centered box)
+  const sigBoxW = 100 // Clean centered signature box width (100mm)
   const sigBoxH = 34 // Compact signature box height
+  const box1X = margin + (contentWidth - sigBoxW) / 2
 
-  // Box 1: Responsável pelo Preenchimento
-  const box1X = margin
   doc.setFillColor(255, 255, 255)
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
   doc.setLineWidth(0.2)
   doc.roundedRect(box1X, currentY, sigBoxW, sigBoxH, 1.2, 1.2, 'FD')
 
-  // Header of Box 1
+  // Header of Signature Box
   doc.setFillColor(241, 245, 249)
   doc.roundedRect(box1X, currentY, sigBoxW, 4.5, 1.2, 1.2, 'F')
   doc.rect(box1X, currentY + 2.5, sigBoxW, 2, 'F') // straighten bottom corners
@@ -870,7 +855,7 @@ export async function generateChecklistPdf({
     align: 'center',
   })
 
-  // Signature 1 image / placeholder
+  // Signature image / placeholder
   if (
     checklist?.filled_by_signature &&
     typeof checklist.filled_by_signature === 'string' &&
@@ -878,7 +863,7 @@ export async function generateChecklistPdf({
   ) {
     try {
       const dim = filledBySigDimensions || { width: 400, height: 200, format: 'PNG' }
-      const maxImgW = sigBoxW - 8
+      const maxImgW = sigBoxW - 12
       const maxImgH = 14
       const ratio = Math.min(maxImgW / dim.width, maxImgH / dim.height)
       const renderW = dim.width * ratio
@@ -908,111 +893,34 @@ export async function generateChecklistPdf({
     })
   }
 
-  // Line 1
+  // Signature line and signer details
   const line1Y = currentY + 21.5
   doc.setDrawColor(148, 163, 184)
   doc.setLineWidth(0.3)
-  doc.line(box1X + 6, line1Y, box1X + sigBoxW - 6, line1Y)
+  doc.line(box1X + 8, line1Y, box1X + sigBoxW - 8, line1Y)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7.2)
   doc.setTextColor(darkText[0], darkText[1], darkText[2])
-  const filledName =
-    checklist?.filled_by_name || checklist?.inspector_name || 'Profissional Responsável'
+  const filledName = checklist?.filled_by_name || 'Profissional Responsável'
   doc.text(filledName, box1X + sigBoxW / 2, line1Y + 3.2, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(6)
   doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-  doc.text('Operador / Rigger Responsável', box1X + sigBoxW / 2, line1Y + 6.2, {
-    align: 'center',
-  })
-  if (checklist?.created) {
-    doc.text(`Data: ${formatDateTime(checklist.created)}`, box1X + sigBoxW / 2, line1Y + 9.2, {
+  doc.text(
+    'Operador / Rigger / Responsável pelo Preenchimento',
+    box1X + sigBoxW / 2,
+    line1Y + 6.2,
+    {
+      align: 'center',
+    },
+  )
+  if (checklist?.completed_at || checklist?.created) {
+    const sigDate = checklist.completed_at || checklist.created
+    doc.text(`Data / Hora: ${formatDateTime(sigDate)}`, box1X + sigBoxW / 2, line1Y + 9.2, {
       align: 'center',
     })
-  }
-
-  // Box 2: Inspetor / Responsável Técnico
-  const box2X = margin + sigBoxW + 4
-  doc.setFillColor(255, 255, 255)
-  doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
-  doc.setLineWidth(0.2)
-  doc.roundedRect(box2X, currentY, sigBoxW, sigBoxH, 1.2, 1.2, 'FD')
-
-  // Header of Box 2
-  doc.setFillColor(241, 245, 249)
-  doc.roundedRect(box2X, currentY, sigBoxW, 4.5, 1.2, 1.2, 'F')
-  doc.rect(box2X, currentY + 2.5, sigBoxW, 2, 'F')
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(6.8)
-  doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-  doc.text('INSPETOR / RESPONSÁVEL TÉCNICO', box2X + sigBoxW / 2, currentY + 3.2, {
-    align: 'center',
-  })
-
-  // Signature 2 image / placeholder
-  if (
-    checklist?.signature_data &&
-    typeof checklist.signature_data === 'string' &&
-    checklist.signature_data.startsWith('data:image')
-  ) {
-    try {
-      const dim = inspectorSigDimensions || { width: 400, height: 200, format: 'PNG' }
-      const maxImgW = sigBoxW - 8
-      const maxImgH = 14
-      const ratio = Math.min(maxImgW / dim.width, maxImgH / dim.height)
-      const renderW = dim.width * ratio
-      const renderH = dim.height * ratio
-      const renderX = box2X + (sigBoxW - renderW) / 2
-      const renderY = currentY + 5.5 + (maxImgH - renderH) / 2
-
-      doc.addImage(
-        checklist.signature_data,
-        dim.format,
-        renderX,
-        renderY,
-        renderW,
-        renderH,
-        undefined,
-        'FAST',
-      )
-    } catch (err) {
-      console.warn('Error inserting inspector signature image in PDF', err)
-    }
-  } else {
-    doc.setFont('helvetica', 'italic')
-    doc.setFontSize(6.5)
-    doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-    doc.text('(Assinatura digital autenticada)', box2X + sigBoxW / 2, currentY + 12.5, {
-      align: 'center',
-    })
-  }
-
-  // Line 2
-  doc.setDrawColor(148, 163, 184)
-  doc.setLineWidth(0.3)
-  doc.line(box2X + 6, line1Y, box2X + sigBoxW - 6, line1Y)
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.2)
-  doc.setTextColor(darkText[0], darkText[1], darkText[2])
-  const inspName = checklist?.inspector_name || 'Inspetor Técnico'
-  doc.text(inspName, box2X + sigBoxW / 2, line1Y + 3.2, { align: 'center' })
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(6)
-  doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-  doc.text('Inspetor / Responsável Técnico de Rigging', box2X + sigBoxW / 2, line1Y + 6.2, {
-    align: 'center',
-  })
-  if (checklist?.completed_at) {
-    doc.text(
-      `Autenticado: ${formatDateTime(checklist.completed_at)}`,
-      box2X + sigBoxW / 2,
-      line1Y + 9.2,
-      { align: 'center' },
-    )
   }
 
   // Security Note
@@ -1021,7 +929,7 @@ export async function generateChecklistPdf({
   doc.setFontSize(5.5)
   doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
   doc.text(
-    'Documento emitido pelo sistema Davi Projetos com validade técnica, rastreabilidade e assinaturas eletrônicas.',
+    'Documento emitido pelo sistema com validade técnica, rastreabilidade e assinatura eletrônica do responsável.',
     pageWidth / 2,
     currentY,
     { align: 'center' },

@@ -86,14 +86,12 @@ export const ChecklistDetailPage: React.FC = () => {
   const [equipmentId, setEquipmentId] = useState<string>('none')
   const [materialId, setMaterialId] = useState<string>('none')
   const [riskLevel, setRiskLevel] = useState<'Baixo' | 'Médio' | 'Alto' | 'Crítico'>('Médio')
-  const [inspectorName, setInspectorName] = useState(user?.name || user?.email || '')
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState<'Pendente' | 'Em Andamento' | 'Concluído' | 'Reprovado'>(
     'Em Andamento',
   )
   const [filledByName, setFilledByName] = useState(user?.name || '')
   const [filledBySignature, setFilledBySignature] = useState<string | undefined>(undefined)
-  const [signatureData, setSignatureData] = useState<string | undefined>(undefined)
   const [completedAt, setCompletedAt] = useState<string | undefined>(undefined)
   const filledByPadRef = useRef<DigitalSignaturePadRef>(null)
 
@@ -141,7 +139,6 @@ export const ChecklistDetailPage: React.FC = () => {
         }
         setCode(`CHK-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`)
         setTitle('Checklist Operacional de Içamento')
-        setInspectorName(user?.name || user?.email || '')
         setFilledByName(user?.name || '')
         setFilledBySignature(undefined)
       } else if (id) {
@@ -159,12 +156,10 @@ export const ChecklistDetailPage: React.FC = () => {
           setEquipmentId(checklist.equipment_id || 'none')
           setMaterialId(checklist.material_id || 'none')
           setRiskLevel(checklist.risk_level || 'Médio')
-          setInspectorName(checklist.inspector_name || user?.name || user?.email || '')
           setFilledByName(checklist.filled_by_name || user?.name || '')
           setFilledBySignature(checklist.filled_by_signature)
           setNotes(checklist.notes || '')
           setStatus(checklist.status)
-          setSignatureData(checklist.signature_data)
           setCompletedAt(checklist.completed_at)
           setCreatedAt(checklist.created)
           setSelectedTemplateId(checklist.template_id)
@@ -286,9 +281,7 @@ export const ChecklistDetailPage: React.FC = () => {
 
   const handleConfirmFinalize = async (data: {
     status: 'Concluído' | 'Reprovado'
-    inspectorName: string
-    signatureData: string
-    signedAt: string
+    completedAt: string
     userId?: string
   }) => {
     const effectiveCompId = selectedCompanyId || company?.id
@@ -299,7 +292,6 @@ export const ChecklistDetailPage: React.FC = () => {
 
     setSaving(true)
     try {
-      const finalInspectorName = data.inspectorName || user?.name || user?.email || 'Inspetor'
       const finalUserId = data.userId || user?.id || ''
 
       const checklistData: Partial<Checklist> = {
@@ -316,12 +308,10 @@ export const ChecklistDetailPage: React.FC = () => {
         operation_type: operationType,
         status: data.status,
         risk_level: riskLevel,
-        inspector_name: finalInspectorName,
-        signature_data: data.signatureData,
         filled_by_name: filledByName,
         filled_by_signature: filledBySignature,
         notes,
-        completed_at: data.signedAt,
+        completed_at: data.completedAt,
       }
 
       const responsesList = Object.values(responsesMap).map((r) => ({
@@ -332,15 +322,13 @@ export const ChecklistDetailPage: React.FC = () => {
       const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
 
       setStatus(data.status)
-      setInspectorName(data.inspectorName)
-      setSignatureData(data.signatureData)
-      setCompletedAt(data.signedAt)
+      setCompletedAt(data.completedAt)
       setIsFinalizeModalOpen(false)
 
       toast.success(
         data.status === 'Concluído'
-          ? 'Checklist finalizado com assinatura digital e operação liberada!'
-          : 'Checklist reprovado e registrado com assinatura do responsável.',
+          ? 'Checklist finalizado com sucesso e operação liberada!'
+          : 'Checklist reprovado e registrado com sucesso.',
       )
 
       if (isNew && res.checklist.id) {
@@ -391,8 +379,6 @@ export const ChecklistDetailPage: React.FC = () => {
         status,
         risk_level: riskLevel,
         notes,
-        inspector_name: inspectorName,
-        signature_data: signatureData,
         filled_by_name: filledByName,
         filled_by_signature: filledBySignature,
         created: createdAt,
@@ -465,8 +451,6 @@ export const ChecklistDetailPage: React.FC = () => {
         operation_type: operationType,
         status: status === 'Concluído' || status === 'Reprovado' ? status : 'Em Andamento',
         risk_level: riskLevel,
-        inspector_name: inspectorName,
-        signature_data: signatureData,
         filled_by_name: filledByName,
         filled_by_signature: filledBySignature,
         notes,
@@ -649,7 +633,7 @@ export const ChecklistDetailPage: React.FC = () => {
             disabled={saving || exportingPdf}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-md shadow-emerald-600/20"
           >
-            <PenLine className="w-3.5 h-3.5 mr-1.5" /> Assinar & Liberar Operação
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar Operação
           </Button>
 
           <Button
@@ -1227,7 +1211,7 @@ export const ChecklistDetailPage: React.FC = () => {
         <CardHeader className="pb-3 border-b border-slate-800">
           <CardTitle className="text-base text-white">Parecer Final & Liberação</CardTitle>
           <CardDescription className="text-slate-400 text-xs">
-            Observações finais do rigger / operador e identificação do responsável
+            Observações finais do rigger / operador e parecer técnico da operação
           </CardDescription>
         </CardHeader>
         <CardContent className="p-5 space-y-4">
@@ -1246,26 +1230,6 @@ export const ChecklistDetailPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300 flex items-center justify-between">
-                <span>Responsável Técnico / Inspetor</span>
-                <span className="text-[10px] text-emerald-400">Usuário Autenticado</span>
-              </Label>
-              <div className="bg-slate-950 border border-slate-800 text-slate-200 text-xs px-3 py-2 rounded-md flex items-center justify-between">
-                <span className="font-medium">
-                  {inspectorName || user?.name || user?.email || 'Usuário Atual'}
-                </span>
-                {user?.role && (
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] uppercase border-slate-700 text-slate-400 py-0"
-                  >
-                    {user.role}
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Status Geral do Checklist</Label>
               <Select value={status} onValueChange={(val: any) => setStatus(val)}>
                 <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
@@ -1279,102 +1243,27 @@ export const ChecklistDetailPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          {/* Visualização da Assinatura Digital do Responsável quando concluído ou existente */}
-          {signatureData ? (
-            <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-blue-950/80 text-blue-400 border border-blue-800 text-xs px-2.5 py-1">
-                    <PenLine className="w-3.5 h-3.5 mr-1" /> Assinatura Digital do Responsável
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className="border-emerald-700/60 text-emerald-400 text-xs"
-                  >
-                    <CheckCircle2 className="w-3 h-3 mr-1" /> Autenticada
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handleOpenFinalizeModal(status === 'Reprovado' ? 'Reprovado' : 'Concluído')
-                    }
-                    className="h-7 text-[11px] border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800"
-                  >
-                    <RotateCcw className="w-3 h-3 mr-1" /> Refazer Assinatura
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950 p-4 rounded-xl border border-slate-800">
-                {/* Imagem da Assinatura */}
-                <div className="md:col-span-6 bg-white p-3 rounded-lg flex items-center justify-center border border-slate-300 shadow-inner">
-                  <img
-                    src={signatureData}
-                    alt="Assinatura Digital do Responsável"
-                    className="max-h-24 object-contain"
-                  />
-                </div>
-
-                {/* Metadados da Assinatura */}
-                <div className="md:col-span-6 space-y-1.5 text-xs">
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <UserCheck className="w-4 h-4 text-blue-400" />
-                    <span>
-                      Signatário:{' '}
-                      <strong className="text-white font-semibold">
-                        {inspectorName || user?.name || user?.email || 'Responsável Técnico'}
-                      </strong>
-                    </span>
-                  </div>
-                  {user?.id && (
-                    <div className="text-[11px] text-slate-400">
-                      ID do Usuário: <span className="font-mono text-slate-300">{user.id}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                    <span>
-                      Data / Hora da Assinatura:{' '}
-                      {completedAt
-                        ? new Date(completedAt).toLocaleString('pt-BR')
-                        : new Date().toLocaleString('pt-BR')}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 pt-1">
-                    Chave de Integridade:{' '}
-                    <span className="font-mono text-slate-400">{code || 'CHK-OFFLINE'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-4 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-slate-950/60 rounded-xl border border-dashed border-slate-800">
-              <div className="space-y-0.5 text-center sm:text-left">
-                <span className="text-xs font-semibold text-slate-300 flex items-center justify-center sm:justify-start gap-1.5">
-                  <PenLine className="w-4 h-4 text-blue-400" />
-                  Assinatura Digital Pendente
-                </span>
-                <p className="text-[11px] text-slate-500">
-                  O checklist exige a assinatura digital na conclusão ou reprovação para ter
-                  validade técnica.
-                </p>
-              </div>
-
+            <div className="flex items-end gap-2">
               <Button
                 type="button"
                 onClick={() => handleOpenFinalizeModal('Concluído')}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shrink-0"
+                disabled={saving || exportingPdf}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20"
               >
-                <PenLine className="w-3.5 h-3.5 mr-1.5" /> Coletar Assinatura Agora
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => handleOpenFinalizeModal('Reprovado')}
+                disabled={saving || exportingPdf}
+                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+              >
+                <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reprovar
               </Button>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
@@ -1425,7 +1314,7 @@ export const ChecklistDetailPage: React.FC = () => {
             disabled={saving || exportingPdf}
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20"
           >
-            <PenLine className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar Operação
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar Operação
           </Button>
         </div>{' '}
       </div>

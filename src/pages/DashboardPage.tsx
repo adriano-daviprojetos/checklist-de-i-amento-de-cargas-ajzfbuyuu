@@ -360,7 +360,7 @@ export const DashboardPage: React.FC = () => {
                   <th className="px-4 py-3">Código / Título</th>
                   <th className="px-4 py-3">Local / Obra</th>
                   <th className="px-4 py-3">Equipamento / TAG</th>
-                  <th className="px-4 py-3">Inspetor</th>
+                  <th className="px-4 py-3">Responsável</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Ação</th>
                 </tr>
@@ -418,7 +418,9 @@ export const DashboardPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-slate-300">{chk.inspector_name || 'Inspetor'}</div>
+                        <div className="text-slate-300">
+                          {chk.filled_by_name || 'Não informado'}
+                        </div>
                       </td>
                       <td className="px-4 py-3">{getStatusBadge(chk.status)}</td>
                       <td className="px-4 py-3 text-right">

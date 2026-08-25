@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React from 'react'
 import {
   Dialog,
   DialogContent,
@@ -11,13 +11,11 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/contexts/AuthContext'
-import { DigitalSignaturePad, DigitalSignaturePadRef } from './DigitalSignaturePad'
 import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
   UserCheck,
-  Lock,
   ShieldCheck,
   Fingerprint,
 } from 'lucide-react'
@@ -27,9 +25,7 @@ interface FinalizeChecklistModalProps {
   onClose: () => void
   onConfirm: (data: {
     status: 'Concluído' | 'Reprovado'
-    inspectorName: string
-    signatureData: string
-    signedAt: string
+    completedAt: string
     userId?: string
   }) => Promise<void>
   targetStatus: 'Concluído' | 'Reprovado'
@@ -58,62 +54,12 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
   const authenticatedUserId = user?.id || ''
   const authenticatedRole = user?.role || 'Operacional'
 
-  const [signatureError, setSignatureError] = useState<string | null>(null)
-  const signaturePadRef = useRef<DigitalSignaturePadRef | null>(null)
-  const [, setHasSignature] = useState(false)
-  const [signatureData, setSignatureData] = useState<string | null>(null)
-
   const currentDate = new Date()
 
-  // Reset or initialize state on dialog open
-  useEffect(() => {
-    if (isOpen) {
-      setSignatureError(null)
-      setHasSignature(false)
-      setSignatureData(null)
-      if (signaturePadRef.current) {
-        signaturePadRef.current.clear()
-      }
-    }
-  }, [isOpen])
-
-  const handleSignatureChange = (isEmpty: boolean, dataUrl: string | null) => {
-    setHasSignature(!isEmpty)
-    setSignatureData(dataUrl)
-    if (!isEmpty && signatureError) {
-      setSignatureError(null)
-    }
-  }
-
   const handleConfirm = async () => {
-    if (!authenticatedName.trim()) {
-      setSignatureError('Não foi possível identificar o usuário autenticado.')
-      return
-    }
-
-    // Se o usuário ainda não clicou em "Finalizar Assinatura", tenta chamar o finalize explicitamente ou verifica se está finalizado
-    let currentSig = signatureData
-    if (!currentSig && signaturePadRef.current) {
-      if (!signaturePadRef.current.isFinalized()) {
-        currentSig = signaturePadRef.current.finalize()
-      } else {
-        currentSig = signaturePadRef.current.getSignatureDataUrl()
-      }
-    }
-
-    if (!currentSig) {
-      setSignatureError(
-        'A assinatura digital do responsável logado é obrigatória. Desenhe e clique em "Finalizar Assinatura".',
-      )
-      return
-    }
-
-    setSignatureError(null)
     await onConfirm({
       status: targetStatus,
-      inspectorName: authenticatedName.trim(),
-      signatureData: currentSig,
-      signedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
       userId: authenticatedUserId,
     })
   }
@@ -150,8 +96,8 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-400">
             {isCompleted
-              ? 'Para validar a conformidade e autorizar o içamento, colete a assinatura digital do responsável técnico abaixo.'
-              : 'Ao reprovar a operação, a assinatura do responsável é registrada para fins de auditoria e segurança.'}
+              ? 'Confirme o parecer técnico para finalizar o checklist e liberar a operação de içamento.'
+              : 'Ao reprovar a operação, o status é registrado para fins de auditoria e segurança.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -183,18 +129,18 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
             <div>
               <strong>Atenção:</strong> Existem itens com reprovação crítica identificados.
-              Certifique-se de que medidas mitigatórias foram adotadas antes de assinar a liberação.
+              Certifique-se de que medidas mitigatórias foram adotadas antes de liberar a operação.
             </div>
           </div>
         )}
 
         <div className="space-y-4 pt-1">
-          {/* Signer Identification Card (Preenchimento automático a partir do usuário autenticado) */}
+          {/* Signer Identification Card */}
           <div className="space-y-1.5">
             <Label className="text-xs text-slate-300 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-blue-400" />
-                Responsável Técnico Autenticado (Signatário)
+                Usuário Responsável pela Liberação
               </span>
               <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> Usuário Logado
@@ -229,40 +175,9 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
               </div>
             </div>
             <p className="text-[11px] text-slate-500 italic">
-              * O checklist será assinado e vinculado ao perfil autenticado acima para fins de
-              auditoria técnica.
+              * O parecer final será vinculado ao perfil autenticado acima para fins de auditoria
+              técnica.
             </p>
-          </div>
-
-          {/* Digital Signature Pad */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs text-slate-300 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-blue-400" />
-                Assinatura Digital Obrigatória *
-              </Label>
-              <span className="text-[10px] text-slate-400">
-                {currentDate.toLocaleDateString('pt-BR')} às{' '}
-                {currentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-
-            <DigitalSignaturePad
-              ref={signaturePadRef}
-              onSignatureChange={handleSignatureChange}
-              signerName={authenticatedName}
-              date={currentDate}
-              strokeColor="#000000" // Cor preta para inspetor
-              title="Área de Assinatura do Inspetor / Responsável Técnico"
-              height={170}
-            />
-
-            {signatureError && (
-              <div className="text-xs text-red-400 flex items-center gap-1 mt-1 font-medium animate-fade-in">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                {signatureError}
-              </div>
-            )}
           </div>
         </div>
 
