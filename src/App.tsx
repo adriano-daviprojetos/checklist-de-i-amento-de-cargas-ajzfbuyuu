@@ -17,6 +17,7 @@ import { MaterialsPage } from './pages/MaterialsPage'
 import { ClientsPage } from './pages/ClientsPage'
 import { UsersPage } from './pages/UsersPage'
 import { CompanyPage } from './pages/CompanyPage'
+import { ProfilePage } from './pages/ProfilePage'
 import NotFound from './pages/NotFound'
 import { Loader2 } from 'lucide-react'
 
@@ -131,6 +132,15 @@ const App = () => (
             element={
               <ProtectedRoute adminOnly>
                 <CompanyPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/meu-perfil"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

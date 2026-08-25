@@ -439,6 +439,33 @@ export class AppDataService {
     })
   }
 
+  static async changeOwnPassword(
+    oldPassword: string,
+    newPassword: string,
+    newPasswordConfirm: string,
+  ): Promise<void> {
+    if (!pb.authStore.isValid || !pb.authStore.record?.id) {
+      throw new Error('Usuário não autenticado.')
+    }
+    const currentUserId = pb.authStore.record.id
+    if (!oldPassword || !oldPassword.trim()) {
+      throw new Error('Informe sua senha atual.')
+    }
+    if (!newPassword || newPassword.trim().length < 8) {
+      throw new Error('A nova senha deve conter no mínimo 8 caracteres.')
+    }
+    if (newPassword !== newPasswordConfirm) {
+      throw new Error('A confirmação da nova senha não confere.')
+    }
+
+    // In PocketBase auth collections, updating own password requires oldPassword, password and passwordConfirm
+    await pb.collection('users').update(currentUserId, {
+      oldPassword: oldPassword.trim(),
+      password: newPassword.trim(),
+      passwordConfirm: newPasswordConfirm.trim(),
+    })
+  }
+
   static async deleteUser(id: string): Promise<void> {
     if (pb.authStore.isValid) {
       await pb.collection('users').delete(id)

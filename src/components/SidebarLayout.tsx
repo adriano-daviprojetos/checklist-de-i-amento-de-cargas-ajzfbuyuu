@@ -17,6 +17,8 @@ import {
   X,
   ShieldCheck,
   HardHat,
+  User,
+  KeyRound,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -48,6 +50,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     { title: 'Clientes & Obras', path: '/clientes', icon: Building2, adminOnly: false },
     { title: 'Usuários & Perfis', path: '/usuarios', icon: Users, adminOnly: false },
     { title: 'Dados da Empresa', path: '/empresa', icon: Building, adminOnly: true },
+    { title: 'Meu Perfil', path: '/meu-perfil', icon: User, adminOnly: false },
   ]
 
   const navItems = allNavItems.filter((item) => !item.adminOnly || canManageCompanies)
@@ -248,8 +251,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
         {/* User Card & Logout */}
         <div className="p-3 border-t border-slate-800 bg-slate-900/50">
           <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mb-2">
-            <div className="min-w-0 pr-2">
-              <div className="text-xs font-semibold text-slate-200 truncate">
+            <Link
+              to="/meu-perfil"
+              onClick={() => setMobileMenuOpen(false)}
+              className="min-w-0 pr-2 group block flex-1 hover:opacity-90 transition"
+              title="Acessar Meu Perfil"
+            >
+              <div className="text-xs font-semibold text-slate-200 truncate group-hover:text-blue-400 transition-colors">
                 {user?.name || 'Operador'}
               </div>
               <div className="flex items-center gap-1 mt-0.5">
@@ -260,16 +268,28 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                   {getRoleLabel(role)}
                 </Badge>
               </div>
+            </Link>
+            <div className="flex items-center gap-1">
+              <Link
+                to="/meu-perfil"
+                onClick={() => setMobileMenuOpen(false)}
+                title="Meu Perfil & Senha"
+                className={`p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition ${
+                  location.pathname === '/meu-perfil' ? 'text-blue-400 bg-blue-600/20' : ''
+                }`}
+              >
+                <User className="w-4 h-4" />
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={logout}
+                title="Sair do sistema"
+                className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-950/20"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={logout}
-              title="Sair do sistema"
-              className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-950/20"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
           </div>
         </div>
       </aside>
@@ -292,6 +312,58 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
 
           <div className="flex items-center gap-3">
             <OfflineSyncBar />
+
+            {/* User Profile dropdown/button on desktop */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-2 bg-slate-950/60 border border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800 text-xs px-2.5"
+                >
+                  <div className="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 flex items-center justify-center font-bold text-[10px]">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="max-w-[120px] truncate">{user?.name || 'Usuário'}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 bg-slate-900 border-slate-800 text-slate-200"
+              >
+                <DropdownMenuLabel className="text-xs">
+                  <div className="font-medium text-white truncate">{user?.name || 'Usuário'}</div>
+                  <div className="text-[10px] text-slate-400 font-normal truncate">
+                    {user?.email}
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`mt-1.5 text-[9px] px-1.5 py-0 uppercase ${getRoleBadgeVariant(role)}`}
+                  >
+                    {getRoleLabel(role)}
+                  </Badge>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-slate-800" />
+                <DropdownMenuItem
+                  asChild
+                  className="cursor-pointer text-xs focus:bg-slate-800 focus:text-white"
+                >
+                  <Link to="/meu-perfil" className="flex items-center gap-2 w-full">
+                    <User className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Meu Perfil & Senha</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-slate-800" />
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="cursor-pointer text-xs text-red-400 focus:bg-red-950/30 focus:text-red-300 flex items-center gap-2"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sair do sistema</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
