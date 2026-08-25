@@ -146,6 +146,19 @@ class SyncService {
     }
   }
 
+  private isLocalId(id?: string): boolean {
+    if (!id) return true
+    return (
+      id.startsWith('queue_') ||
+      id.startsWith('local_') ||
+      id.startsWith('eq_') ||
+      id.startsWith('mat_') ||
+      id.startsWith('cli_') ||
+      id.startsWith('tpl_') ||
+      id.startsWith('item_')
+    )
+  }
+
   // Push pending queue items to PocketBase
   public async processSyncQueue(): Promise<{ total: number; processed: number; errors: number }> {
     if (this.isSyncing) return { total: 0, processed: 0, errors: 0 }
@@ -158,19 +171,6 @@ class SyncService {
     let errors = 0
     // In-memory mapping of local IDs to real server IDs for this sync batch
     const idMap = new Map<string, string>()
-
-    const isLocalId = (id?: string) => {
-      if (!id) return true
-      return (
-        id.startsWith('queue_') ||
-        id.startsWith('local_') ||
-        id.startsWith('eq_') ||
-        id.startsWith('mat_') ||
-        id.startsWith('cli_') ||
-        id.startsWith('tpl_') ||
-        id.startsWith('item_')
-      )
-    }
 
     try {
       const queue = await dbGetAll<OfflineSyncQueueItem>('sync_queue')
@@ -202,7 +202,7 @@ class SyncService {
             }
 
             // Clean item_id relation if local or invalid
-            if (payloadData.item_id && isLocalId(payloadData.item_id)) {
+            if (payloadData.item_id && this.isLocalId(payloadData.item_id)) {
               delete payloadData.item_id
             }
 
@@ -259,6 +259,7 @@ class SyncService {
           } else if (item.action === 'update') {
             const {
               id: _ignoredId,
+              local_id,
               expand,
               sync_status,
               created,
@@ -289,7 +290,7 @@ class SyncService {
             let serverId = idMap.get(targetLocalId) || idMap.get(item.id) || targetLocalId
 
             // If the ID is still a local ID (queue_, local_, etc.), it wasn't yet created on server
-            if (isLocalId(serverId)) {
+            if (this.isLocalId(serverId)) {
               // Create first (POST) then record mapping
               const res = await pb.collection(item.entity).create(updatePayloadData)
               serverId = res.id
@@ -317,7 +318,7 @@ class SyncService {
             }
           } else if (item.action === 'delete') {
             const targetId = idMap.get(targetLocalId) || idMap.get(item.id) || targetLocalId
-            if (!isLocalId(targetId)) {
+            if (!this.isLocalId(targetId)) {
               await pb.collection(item.entity).delete(targetId)
             }
           }
@@ -409,9 +410,9 @@ class SyncService {
     }
 
     if (isOnline) {
+      let serverChkId: string | null = null
       try {
         // Attempt direct PocketBase upload
-        let serverChkId = checklistId
         if (isNew) {
           const {
             id: _ignoredId,
@@ -433,6 +434,7 @@ class SyncService {
           await dbDelete('checklists', checklistId)
           await dbPut('checklists', fullChecklist)
         } else {
+          serverChkId = checklistId
           const {
             id: _ignoredId,
             expand,
@@ -483,11 +485,38 @@ class SyncService {
         }
       } catch (uploadErr) {
         console.warn('Online sync failed during save, enqueuing for offline retry', uploadErr)
-        fullChecklist.sync_status = 'pending_sync'
-        await dbPut('checklists', fullChecklist)
-        await this.enqueueSync('checklists', isNew ? 'create' : 'update', fullChecklist)
-        for (const r of savedResponses) {
-          await this.enqueueSync('checklist_responses', 'create', r)
+
+        // Helper to prepare response payload for queue
+        const sanitizeResponse = (r: ChecklistResponse): ChecklistResponse => {
+          const targetChkId = serverChkId || checklistId
+          const cleanResp: ChecklistResponse = {
+            ...r,
+            checklist_id: targetChkId,
+          }
+          if (cleanResp.item_id && this.isLocalId(cleanResp.item_id)) {
+            cleanResp.item_id = undefined
+          }
+          return cleanResp
+        }
+
+        if (serverChkId) {
+          // Checklist was already created/updated on the server.
+          // Do NOT re-enqueue the checklist. Only enqueue the responses (those not yet synced).
+          for (const r of savedResponses) {
+            const isSynced = r.id && !this.isLocalId(r.id)
+            if (!isSynced) {
+              await this.enqueueSync('checklist_responses', 'create', sanitizeResponse(r))
+            }
+          }
+        } else {
+          // Checklist failed to create/update online: enqueue checklist with original local ID
+          fullChecklist.id = checklistId
+          fullChecklist.sync_status = 'pending_sync'
+          await dbPut('checklists', fullChecklist)
+          await this.enqueueSync('checklists', isNew ? 'create' : 'update', fullChecklist)
+          for (const r of savedResponses) {
+            await this.enqueueSync('checklist_responses', 'create', sanitizeResponse(r))
+          }
         }
       }
     } else {
