@@ -41,7 +41,10 @@ onRecordAuthRequest((e) => {
 
     // 3. Se ainda não encontrou, tenta buscar por CPF somente com dígitos
     if (!userRecord) {
-      const digitsOnly = identity.replace(/\D/g, '')
+      const digitsOnly = identity
+        .split('')
+        .filter((c) => c >= '0' && c <= '9')
+        .join('')
       if (digitsOnly.length >= 10 && digitsOnly !== identity) {
         try {
           userRecord = $app.findFirstRecordByFilter('users', 'cpf = {:cpf}', { cpf: digitsOnly })
@@ -72,4 +75,4 @@ onRecordAuthRequest((e) => {
   }
 
   e.next()
-}, 'users')
+})
