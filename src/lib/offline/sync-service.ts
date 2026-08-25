@@ -182,6 +182,7 @@ class SyncService {
           const targetLocalId = item.payload?.id || item.id
 
           if (item.action === 'create') {
+            // Clean PocketBase system / local fields before create
             const {
               id: _ignoredId,
               local_id: _ignoredLocalId,
