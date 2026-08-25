@@ -78,7 +78,7 @@ export const ChecklistDetailPage: React.FC = () => {
   const [equipmentId, setEquipmentId] = useState<string>('none')
   const [materialId, setMaterialId] = useState<string>('none')
   const [riskLevel, setRiskLevel] = useState<'Baixo' | 'Médio' | 'Alto' | 'Crítico'>('Médio')
-  const [inspectorName, setInspectorName] = useState(user?.name || '')
+  const [inspectorName, setInspectorName] = useState(user?.name || user?.email || '')
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState<'Pendente' | 'Em Andamento' | 'Concluído' | 'Reprovado'>(
     'Em Andamento',
@@ -123,7 +123,7 @@ export const ChecklistDetailPage: React.FC = () => {
         }
         setCode(`CHK-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`)
         setTitle('Checklist Operacional de Içamento')
-        setInspectorName(user?.name || '')
+        setInspectorName(user?.name || user?.email || '')
       } else if (id) {
         // Load existing checklist
         const { checklist, responses } = await AppDataService.getChecklistById(id, isOnline)
@@ -139,7 +139,7 @@ export const ChecklistDetailPage: React.FC = () => {
           setEquipmentId(checklist.equipment_id || 'none')
           setMaterialId(checklist.material_id || 'none')
           setRiskLevel(checklist.risk_level || 'Médio')
-          setInspectorName(checklist.inspector_name || user?.name || '')
+          setInspectorName(checklist.inspector_name || user?.name || user?.email || '')
           setNotes(checklist.notes || '')
           setStatus(checklist.status)
           setSignatureData(checklist.signature_data)
@@ -258,6 +258,7 @@ export const ChecklistDetailPage: React.FC = () => {
     inspectorName: string
     signatureData: string
     signedAt: string
+    userId?: string
   }) => {
     const effectiveCompId = selectedCompanyId || company?.id
     if (!effectiveCompId) {
@@ -267,6 +268,9 @@ export const ChecklistDetailPage: React.FC = () => {
 
     setSaving(true)
     try {
+      const finalInspectorName = data.inspectorName || user?.name || user?.email || 'Inspetor'
+      const finalUserId = data.userId || user?.id || ''
+
       const checklistData: Partial<Checklist> = {
         id: isNew ? undefined : id,
         company_id: effectiveCompId,
@@ -274,14 +278,14 @@ export const ChecklistDetailPage: React.FC = () => {
         client_id: clientId === 'none' ? undefined : clientId,
         equipment_id: equipmentId === 'none' ? undefined : equipmentId,
         material_id: materialId === 'none' ? undefined : materialId,
-        user_id: user?.id || '',
+        user_id: finalUserId,
         code,
         title,
         location,
         operation_type: operationType,
         status: data.status,
         risk_level: riskLevel,
-        inspector_name: data.inspectorName,
+        inspector_name: finalInspectorName,
         signature_data: data.signatureData,
         notes,
         completed_at: data.signedAt,
@@ -876,14 +880,23 @@ export const ChecklistDetailPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">
-                Nome do Inspetor / Responsável Técnico
+              <Label className="text-xs text-slate-300 flex items-center justify-between">
+                <span>Responsável Técnico / Inspetor</span>
+                <span className="text-[10px] text-emerald-400">Usuário Autenticado</span>
               </Label>
-              <Input
-                value={inspectorName}
-                onChange={(e) => setInspectorName(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-white text-xs"
-              />
+              <div className="bg-slate-950 border border-slate-800 text-slate-200 text-xs px-3 py-2 rounded-md flex items-center justify-between">
+                <span className="font-medium">
+                  {inspectorName || user?.name || user?.email || 'Usuário Atual'}
+                </span>
+                {user?.role && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] uppercase border-slate-700 text-slate-400 py-0"
+                  >
+                    {user.role}
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -949,14 +962,19 @@ export const ChecklistDetailPage: React.FC = () => {
                     <span>
                       Signatário:{' '}
                       <strong className="text-white font-semibold">
-                        {inspectorName || user?.name || 'Responsável Técnico'}
+                        {inspectorName || user?.name || user?.email || 'Responsável Técnico'}
                       </strong>
                     </span>
                   </div>
+                  {user?.id && (
+                    <div className="text-[11px] text-slate-400">
+                      ID do Usuário: <span className="font-mono text-slate-300">{user.id}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
                     <Calendar className="w-3.5 h-3.5 text-slate-500" />
                     <span>
-                      Data / Hora:{' '}
+                      Data / Hora da Assinatura:{' '}
                       {completedAt
                         ? new Date(completedAt).toLocaleString('pt-BR')
                         : new Date().toLocaleString('pt-BR')}
@@ -1036,7 +1054,6 @@ export const ChecklistDetailPage: React.FC = () => {
         onClose={() => setIsFinalizeModalOpen(false)}
         onConfirm={handleConfirmFinalize}
         targetStatus={finalizeTargetStatus}
-        currentInspectorName={inspectorName || user?.name || ''}
         checklistCode={code}
         checklistTitle={title}
         answeredCount={answeredCount}

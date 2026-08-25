@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -8,18 +8,18 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/contexts/AuthContext'
 import { DigitalSignaturePad, DigitalSignaturePadRef } from './DigitalSignaturePad'
 import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  FileCheck,
   UserCheck,
-  Calendar,
   Lock,
+  ShieldCheck,
+  Fingerprint,
 } from 'lucide-react'
 
 interface FinalizeChecklistModalProps {
@@ -30,9 +30,9 @@ interface FinalizeChecklistModalProps {
     inspectorName: string
     signatureData: string
     signedAt: string
+    userId?: string
   }) => Promise<void>
   targetStatus: 'Concluído' | 'Reprovado'
-  currentInspectorName: string
   checklistCode?: string
   checklistTitle?: string
   answeredCount: number
@@ -46,7 +46,6 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
   onClose,
   onConfirm,
   targetStatus,
-  currentInspectorName,
   checklistCode,
   checklistTitle,
   answeredCount,
@@ -54,18 +53,21 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
   criticalFailsCount,
   saving = false,
 }) => {
-  const [inspectorName, setInspectorName] = useState(currentInspectorName)
+  const { user } = useAuth()
+  const authenticatedName = user?.name || user?.email || 'Usuário Autenticado'
+  const authenticatedUserId = user?.id || ''
+  const authenticatedRole = user?.role || 'Operacional'
+
   const [signatureError, setSignatureError] = useState<string | null>(null)
   const signaturePadRef = useRef<DigitalSignaturePadRef | null>(null)
-  const [hasSignature, setHasSignature] = useState(false)
+  const [, setHasSignature] = useState(false)
   const [signatureData, setSignatureData] = useState<string | null>(null)
 
   const currentDate = new Date()
 
   // Reset or initialize state on dialog open
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
-      setInspectorName(currentInspectorName)
       setSignatureError(null)
       setHasSignature(false)
       setSignatureData(null)
@@ -73,7 +75,7 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
         signaturePadRef.current.clear()
       }
     }
-  }, [isOpen, currentInspectorName])
+  }, [isOpen])
 
   const handleSignatureChange = (isEmpty: boolean, dataUrl: string | null) => {
     setHasSignature(!isEmpty)
@@ -84,8 +86,8 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
   }
 
   const handleConfirm = async () => {
-    if (!inspectorName.trim()) {
-      setSignatureError('Informe o nome do responsável técnico pela inspeção.')
+    if (!authenticatedName.trim()) {
+      setSignatureError('Não foi possível identificar o usuário autenticado.')
       return
     }
 
@@ -93,7 +95,7 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
 
     if (!currentSig || signaturePadRef.current?.isEmpty()) {
       setSignatureError(
-        'A assinatura digital do responsável é obrigatória para finalizar o checklist.',
+        'A assinatura digital do responsável logado é obrigatória para finalizar o checklist.',
       )
       return
     }
@@ -101,9 +103,10 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
     setSignatureError(null)
     await onConfirm({
       status: targetStatus,
-      inspectorName: inspectorName.trim(),
+      inspectorName: authenticatedName.trim(),
       signatureData: currentSig,
       signedAt: new Date().toISOString(),
+      userId: authenticatedUserId,
     })
   }
 
@@ -175,21 +178,49 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
         )}
 
         <div className="space-y-4 pt-1">
-          {/* Inspector Name */}
+          {/* Signer Identification Card (Preenchimento automático a partir do usuário autenticado) */}
           <div className="space-y-1.5">
             <Label className="text-xs text-slate-300 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-blue-400" />
-                Nome do Responsável Técnico / Inspetor *
+                Responsável Técnico Autenticado (Signatário)
               </span>
-              <span className="text-[10px] text-slate-500">Usuário logado ou preposto</span>
+              <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> Usuário Logado
+              </span>
             </Label>
-            <Input
-              value={inspectorName}
-              onChange={(e) => setInspectorName(e.target.value)}
-              placeholder="Nome completo do responsável"
-              className="bg-slate-950 border-slate-800 text-white text-xs h-9 focus:border-blue-500"
-            />
+
+            <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold text-sm shrink-0">
+                  {authenticatedName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white leading-tight">
+                    {authenticatedName}
+                  </div>
+                  <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                    <span className="capitalize">{authenticatedRole}</span>
+                    {user?.cpf && <span>• CPF: {user.cpf}</span>}
+                    {user?.email && <span className="hidden sm:inline">• {user.email}</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-right shrink-0">
+                <Badge
+                  variant="outline"
+                  className="bg-slate-900 border-slate-700 text-slate-300 text-[10px] flex items-center gap-1"
+                >
+                  <Fingerprint className="w-3 h-3 text-blue-400" />
+                  ID: {authenticatedUserId ? authenticatedUserId.slice(0, 8) : 'Sessão'}
+                </Badge>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 italic">
+              * O checklist será assinado e vinculado ao perfil autenticado acima para fins de
+              auditoria técnica.
+            </p>
           </div>
 
           {/* Digital Signature Pad */}
@@ -208,7 +239,7 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
             <DigitalSignaturePad
               ref={signaturePadRef}
               onSignatureChange={handleSignatureChange}
-              signerName={inspectorName}
+              signerName={authenticatedName}
               date={currentDate}
               strokeColor="#1e3a5f" // Azul Davi Projetos #1e3a5f
               height={170}
