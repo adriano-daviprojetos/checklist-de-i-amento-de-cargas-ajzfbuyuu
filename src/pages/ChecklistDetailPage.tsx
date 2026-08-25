@@ -840,6 +840,77 @@ export const ChecklistDetailPage: React.FC = () => {
               </Select>
             </div>
           </div>
+
+          {/* Card informativo de equipamento selecionado */}
+          {equipmentId &&
+            equipmentId !== 'none' &&
+            (() => {
+              const selectedEq = equipmentList.find((e) => e.id === equipmentId)
+              if (!selectedEq) return null
+
+              return (
+                <div className="mt-2 p-3.5 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-2 animate-in fade-in-50 duration-200">
+                  <div className="flex items-center justify-between gap-2 border-b border-slate-800/60 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-blue-400 shrink-0" />
+                      <span className="text-xs font-semibold text-slate-200">
+                        Especificações do Equipamento
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-blue-950/40 text-blue-400 border-blue-800/60 font-normal"
+                      >
+                        {selectedEq.type || 'Equipamento'}
+                      </Badge>
+                    </div>
+                    {selectedEq.status && (
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${
+                          selectedEq.status === 'Operacional'
+                            ? 'border-emerald-700/60 text-emerald-400 bg-emerald-950/30'
+                            : selectedEq.status === 'Em Manutenção'
+                              ? 'border-amber-700/60 text-amber-400 bg-amber-950/30'
+                              : 'border-slate-700 text-slate-400 bg-slate-900'
+                        }`}
+                      >
+                        {selectedEq.status}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-0.5 text-xs">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] text-slate-400">Fabricante</span>
+                      <p className="font-medium text-slate-200 truncate">
+                        {selectedEq.manufacturer || 'Não informado'}
+                      </p>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] text-slate-400">Modelo</span>
+                      <p className="font-medium text-slate-200 truncate">
+                        {selectedEq.model || 'Não informado'}
+                      </p>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] text-slate-400">Capacidade</span>
+                      <p className="font-medium text-slate-200 truncate">
+                        {selectedEq.capacity || 'Não informado'}
+                      </p>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] text-slate-400">Placa</span>
+                      <p className="font-medium text-slate-200 font-mono">
+                        {selectedEq.license_plate || 'Sem placa / N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
         </CardContent>
       </Card>
 
