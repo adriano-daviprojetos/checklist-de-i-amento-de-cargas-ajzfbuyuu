@@ -62,7 +62,6 @@ function getImageDimensions(
   base64Data: string,
 ): Promise<{ width: number; height: number; format: string }> {
   return new Promise((resolve) => {
-    // Detect format
     let format = 'PNG'
     if (base64Data.startsWith('data:image/jpeg') || base64Data.startsWith('data:image/jpg')) {
       format = 'JPEG'
@@ -91,7 +90,7 @@ function getImageDimensions(
 }
 
 /**
- * Formats a date string into "DD/MM/AAAA às HH:MM"
+ * Formats a date string into "DD/MM/AAAA às HH:MM" or "DD/MM/AAAA HH:MM"
  */
 function formatDateTime(dateStr?: string | null): string {
   if (!dateStr) return '-'
@@ -107,7 +106,7 @@ function formatDateTime(dateStr?: string | null): string {
       hour: '2-digit',
       minute: '2-digit',
     })
-    return `${datePart} às ${timePart}`
+    return `${datePart} ${timePart}`
   } catch {
     return '-'
   }
@@ -126,8 +125,8 @@ function getStatusDisplay(status?: string): {
     case 'SIM':
       return {
         text: 'CONFORME',
-        textColor: [6, 95, 70], // #065F46 dark green
-        bgColor: [209, 250, 229], // #D1FAE5 light green
+        textColor: [6, 95, 70], // #065F46 dark emerald
+        bgColor: [209, 250, 229], // #D1FAE5 light emerald
       }
     case 'NC':
     case 'NAO':
@@ -173,8 +172,10 @@ export async function generateChecklistPdf({
 
   const pageWidth = doc.internal.pageSize.getWidth() // 210mm
   const pageHeight = doc.internal.pageSize.getHeight() // 297mm
-  const margin = 14
-  const contentWidth = pageWidth - margin * 2 // 182mm
+  const margin = 8 // 8mm compact margin
+  const contentWidth = pageWidth - margin * 2 // 194mm
+  const bottomFooterReserve = 12 // Space reserved for footer
+  const pageContentBottomLimit = pageHeight - margin - bottomFooterReserve // ~277mm
 
   // Colors
   const primaryNavy: [number, number, number] = [15, 23, 42] // Slate 900
@@ -184,10 +185,8 @@ export async function generateChecklistPdf({
   const darkText: [number, number, number] = [30, 41, 59] // Slate 800
   const lightMutedText: [number, number, number] = [100, 116, 139] // Slate 500
 
-  // Effective company name
+  // Effective names
   const companyName = company?.trade_name || company?.name || 'Davi Projetos - Engenharia e Rigging'
-
-  // Effective client name
   const clientName =
     client?.trade_name ||
     client?.name ||
@@ -195,7 +194,7 @@ export async function generateChecklistPdf({
     checklist?.expand?.client_id?.name ||
     'Não informado'
 
-  // Map of responses by itemId and by title for fallback
+  // Map of responses by itemId and title
   const responseByItemId = new Map<string, ChecklistResponse>()
   const responseByTitle = new Map<string, ChecklistResponse>()
   safeResponses.forEach((r) => {
@@ -207,7 +206,6 @@ export async function generateChecklistPdf({
   const sortedGroups = [...safeGroups].sort((a, b) => (a?.sort_order ?? 0) - (b?.sort_order ?? 0))
   const processedGroups: ProcessedGroup[] = []
 
-  // Defined groups
   sortedGroups.forEach((grp, gIdx) => {
     if (!grp?.id) return
     const groupItems = safeItems
@@ -302,37 +300,35 @@ export async function generateChecklistPdf({
 
   const safeChecklistCode = checklist?.code || 'CHK-N/A'
 
-  // Render Header (applied to every page)
-  const renderHeader = (_isFirstPage: boolean = false) => {
-    // Outer Header Box
+  // Header height
+  const headerHeight = 15 // Compact header: 15mm
+
+  // Render Compact Header on any page
+  const renderHeader = (isFirstPage: boolean = true) => {
     doc.setFillColor(headerBgColor[0], headerBgColor[1], headerBgColor[2])
     doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
-    doc.setLineWidth(0.3)
-    doc.roundedRect(margin, margin, contentWidth, 27, 2, 2, 'FD')
+    doc.setLineWidth(0.25)
+    doc.roundedRect(margin, margin, contentWidth, headerHeight, 1.2, 1.2, 'FD')
 
     // Left accent bar
     doc.setFillColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
-    doc.rect(margin, margin, 3, 27, 'F')
+    doc.rect(margin, margin, 2.5, headerHeight, 'F')
 
-    // Company / Brand
+    // Row 1: Company Name (left) & Main Title (middle) & Code/Status (right)
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10)
+    doc.setFontSize(8)
     doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
-    doc.text(companyName.toUpperCase(), margin + 6, margin + 5.5)
+    const compText = companyName.toUpperCase()
+    const truncatedCompany = compText.length > 28 ? compText.substring(0, 26) + '...' : compText
+    doc.text(truncatedCompany, margin + 4.5, margin + 4.5)
 
-    // Main Title
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(12)
-    doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-    doc.text('RELATÓRIO DE CHECKLIST DE IÇAMENTO DE CARGAS', margin + 6, margin + 11.5)
-
-    // Subtitle / Checklist Code & Status
-    doc.setFont('helvetica', 'normal')
     doc.setFontSize(8.5)
-    doc.setTextColor(darkText[0], darkText[1], darkText[2])
-    doc.text(`Código: `, margin + 6, margin + 17)
-    doc.setFont('helvetica', 'bold')
-    doc.text(safeChecklistCode, margin + 18, margin + 17)
+    doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
+    const docTitle = isFirstPage
+      ? 'RELATÓRIO DE CHECKLIST DE IÇAMENTO'
+      : `RELATÓRIO DE CHECKLIST - ${safeChecklistCode}`
+    doc.text(docTitle, margin + 55, margin + 4.5)
 
     // Status Badge inside header
     const isCompleted = checklist?.status === 'Concluído'
@@ -343,9 +339,11 @@ export async function generateChecklistPdf({
         ? 'REPROVADO'
         : (checklist?.status || 'EM ANDAMENTO').toUpperCase()
 
-    const badgeX = margin + 55
-    const badgeY = margin + 13.5
-    doc.setFontSize(7.5)
+    const badgeW = 32
+    const badgeH = 4.2
+    const badgeX = pageWidth - margin - badgeW - 1.5
+    const badgeY = margin + 1.8
+    doc.setFontSize(6.5)
     doc.setFont('helvetica', 'bold')
     if (isCompleted) {
       doc.setFillColor(209, 250, 229)
@@ -360,172 +358,173 @@ export async function generateChecklistPdf({
       doc.setTextColor(3, 105, 161)
       doc.setDrawColor(14, 165, 233)
     }
-    doc.roundedRect(badgeX, badgeY, 38, 5, 1, 1, 'FD')
-    doc.text(stBadgeText, badgeX + 19, badgeY + 3.6, { align: 'center' })
+    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 0.8, 0.8, 'FD')
+    doc.text(stBadgeText, badgeX + badgeW / 2, badgeY + 2.9, { align: 'center' })
 
-    // Client/Obra in header
+    // Horizontal thin divider in header
+    doc.setDrawColor(226, 232, 240)
+    doc.setLineWidth(0.15)
+    doc.line(margin + 3, margin + 7.2, margin + contentWidth - 1, margin + 7.2)
+
+    // Row 2: Checklist Code, Client/Obra, Dates, Risk
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(8)
+    doc.setFontSize(6.8)
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-    doc.text('Cliente / Obra:', margin + 6, margin + 22.5)
+    doc.text('Cód: ', margin + 4.5, margin + 11.5)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(darkText[0], darkText[1], darkText[2])
-    const truncatedClient =
-      clientName.length > 40 ? clientName.substring(0, 38) + '...' : clientName
-    doc.text(truncatedClient, margin + 26, margin + 22.5)
+    doc.text(safeChecklistCode, margin + 11.5, margin + 11.5)
 
-    // Right Column in header: Dates
-    const rightColX = pageWidth - margin - 5
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7.5)
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
+    doc.text('Cliente/Obra: ', margin + 36, margin + 11.5)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(darkText[0], darkText[1], darkText[2])
+    const maxClientLen = 32
+    const clientDisplay =
+      clientName.length > maxClientLen
+        ? clientName.substring(0, maxClientLen - 2) + '...'
+        : clientName
+    doc.text(clientDisplay, margin + 53, margin + 11.5)
 
-    const createdFormatted = formatDateTime(checklist?.created || checklist?.scheduled_date)
-    const completedFormatted = formatDateTime(checklist?.completed_at || checklist?.updated)
-
-    doc.text(`Criação: ${createdFormatted}`, rightColX, margin + 6.5, { align: 'right' })
-    doc.text(`Finalização: ${completedFormatted}`, rightColX, margin + 11.5, { align: 'right' })
+    // Dates and Risk on Right side of row 2
+    const createdFormatted = formatDateTime(checklist?.scheduled_date || checklist?.created)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
+    doc.text(`Data: ${createdFormatted}`, margin + 112, margin + 11.5)
 
     if (checklist?.risk_level) {
-      doc.text(`Grau de Risco: `, rightColX - 18, margin + 17, { align: 'right' })
+      doc.text(`Risco: `, margin + 152, margin + 11.5)
       doc.setFont('helvetica', 'bold')
       if (checklist.risk_level === 'Alto' || checklist.risk_level === 'Crítico') {
         doc.setTextColor(185, 28, 28)
       } else {
         doc.setTextColor(darkText[0], darkText[1], darkText[2])
       }
-      doc.text(checklist.risk_level.toUpperCase(), rightColX, margin + 17, { align: 'right' })
+      doc.text(checklist.risk_level.toUpperCase(), margin + 161, margin + 11.5)
     }
 
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-    doc.setFontSize(7)
-    doc.text(`Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightColX, margin + 22.5, {
+    const emissionDateStr = new Date().toLocaleDateString('pt-BR')
+    doc.text(`Emissão: ${emissionDateStr}`, pageWidth - margin - 2, margin + 11.5, {
       align: 'right',
     })
   }
 
-  // Render Operation Details Block (First page before items)
+  // Render Compact Operation & Equipment Details Block (Side-by-side 2-column or unified grid)
   const renderOperationDetails = (startY: number): number => {
+    const boxHeight = 27 // Ultra compact height: 27mm
     doc.setFillColor(248, 250, 252)
     doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
-    doc.setLineWidth(0.25)
+    doc.setLineWidth(0.2)
+    doc.roundedRect(margin, startY, contentWidth, boxHeight, 1.2, 1.2, 'FD')
 
-    const boxHeight = 44
-    doc.roundedRect(margin, startY, contentWidth, boxHeight, 1.5, 1.5, 'FD')
+    const halfW = (contentWidth - 2) / 2
+    const leftColX = margin + 2.5
+    const rightColX = margin + halfW + 3
 
-    // Section title inside box
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-    doc.text('DADOS DA OPERAÇÃO DE IÇAMENTO', margin + 3.5, startY + 4.5)
-
-    // Horizontal line
+    // Vertical separator between Operation and Equipment
     doc.setDrawColor(226, 232, 240)
-    doc.line(margin, startY + 6.5, margin + contentWidth, startY + 6.5)
+    doc.setLineWidth(0.2)
+    doc.line(margin + halfW + 1, startY + 1.5, margin + halfW + 1, startY + boxHeight - 1.5)
 
-    // Cell helper
-    const drawCell = (x: number, y: number, label: string, val: string, maxLen = 36) => {
+    // Left Column: DADOS DA OPERAÇÃO
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(7.2)
+    doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
+    doc.text('DADOS DA OPERAÇÃO', leftColX, startY + 4)
+
+    // Right Column: EQUIPAMENTO & ACESSÓRIOS
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(7.2)
+    doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
+    doc.text('EQUIPAMENTO E ACESSÓRIOS', rightColX, startY + 4)
+
+    // Subtle horizontal divider under column titles
+    doc.setDrawColor(235, 238, 243)
+    doc.line(leftColX, startY + 5.5, leftColX + halfW - 4, startY + 5.5)
+    doc.line(rightColX, startY + 5.5, rightColX + halfW - 4, startY + 5.5)
+
+    // Helper for key-value pair
+    const drawField = (x: number, y: number, label: string, val: string, maxLen = 32) => {
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(6.8)
+      doc.setFontSize(6.2)
       doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
       doc.text(label, x, y)
 
       doc.setFont('helvetica', 'normal')
-      doc.setFontSize(7.8)
+      doc.setFontSize(7)
       doc.setTextColor(darkText[0], darkText[1], darkText[2])
       const safeVal = val || '—'
       const textToDraw =
         safeVal.length > maxLen ? safeVal.substring(0, maxLen - 2) + '...' : safeVal
-      doc.text(textToDraw, x, y + 3.8)
+      doc.text(textToDraw, x, y + 3)
     }
 
-    // Grid columns (3 columns for general info)
-    const col1X = margin + 3.5
-    const col2X = margin + contentWidth / 3 + 2
-    const col3X = margin + (contentWidth / 3) * 2 + 2
+    // Left column items: Row 1 & Row 2 & Row 3
+    const opSubColW = (halfW - 5) / 2
+    const row1Y = startY + 9.5
+    const row2Y = startY + 18.5
 
-    const row1Y = startY + 11
-
-    drawCell(
-      col1X,
+    drawField(
+      leftColX,
       row1Y,
-      'DATA / HORA PROGRAMADA',
+      'DATA / HORA PROG.',
       formatDateTime(checklist?.scheduled_date || checklist?.created),
+      22,
     )
-    drawCell(col2X, row1Y, 'LOCAL / FRENTE DE SERVIÇO', checklist?.location || '—')
-    drawCell(
-      col3X,
-      row1Y,
+    drawField(leftColX + opSubColW, row1Y, 'LOCAL / FRENTE', checklist?.location || '—', 24)
+
+    drawField(
+      leftColX,
+      row2Y,
       'MANOBRA / OPERAÇÃO',
       checklist?.operation_type || checklist?.title || 'Içamento de Carga',
+      24,
+    )
+    drawField(
+      leftColX + opSubColW,
+      row2Y,
+      'RESP. PREENCHIMENTO',
+      checklist?.filled_by_name || checklist?.inspector_name || '—',
+      22,
     )
 
-    // Divider line between General info and Equipment/Materials details
-    doc.setDrawColor(235, 238, 243)
-    doc.line(margin + 2, startY + 17.5, margin + contentWidth - 2, startY + 17.5)
-
-    // Equipment object & details
+    // Right column items: Equipment & Material
     const eqObj = equipment || checklist?.expand?.equipment_id
     const eqType = eqObj?.type || '—'
-    const eqManufacturer = eqObj?.manufacturer || '—'
-    const eqModel = eqObj?.model || '—'
-    const eqCapacity = eqObj?.capacity || '—'
+    const eqModel = eqObj?.model || eqObj?.manufacturer || '—'
+    const eqCap = eqObj?.capacity ? `${eqObj.capacity}` : '—'
     const eqPlate = eqObj?.license_plate || '—'
 
-    // Subheader: DADOS DO EQUIPAMENTO
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.2)
-    doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
-    doc.text('EQUIPAMENTO UTILIZADO', margin + 3.5, startY + 22)
+    const eqSubColW = (halfW - 5) / 2
+    drawField(rightColX, row1Y, 'TIPO / MODELO', `${eqType} - ${eqModel}`, 24)
+    drawField(rightColX + eqSubColW, row1Y, 'CAPACIDADE / PLACA', `${eqCap} | ${eqPlate}`, 22)
 
-    // 5-column layout for equipment parameters
-    const eqColW = (contentWidth - 7) / 5
-    const eqRowY = startY + 27.5
-
-    drawCell(margin + 3.5 + eqColW * 0, eqRowY, 'TIPO', eqType, 22)
-    drawCell(margin + 3.5 + eqColW * 1, eqRowY, 'FABRICANTE', eqManufacturer, 22)
-    drawCell(margin + 3.5 + eqColW * 2, eqRowY, 'MODELO', eqModel, 22)
-    drawCell(margin + 3.5 + eqColW * 3, eqRowY, 'CAPACIDADE', eqCapacity, 20)
-    drawCell(margin + 3.5 + eqColW * 4, eqRowY, 'PLACA', eqPlate, 18)
-
-    // Row 3: Acessórios/Materiais & Responsável pelo preenchimento
     const matObj = material || checklist?.expand?.material_id
     const matStr = matObj
-      ? `TAG: ${matObj.tag || '—'} | ${matObj.type || '—'} (${matObj.capacity || 'S/ Cap'})`.trim()
-      : '—'
+      ? `${matObj.type || 'Acessório'} TAG: ${matObj.tag || '—'} (${matObj.capacity || 'S/ Cap'})`.trim()
+      : 'Nenhum acessório vinculado'
+    drawField(rightColX, row2Y, 'ACESSÓRIOS / MATERIAIS', matStr, 48)
 
-    const row3Y = startY + 36.5
-    drawCell(col1X, row3Y, 'ACESSÓRIOS / MATERIAIS', matStr, 48)
-    drawCell(
-      col3X,
-      row3Y,
-      'RESP. PELO PREENCHIMENTO',
-      checklist?.filled_by_name || checklist?.inspector_name || '—',
-      38,
-    )
-
-    return startY + boxHeight + 4
+    return startY + boxHeight + 2.5
   }
 
-  // Generate Pages (One page per section/group)
-  let isFirst = true
+  // Draw Page 1 header and operation details
+  renderHeader(true)
+  let currentY = margin + headerHeight + 2.5
+  currentY = renderOperationDetails(currentY)
 
+  // Render Groups & Items continuously across pages
   for (let gIdx = 0; gIdx < processedGroups.length; gIdx++) {
     const group = processedGroups[gIdx]
 
-    if (!isFirst) {
+    // Check if group header banner + minimal rows fit on current page; if not, add page
+    if (currentY + 16 > pageContentBottomLimit) {
       doc.addPage()
-    }
-    isFirst = false
-
-    renderHeader()
-
-    let currentY = margin + 30
-
-    // Only on page 1: show operation details before the first group
-    if (gIdx === 0) {
-      currentY = renderOperationDetails(currentY)
+      renderHeader(false)
+      currentY = margin + headerHeight + 2.5
     }
 
     // Section Group Header Banner
@@ -533,31 +532,31 @@ export async function generateChecklistPdf({
       group.groupNumber !== null ? `${group.groupNumber}. ${group.name}` : group.name
 
     doc.setFillColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
-    doc.roundedRect(margin, currentY, contentWidth, 7, 1, 1, 'F')
+    doc.roundedRect(margin, currentY, contentWidth, 5, 0.8, 0.8, 'F')
 
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(9)
+    doc.setFontSize(7.5)
     doc.setTextColor(255, 255, 255)
-    doc.text(groupTitle.toUpperCase(), margin + 3, currentY + 4.8)
+    doc.text(groupTitle.toUpperCase(), margin + 2.5, currentY + 3.5)
 
     // Item count indicator on right
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7.5)
+    doc.setFontSize(6.5)
     doc.text(
       `${group.items.length} ${group.items.length === 1 ? 'item' : 'itens'}`,
-      pageWidth - margin - 4,
-      currentY + 4.8,
+      pageWidth - margin - 3,
+      currentY + 3.5,
       { align: 'right' },
     )
 
-    currentY += 9
+    currentY += 5.8
 
     // Table of items for this group
     const tableBody =
       group.items.length > 0
         ? group.items.map((item) => {
-            let fullTitle = `${item.itemNumberLabel}  ${item.title}`
-            if (item.isCritical) fullTitle += ' [ITEM CRÍTICO]'
+            let fullTitle = item.title
+            if (item.isCritical) fullTitle += ' [CRÍTICO]'
             if (item.isMandatory) fullTitle += ' (Obrigatório)'
             if (item.description) fullTitle += `\n${item.description}`
             if (item.value) fullTitle += `\nMedição: ${item.value}`
@@ -572,25 +571,25 @@ export async function generateChecklistPdf({
       head: [['Nº', 'ITEM DE VERIFICAÇÃO / DESCRIÇÃO / OBSERVAÇÕES', 'AVALIAÇÃO']],
       body: tableBody,
       theme: 'grid',
-      margin: { left: margin, right: margin, bottom: 22 },
+      margin: { left: margin, right: margin, bottom: bottomFooterReserve + 2 },
       tableWidth: contentWidth,
       headStyles: {
         fillColor: [30, 41, 59], // Slate 800
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 7.5,
+        fontSize: 7,
         halign: 'left',
-        cellPadding: 2,
+        cellPadding: 1.2,
       },
       columnStyles: {
-        0: { cellWidth: 12, halign: 'center', fontStyle: 'bold', fontSize: 8 },
-        1: { cellWidth: 'auto', fontSize: 8 },
-        2: { cellWidth: 32, halign: 'center', fontStyle: 'bold', fontSize: 7.5 },
+        0: { cellWidth: 10, halign: 'center', fontStyle: 'bold', fontSize: 7 },
+        1: { cellWidth: 'auto', fontSize: 7 },
+        2: { cellWidth: 26, halign: 'center', fontStyle: 'bold', fontSize: 6.8 },
       },
       styles: {
-        cellPadding: 2.2,
+        cellPadding: 1.2,
         lineColor: borderGray,
-        lineWidth: 0.15,
+        lineWidth: 0.12,
         textColor: darkText,
         overflow: 'linebreak',
       },
@@ -614,91 +613,104 @@ export async function generateChecklistPdf({
         }
       },
     })
+
+    // Advance currentY after table
+    currentY = ((doc as any).lastAutoTable?.finalY ?? currentY) + 2.5
   }
 
-  // --- Final Signatures Page (or prominent section at the end) ---
-  // We add a dedicated concluding page for Technical Opinions, Notes, and Digital Signatures
-  doc.addPage()
-  renderHeader()
+  // --- Concluding Section: Technical Opinion, Notes & Side-by-Side Signatures ---
+  // Check if signatures block + notes fit on current page (approx 55mm needed)
+  const notesAndSignaturesHeight = 54
+  if (currentY + notesAndSignaturesHeight > pageContentBottomLimit) {
+    doc.addPage()
+    renderHeader(false)
+    currentY = margin + headerHeight + 2.5
+  }
 
-  let sigY = margin + 30
-
-  // General Notes & Recommendations Box
+  // General Notes & Recommendations Box (Compact)
+  const notesBoxH = 16
   doc.setFillColor(248, 250, 252)
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
-  doc.setLineWidth(0.25)
-  doc.roundedRect(margin, sigY, contentWidth, 38, 1.5, 1.5, 'FD')
+  doc.setLineWidth(0.2)
+  doc.roundedRect(margin, currentY, contentWidth, notesBoxH, 1.2, 1.2, 'FD')
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5)
+  doc.setFontSize(7)
   doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-  doc.text('PARECER FINAL E OBSERVAÇÕES TÉCNICAS DE RIGGING', margin + 3.5, sigY + 5)
+  doc.text('PARECER FINAL E OBSERVAÇÕES TÉCNICAS', margin + 2.5, currentY + 3.6)
+
+  // Status and Conclusion stamp on right side of title
+  const isApproved = checklist?.status === 'Concluído'
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(6.8)
+  if (isApproved) {
+    doc.setTextColor(6, 95, 70)
+    doc.text(
+      'OPERAÇÃO LIBERADA - CONFORMIDADE ATESTADA',
+      margin + contentWidth - 2.5,
+      currentY + 3.6,
+      {
+        align: 'right',
+      },
+    )
+  } else if (checklist?.status === 'Reprovado') {
+    doc.setTextColor(153, 27, 27)
+    doc.text(
+      'OPERAÇÃO BLOQUEADA - NÃO CONFORMIDADES',
+      margin + contentWidth - 2.5,
+      currentY + 3.6,
+      {
+        align: 'right',
+      },
+    )
+  } else {
+    doc.setTextColor(146, 64, 14)
+    doc.text('EM ANDAMENTO / PENDENTE DE LIBERAÇÃO', margin + contentWidth - 2.5, currentY + 3.6, {
+      align: 'right',
+    })
+  }
 
   doc.setDrawColor(226, 232, 240)
-  doc.line(margin, sigY + 7, margin + contentWidth, sigY + 7)
+  doc.setLineWidth(0.15)
+  doc.line(margin + 2, currentY + 5.2, margin + contentWidth - 2, currentY + 5.2)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
+  doc.setFontSize(6.8)
   doc.setTextColor(darkText[0], darkText[1], darkText[2])
 
   const notesText =
     checklist?.notes?.trim() ||
-    'Operação vistoriada conforme normas regulamentadoras de segurança vigentes (NR-11, NR-12 e NR-18). Equipamentos, acessórios de amarração e isolamento de raio de giro inspecionados no canteiro de obras.'
-  const splitNotes = doc.splitTextToSize(notesText, contentWidth - 7)
-  doc.text(splitNotes, margin + 3.5, sigY + 12)
+    'Operação vistoriada conforme normas regulamentadoras vigentes (NR-11, NR-12 e NR-18). Equipamentos, acessórios e isolamento de raio de giro inspecionados no canteiro de obras.'
+  const splitNotes = doc.splitTextToSize(notesText, contentWidth - 5)
+  // Limit to 2 lines for compactness
+  const displayedNotes = splitNotes.slice(0, 2)
+  doc.text(displayedNotes, margin + 2.5, currentY + 8.8)
 
-  // Status and Conclusion stamp inside notes box
-  const conclusionY = sigY + 31
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  doc.text('Conclusão da Vistoria:', margin + 3.5, conclusionY)
+  currentY += notesBoxH + 2
 
-  const isApproved = checklist?.status === 'Concluído'
-  if (isApproved) {
-    doc.setTextColor(6, 95, 70)
-    doc.text('OPERAÇÃO LIBERADA - CONFORMIDADE ATESTADA', margin + 38, conclusionY)
-  } else if (checklist?.status === 'Reprovado') {
-    doc.setTextColor(153, 27, 27)
-    doc.text('OPERAÇÃO BLOQUEADA - NÃO CONFORMIDADES IDENTIFICADAS', margin + 38, conclusionY)
-  } else {
-    doc.setTextColor(146, 64, 14)
-    doc.text('EM ANDAMENTO / PENDENTE DE LIBERAÇÃO', margin + 38, conclusionY)
-  }
-
-  sigY += 44
-
-  // Title for Signatures
-  doc.setFillColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-  doc.roundedRect(margin, sigY, contentWidth, 7, 1, 1, 'F')
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.setTextColor(255, 255, 255)
-  doc.text('VALIDAÇÃO E ASSINATURAS DIGITAIS', margin + 3, sigY + 4.8)
-
-  sigY += 11
-
-  // Signatures 2-column layout
-  const sigBoxWidth = (contentWidth - 6) / 2
-  const sigBoxHeight = 65
+  // Signatures Side-by-Side (2 columns)
+  const sigBoxW = (contentWidth - 4) / 2
+  const sigBoxH = 34 // Compact signature box height
 
   // Box 1: Responsável pelo Preenchimento
   const box1X = margin
   doc.setFillColor(255, 255, 255)
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
-  doc.setLineWidth(0.3)
-  doc.roundedRect(box1X, sigY, sigBoxWidth, sigBoxHeight, 2, 2, 'FD')
+  doc.setLineWidth(0.2)
+  doc.roundedRect(box1X, currentY, sigBoxW, sigBoxH, 1.2, 1.2, 'FD')
 
   // Header of Box 1
   doc.setFillColor(241, 245, 249)
-  doc.rect(box1X, sigY, sigBoxWidth, 7, 'F')
+  doc.roundedRect(box1X, currentY, sigBoxW, 4.5, 1.2, 1.2, 'F')
+  doc.rect(box1X, currentY + 2.5, sigBoxW, 2, 'F') // straighten bottom corners
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
+  doc.setFontSize(6.8)
   doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-  doc.text('RESPONSÁVEL PELO PREENCHIMENTO', box1X + sigBoxWidth / 2, sigY + 4.8, {
+  doc.text('RESPONSÁVEL PELO PREENCHIMENTO', box1X + sigBoxW / 2, currentY + 3.2, {
     align: 'center',
   })
 
-  // Signature Image / Placeholder for Filled By
+  // Signature 1 image / placeholder
   if (
     checklist?.filled_by_signature &&
     typeof checklist.filled_by_signature === 'string' &&
@@ -706,13 +718,13 @@ export async function generateChecklistPdf({
   ) {
     try {
       const dim = filledBySigDimensions || { width: 400, height: 200, format: 'PNG' }
-      const maxImgW = sigBoxWidth - 10
-      const maxImgH = 28
+      const maxImgW = sigBoxW - 8
+      const maxImgH = 14
       const ratio = Math.min(maxImgW / dim.width, maxImgH / dim.height)
       const renderW = dim.width * ratio
       const renderH = dim.height * ratio
-      const renderX = box1X + (sigBoxWidth - renderW) / 2
-      const renderY = sigY + 9 + (maxImgH - renderH) / 2
+      const renderX = box1X + (sigBoxW - renderW) / 2
+      const renderY = currentY + 5.5 + (maxImgH - renderH) / 2
 
       doc.addImage(
         checklist.filled_by_signature,
@@ -728,63 +740,58 @@ export async function generateChecklistPdf({
       console.warn('Error inserting filled_by signature image in PDF', err)
     }
   } else {
-    // Stamp placeholder
     doc.setFont('helvetica', 'italic')
-    doc.setFontSize(7.5)
+    doc.setFontSize(6.5)
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-    doc.text(
-      '(Assinatura registrada digitalmente em sistema)',
-      box1X + sigBoxWidth / 2,
-      sigY + 22,
-      {
-        align: 'center',
-      },
-    )
+    doc.text('(Assinatura digital registrada)', box1X + sigBoxW / 2, currentY + 12.5, {
+      align: 'center',
+    })
   }
 
-  // Signature Line 1
-  const line1Y = sigY + 44
+  // Line 1
+  const line1Y = currentY + 21.5
   doc.setDrawColor(148, 163, 184)
-  doc.setLineWidth(0.4)
-  doc.line(box1X + 8, line1Y, box1X + sigBoxWidth - 8, line1Y)
+  doc.setLineWidth(0.3)
+  doc.line(box1X + 6, line1Y, box1X + sigBoxW - 6, line1Y)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5)
+  doc.setFontSize(7.2)
   doc.setTextColor(darkText[0], darkText[1], darkText[2])
   const filledName =
     checklist?.filled_by_name || checklist?.inspector_name || 'Profissional Responsável'
-  doc.text(filledName, box1X + sigBoxWidth / 2, line1Y + 4.5, { align: 'center' })
+  doc.text(filledName, box1X + sigBoxW / 2, line1Y + 3.2, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7)
+  doc.setFontSize(6)
   doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-  doc.text('Operador / Rigger Responsável', box1X + sigBoxWidth / 2, line1Y + 8.5, {
+  doc.text('Operador / Rigger Responsável', box1X + sigBoxW / 2, line1Y + 6.2, {
     align: 'center',
   })
   if (checklist?.created) {
-    doc.text(`Data: ${formatDateTime(checklist.created)}`, box1X + sigBoxWidth / 2, line1Y + 12.5, {
+    doc.text(`Data: ${formatDateTime(checklist.created)}`, box1X + sigBoxW / 2, line1Y + 9.2, {
       align: 'center',
     })
   }
 
   // Box 2: Inspetor / Responsável Técnico
-  const box2X = margin + sigBoxWidth + 6
+  const box2X = margin + sigBoxW + 4
   doc.setFillColor(255, 255, 255)
   doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
-  doc.setLineWidth(0.3)
-  doc.roundedRect(box2X, sigY, sigBoxWidth, sigBoxHeight, 2, 2, 'FD')
+  doc.setLineWidth(0.2)
+  doc.roundedRect(box2X, currentY, sigBoxW, sigBoxH, 1.2, 1.2, 'FD')
 
   // Header of Box 2
   doc.setFillColor(241, 245, 249)
-  doc.rect(box2X, sigY, sigBoxWidth, 7, 'F')
+  doc.roundedRect(box2X, currentY, sigBoxW, 4.5, 1.2, 1.2, 'F')
+  doc.rect(box2X, currentY + 2.5, sigBoxW, 2, 'F')
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
+  doc.setFontSize(6.8)
   doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-  doc.text('INSPETOR / RESPONSÁVEL TÉCNICO', box2X + sigBoxWidth / 2, sigY + 4.8, {
+  doc.text('INSPETOR / RESPONSÁVEL TÉCNICO', box2X + sigBoxW / 2, currentY + 3.2, {
     align: 'center',
   })
 
-  // Signature Image / Placeholder for Inspector
+  // Signature 2 image / placeholder
   if (
     checklist?.signature_data &&
     typeof checklist.signature_data === 'string' &&
@@ -792,13 +799,13 @@ export async function generateChecklistPdf({
   ) {
     try {
       const dim = inspectorSigDimensions || { width: 400, height: 200, format: 'PNG' }
-      const maxImgW = sigBoxWidth - 10
-      const maxImgH = 28
+      const maxImgW = sigBoxW - 8
+      const maxImgH = 14
       const ratio = Math.min(maxImgW / dim.width, maxImgH / dim.height)
       const renderW = dim.width * ratio
       const renderH = dim.height * ratio
-      const renderX = box2X + (sigBoxWidth - renderW) / 2
-      const renderY = sigY + 9 + (maxImgH - renderH) / 2
+      const renderX = box2X + (sigBoxW - renderW) / 2
+      const renderY = currentY + 5.5 + (maxImgH - renderH) / 2
 
       doc.addImage(
         checklist.signature_data,
@@ -814,67 +821,71 @@ export async function generateChecklistPdf({
       console.warn('Error inserting inspector signature image in PDF', err)
     }
   } else {
-    // Stamp placeholder
     doc.setFont('helvetica', 'italic')
-    doc.setFontSize(7.5)
+    doc.setFontSize(6.5)
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-    doc.text('(Assinatura digital autenticada)', box2X + sigBoxWidth / 2, sigY + 22, {
+    doc.text('(Assinatura digital autenticada)', box2X + sigBoxW / 2, currentY + 12.5, {
       align: 'center',
     })
   }
 
-  // Signature Line 2
+  // Line 2
   doc.setDrawColor(148, 163, 184)
-  doc.setLineWidth(0.4)
-  doc.line(box2X + 8, line1Y, box2X + sigBoxWidth - 8, line1Y)
+  doc.setLineWidth(0.3)
+  doc.line(box2X + 6, line1Y, box2X + sigBoxW - 6, line1Y)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5)
+  doc.setFontSize(7.2)
   doc.setTextColor(darkText[0], darkText[1], darkText[2])
   const inspName = checklist?.inspector_name || 'Inspetor Técnico'
-  doc.text(inspName, box2X + sigBoxWidth / 2, line1Y + 4.5, { align: 'center' })
+  doc.text(inspName, box2X + sigBoxW / 2, line1Y + 3.2, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7)
+  doc.setFontSize(6)
   doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
-  doc.text('Inspetor / Responsável Técnico de Rigging', box2X + sigBoxWidth / 2, line1Y + 8.5, {
+  doc.text('Inspetor / Responsável Técnico de Rigging', box2X + sigBoxW / 2, line1Y + 6.2, {
     align: 'center',
   })
   if (checklist?.completed_at) {
     doc.text(
-      `Autenticado em: ${formatDateTime(checklist.completed_at)}`,
-      box2X + sigBoxWidth / 2,
-      line1Y + 12.5,
+      `Autenticado: ${formatDateTime(checklist.completed_at)}`,
+      box2X + sigBoxW / 2,
+      line1Y + 9.2,
       { align: 'center' },
     )
   }
 
-  // Compliance Security Footer Note
-  const secNoteY = sigY + sigBoxHeight + 8
+  // Security Note
+  currentY += sigBoxH + 1.5
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(6.5)
+  doc.setFontSize(5.5)
   doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
   doc.text(
-    'Este documento eletrônico foi emitido pelo sistema Davi Projetos e possui validade técnica com registro de auditoria, datação temporal e assinaturas digitais.',
+    'Documento emitido pelo sistema Davi Projetos com validade técnica, rastreabilidade e assinaturas eletrônicas.',
     pageWidth / 2,
-    secNoteY,
+    currentY,
     { align: 'center' },
   )
 
-  // --- Footers for All Pages (Page X of Y + Issue Date) ---
+  // --- Footers on All Pages (Page X of Y + Issue Date) ---
   const totalPages = doc.getNumberOfPages()
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p)
 
-    const footerY = pageHeight - margin + 4
+    // Render header on subsequent pages if autotable created new pages automatically
+    if (p > 1) {
+      renderHeader(false)
+    }
+
+    const footerY = pageHeight - margin + 2
 
     // Top border of footer
     doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
-    doc.setLineWidth(0.2)
-    doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3)
+    doc.setLineWidth(0.15)
+    doc.line(margin, footerY - 2.5, pageWidth - margin, footerY - 2.5)
 
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7)
+    doc.setFontSize(6.5)
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
 
     // Left
@@ -902,7 +913,6 @@ export async function generateChecklistPdf({
     doc.save(filename)
   } catch (saveErr: any) {
     console.error('Erro ao salvar/baixar o arquivo PDF gerado:', saveErr)
-    // Fallback: tentar gerar Blob e disparar download via URL do navegador
     try {
       const pdfBlob = doc.output('blob')
       const blobUrl = URL.createObjectURL(pdfBlob)
