@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T12:33:04.666Z",
+  "generatedAt": "2026-08-25T12:43:13.826Z",
   "collections": [
     {
       "name": "users",
@@ -785,12 +785,6 @@
           "system": false
         },
         {
-          "name": "signature_data",
-          "type": "text",
-          "required": false,
-          "system": false
-        },
-        {
           "name": "sync_status",
           "type": "select",
           "required": false,
@@ -816,6 +810,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "signature_data",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
