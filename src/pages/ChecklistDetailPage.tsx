@@ -9,6 +9,7 @@ import {
   ChecklistResponse,
   ChecklistTemplate,
   ChecklistTemplateItem,
+  ChecklistItemGroup,
   Equipment,
   Material,
   Client,
@@ -51,6 +52,7 @@ import {
   UserCheck,
   Calendar,
   RotateCcw,
+  Folder,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -65,6 +67,7 @@ export const ChecklistDetailPage: React.FC = () => {
   // Reference lists
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([])
   const [templateItems, setTemplateItems] = useState<ChecklistTemplateItem[]>([])
+  const [templateGroups, setTemplateGroups] = useState<ChecklistItemGroup[]>([])
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([])
   const [materialsList, setMaterialsList] = useState<Material[]>([])
   const [clientsList, setClientsList] = useState<Client[]>([])
@@ -162,9 +165,13 @@ export const ChecklistDetailPage: React.FC = () => {
           setCreatedAt(checklist.created)
           setSelectedTemplateId(checklist.template_id)
 
-          // Load template items
-          const items = await AppDataService.getTemplateItems(checklist.template_id, isOnline)
+          // Load template items and groups
+          const [items, groups] = await Promise.all([
+            AppDataService.getTemplateItems(checklist.template_id, isOnline),
+            AppDataService.getItemGroups(checklist.template_id, isOnline),
+          ])
           setTemplateItems(items)
+          setTemplateGroups(groups)
 
           // Populate responses
           const rMap: Record<string, Partial<ChecklistResponse>> = {}
@@ -191,8 +198,12 @@ export const ChecklistDetailPage: React.FC = () => {
   const handleSelectTemplate = async (templateId: string) => {
     setSelectedTemplateId(templateId)
     try {
-      const items = await AppDataService.getTemplateItems(templateId, isOnline)
+      const [items, groups] = await Promise.all([
+        AppDataService.getTemplateItems(templateId, isOnline),
+        AppDataService.getItemGroups(templateId, isOnline),
+      ])
       setTemplateItems(items)
+      setTemplateGroups(groups)
 
       const chosenTpl = templates.find((t) => t.id === templateId)
       if (chosenTpl && isNew) {
@@ -217,7 +228,7 @@ export const ChecklistDetailPage: React.FC = () => {
         return nextMap
       })
     } catch (err) {
-      console.error('Error fetching template items:', err)
+      console.error('Error fetching template items and groups:', err)
     }
   }
 
@@ -399,26 +410,51 @@ export const ChecklistDetailPage: React.FC = () => {
     }
   }
 
-  // Group items by section/group
-  const sections: { sectionName: string; items: ChecklistTemplateItem[] }[] = []
-  const sectionMap = new Map<string, ChecklistTemplateItem[]>()
+  // Hierarchical display groups mirroring TemplatesPage
+  interface DisplayGroup {
+    group: ChecklistItemGroup | null // null means "Geral"
+    name: string
+    id: string
+    groupNumber: number | null // 1, 2, 3... or null if "Geral"
+    items: ChecklistTemplateItem[]
+  }
 
-  templateItems.forEach((it) => {
-    const sName = it.section || it.expand?.group?.name || 'Geral'
-    if (!sectionMap.has(sName)) {
-      sectionMap.set(sName, [])
-    }
-    sectionMap.get(sName)!.push(it)
-  })
+  const displayGroups: DisplayGroup[] = []
 
-  sectionMap.forEach((items, sectionName) => {
-    sections.push({
-      sectionName,
-      items: items.sort(
-        (a, b) => (a.sort_order ?? a.order_num ?? 0) - (b.sort_order ?? b.order_num ?? 0),
-      ),
+  // Ensure templateGroups are ordered by sort_order
+  const sortedTemplateGroups = [...templateGroups].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  )
+
+  // Add defined groups with sequential numbering
+  sortedTemplateGroups.forEach((grp, gIdx) => {
+    const itemsInGroup = templateItems
+      .filter((it) => it.group === grp.id)
+      .sort((a, b) => (a.sort_order ?? a.order_num ?? 0) - (b.sort_order ?? b.order_num ?? 0))
+    displayGroups.push({
+      group: grp,
+      name: grp.name,
+      id: grp.id,
+      groupNumber: gIdx + 1,
+      items: itemsInGroup,
     })
   })
+
+  // Add "Geral" group for unassigned items
+  const knownGroupIds = new Set(templateGroups.map((g) => g.id))
+  const unassignedItems = templateItems
+    .filter((it) => !it.group || !knownGroupIds.has(it.group))
+    .sort((a, b) => (a.sort_order ?? a.order_num ?? 0) - (b.sort_order ?? b.order_num ?? 0))
+
+  if (unassignedItems.length > 0 || templateGroups.length === 0) {
+    displayGroups.push({
+      group: null,
+      name: 'Geral',
+      id: 'none',
+      groupNumber: null,
+      items: unassignedItems,
+    })
+  }
 
   const totalItems = templateItems.length
   const answeredCount = Object.values(responsesMap).filter(
@@ -791,25 +827,50 @@ export const ChecklistDetailPage: React.FC = () => {
           Itens de Verificação e Inspeção Visual
         </h2>
 
-        {sections.map((sec, secIdx) => (
-          <Card key={secIdx} className="bg-slate-900 border-slate-800 overflow-hidden">
-            <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800 font-semibold text-xs text-blue-400 uppercase tracking-wider flex items-center justify-between">
-              <span>{sec.sectionName}</span>
+        {displayGroups.map((displayGrp) => (
+          <Card
+            key={displayGrp.id}
+            className="bg-slate-900 border-slate-800 overflow-hidden shadow-sm"
+          >
+            <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Folder className="w-4 h-4 text-blue-400 shrink-0" />
+                <span className="font-semibold text-xs text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                  {displayGrp.groupNumber !== null
+                    ? `${displayGrp.groupNumber}. ${displayGrp.name}`
+                    : displayGrp.name}
+                  {displayGrp.group === null && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] border-slate-700 text-slate-400 font-normal lowercase"
+                    >
+                      geral
+                    </Badge>
+                  )}
+                </span>
+              </div>
               <span className="text-[11px] text-slate-500 font-normal">
-                {sec.items.length} {sec.items.length === 1 ? 'item' : 'itens'}
+                {displayGrp.items.length} {displayGrp.items.length === 1 ? 'item' : 'itens'}
               </span>
             </div>
 
             <CardContent className="p-0 divide-y divide-slate-800">
-              {sec.items.map((item) => {
+              {displayGrp.items.map((item, itemIdx) => {
                 const currentResp = responsesMap[item.id] || {}
                 const currentStatus = currentResp.status || 'PENDENTE'
+                const itemNumberLabel =
+                  displayGrp.groupNumber !== null
+                    ? `${displayGrp.groupNumber}.${itemIdx + 1}`
+                    : `${itemIdx + 1}.`
 
                 return (
                   <div key={item.id} className="p-4 space-y-3 hover:bg-slate-850/50 transition">
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
                       <div className="space-y-1 flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-slate-400 font-mono text-xs font-semibold shrink-0">
+                            {itemNumberLabel}
+                          </span>
                           <span className="font-medium text-white text-sm">{item.title}</span>
                           {item.is_critical && (
                             <Badge className="bg-red-950/80 text-red-400 border border-red-800 text-[10px] px-1.5 py-0">
@@ -826,7 +887,7 @@ export const ChecklistDetailPage: React.FC = () => {
                           )}
                         </div>
                         {item.description && (
-                          <p className="text-xs text-slate-400">{item.description}</p>
+                          <p className="text-xs text-slate-400 pl-6">{item.description}</p>
                         )}
                       </div>
 
