@@ -12,20 +12,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  ShieldCheck,
-  HardHat,
-  Truck,
-  Anchor,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 
 export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = () => {
   const { login } = useAuth()
-  const [identifier, setIdentifier] = useState('adriano@daviprojetos.com.br')
-  const [password, setPassword] = useState('Skip@Pass')
+  const [identifier, setIdentifier] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -44,11 +36,6 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
     } finally {
       setLoading(false)
     }
-  }
-
-  const setDemoAccount = (email: string) => {
-    setIdentifier(email)
-    setPassword('Skip@Pass')
   }
 
   return (
@@ -138,24 +125,24 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   required
+                  autoComplete="username"
                   className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 focus:border-blue-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-slate-200">
-                    Senha
-                  </Label>
-                  <span className="text-xs text-slate-500">Padrão: Skip@Pass</span>
-                </div>
+                <Label htmlFor="password" className="text-slate-200">
+                  Senha
+                </Label>
                 <Input
                   id="password"
                   type="password"
+                  placeholder="Digite sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-slate-950 border-slate-800 text-white focus:border-blue-500"
+                  autoComplete="current-password"
+                  className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 focus:border-blue-500"
                 />
               </div>
             </CardContent>
@@ -178,60 +165,6 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
             </CardFooter>
           </form>
         </Card>
-
-        {/* Quick Demo Role Logins */}
-        <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 space-y-3">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-            <span>Acessos Rápidos de Demonstração (Perfis):</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setDemoAccount('adriano@daviprojetos.com.br')}
-              className="p-2 text-left bg-slate-950/80 hover:bg-slate-800 border border-slate-800 rounded text-xs transition"
-            >
-              <div className="font-semibold text-blue-400 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> Administrador
-              </div>
-              <div className="text-[11px] text-slate-400 truncate">adriano@daviprojetos.com.br</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDemoAccount('supervisor@gebrigging.com.br')}
-              className="p-2 text-left bg-slate-950/80 hover:bg-slate-800 border border-slate-800 rounded text-xs transition"
-            >
-              <div className="font-semibold text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Supervisor
-              </div>
-              <div className="text-[11px] text-slate-400 truncate">
-                supervisor@gebrigging.com.br
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDemoAccount('rigger@gebrigging.com.br')}
-              className="p-2 text-left bg-slate-950/80 hover:bg-slate-800 border border-slate-800 rounded text-xs transition"
-            >
-              <div className="font-semibold text-amber-400 flex items-center gap-1">
-                <Anchor className="w-3.5 h-3.5" /> Rigger
-              </div>
-              <div className="text-[11px] text-slate-400 truncate">rigger@gebrigging.com.br</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDemoAccount('operador@gebrigging.com.br')}
-              className="p-2 text-left bg-slate-950/80 hover:bg-slate-800 border border-slate-800 rounded text-xs transition"
-            >
-              <div className="font-semibold text-purple-400 flex items-center gap-1">
-                <Truck className="w-3.5 h-3.5" /> Operador Guindaste
-              </div>
-              <div className="text-[11px] text-slate-400 truncate">operador@gebrigging.com.br</div>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   )
