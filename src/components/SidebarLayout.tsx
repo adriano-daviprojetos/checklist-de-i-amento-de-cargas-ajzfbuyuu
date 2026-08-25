@@ -34,20 +34,23 @@ interface SidebarLayoutProps {
 }
 
 export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
-  const { user, company, companies, logout, switchCompany, role, isSuperAdmin } = useAuth()
+  const { user, company, companies, logout, switchCompany, role, isAdmin, canManageCompanies } =
+    useAuth()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const navItems = [
-    { title: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { title: 'Checklists', path: '/checklists', icon: ClipboardCheck },
-    { title: 'Modelos de Inspeção', path: '/modelos', icon: FileSpreadsheet },
-    { title: 'Equipamentos', path: '/equipamentos', icon: Truck },
-    { title: 'Materiais & Acessórios', path: '/materiais', icon: Anchor },
-    { title: 'Clientes & Obras', path: '/clientes', icon: Building2 },
-    { title: 'Usuários & Perfis', path: '/usuarios', icon: Users },
-    { title: 'Dados da Empresa', path: '/empresa', icon: Building },
+  const allNavItems = [
+    { title: 'Dashboard', path: '/', icon: LayoutDashboard, adminOnly: false },
+    { title: 'Checklists', path: '/checklists', icon: ClipboardCheck, adminOnly: false },
+    { title: 'Modelos de Inspeção', path: '/modelos', icon: FileSpreadsheet, adminOnly: false },
+    { title: 'Equipamentos', path: '/equipamentos', icon: Truck, adminOnly: false },
+    { title: 'Materiais & Acessórios', path: '/materiais', icon: Anchor, adminOnly: false },
+    { title: 'Clientes & Obras', path: '/clientes', icon: Building2, adminOnly: false },
+    { title: 'Usuários & Perfis', path: '/usuarios', icon: Users, adminOnly: false },
+    { title: 'Dados da Empresa', path: '/empresa', icon: Building, adminOnly: true },
   ]
+
+  const navItems = allNavItems.filter((item) => !item.adminOnly || canManageCompanies)
 
   const getRoleLabel = (r: string) => {
     switch (r) {
@@ -158,47 +161,60 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           {/* Multi-Tenant Switcher */}
           <div className="pt-2">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-              Ambiente / Empresa
+              {canManageCompanies ? 'Ambiente / Empresa' : 'Empresa Vinculada'}
             </label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-950/80 hover:bg-slate-950 border border-slate-800 text-left transition"
-                >
-                  <div className="min-w-0 pr-2">
-                    <div className="text-xs font-medium text-slate-200 truncate">
-                      {company?.trade_name || company?.name || 'Selecione a Empresa'}
-                    </div>
-                    <div className="text-[10px] text-slate-400 truncate">
-                      CNPJ: {company?.cnpj || 'Não informado'}
-                    </div>
-                  </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="w-60 bg-slate-900 border-slate-800 text-slate-200"
-              >
-                <DropdownMenuLabel className="text-xs text-slate-400">
-                  Alternar Empresa (Multi-tenant)
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-slate-800" />
-                {companies.map((c) => (
-                  <DropdownMenuItem
-                    key={c.id}
-                    onClick={() => switchCompany(c.id)}
-                    className={`text-xs cursor-pointer ${
-                      company?.id === c.id ? 'bg-blue-600/20 text-blue-400 font-semibold' : ''
-                    }`}
+            {canManageCompanies ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-950/80 hover:bg-slate-950 border border-slate-800 text-left transition"
                   >
-                    <Building className="w-3.5 h-3.5 mr-2 shrink-0" />
-                    <span className="truncate">{c.name}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <div className="min-w-0 pr-2">
+                      <div className="text-xs font-medium text-slate-200 truncate">
+                        {company?.trade_name || company?.name || 'Selecione a Empresa'}
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        CNPJ: {company?.cnpj || 'Não informado'}
+                      </div>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-60 bg-slate-900 border-slate-800 text-slate-200"
+                >
+                  <DropdownMenuLabel className="text-xs text-slate-400">
+                    Alternar Empresa (Multi-tenant)
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-slate-800" />
+                  {companies.map((c) => (
+                    <DropdownMenuItem
+                      key={c.id}
+                      onClick={() => switchCompany(c.id)}
+                      className={`text-xs cursor-pointer ${
+                        company?.id === c.id ? 'bg-blue-600/20 text-blue-400 font-semibold' : ''
+                      }`}
+                    >
+                      <Building className="w-3.5 h-3.5 mr-2 shrink-0" />
+                      <span className="truncate">{c.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 text-left cursor-default">
+                <div className="min-w-0 pr-2">
+                  <div className="text-xs font-medium text-slate-200 truncate">
+                    {company?.trade_name || company?.name || 'Empresa Padrão'}
+                  </div>
+                  <div className="text-[10px] text-slate-400 truncate">
+                    CNPJ: {company?.cnpj || 'Não informado'}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

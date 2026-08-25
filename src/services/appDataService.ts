@@ -399,6 +399,12 @@ export class AppDataService {
     }
   }
 
+  static async deleteUser(id: string): Promise<void> {
+    if (pb.authStore.isValid) {
+      await pb.collection('users').delete(id)
+    }
+  }
+
   // --- Companies ---
   static async getCompanies(isOnline = true): Promise<Company[]> {
     const local = await dbGetAll<Company>('companies')

@@ -23,6 +23,7 @@ interface AuthContextType {
   isGestor: boolean
   isSupervisor: boolean
   canManageUsers: boolean
+  canManageCompanies: boolean
   canManageTemplates: boolean
   canManageAssets: boolean
   canCreateChecklist: boolean
@@ -46,6 +47,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isGestor = role === 'gestor' || isAdmin
   const isSupervisor = role === 'supervisor' || isGestor
 
+  const canManageCompanies = isAdmin
   const canManageUsers = isAdmin || role === 'gestor'
   const canManageTemplates = isAdmin || role === 'gestor' || role === 'supervisor'
   const canManageAssets = isAdmin || role === 'gestor' || role === 'supervisor'
@@ -224,6 +226,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isGestor,
         isSupervisor,
         canManageUsers,
+        canManageCompanies,
         canManageTemplates,
         canManageAssets,
         canCreateChecklist,

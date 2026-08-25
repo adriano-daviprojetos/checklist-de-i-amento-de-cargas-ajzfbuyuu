@@ -30,15 +30,17 @@ import {
   ShieldCheck,
   UserCheck,
   Edit2,
+  Trash2,
   HardHat,
   Truck,
   Anchor,
   Radio,
+  Lock,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export const UsersPage: React.FC = () => {
-  const { company, companies, canManageUsers, isAdmin, isSuperAdmin } = useAuth()
+  const { company, companies, canManageUsers, isAdmin, user: currentUser } = useAuth()
   const { isOnline } = useOnlineStatus()
 
   const [users, setUsers] = useState<AppUser[]>([])
@@ -72,8 +74,21 @@ export const UsersPage: React.FC = () => {
     }
   }
 
+  // Permission helper to check if current logged-in user can edit/delete a specific user target
+  const canEditTargetUser = (targetUser: AppUser) => {
+    if (!canManageUsers) return false
+    if (isAdmin) return true
+    // Gestor can only edit users from their own company
+    return company?.id ? targetUser.company_id === company.id : false
+  }
+
   const openNewModal = () => {
+    if (!canManageUsers) {
+      toast.error('Você não tem permissão para cadastrar usuários.')
+      return
+    }
     setEditingId(null)
+    // Non-admin (Gestor) is strictly locked to their company
     setSelectedCompanyId(company?.id || companies[0]?.id || '')
     setName('')
     setEmail('')
@@ -85,8 +100,12 @@ export const UsersPage: React.FC = () => {
   }
 
   const openEditModal = (u: AppUser) => {
+    if (!canEditTargetUser(u)) {
+      toast.error('Você só tem permissão para gerenciar usuários da sua empresa.')
+      return
+    }
     setEditingId(u.id)
-    setSelectedCompanyId(u.company_id || company?.id || companies[0]?.id || '')
+    setSelectedCompanyId(isAdmin ? u.company_id || company?.id || '' : company?.id || '')
     setName(u.name || '')
     setEmail(u.email)
     setCpf(u.cpf || '')
@@ -96,13 +115,42 @@ export const UsersPage: React.FC = () => {
     setIsModalOpen(true)
   }
 
+  const handleDeleteUser = async (u: AppUser) => {
+    if (!canEditTargetUser(u)) {
+      toast.error('Você não tem permissão para excluir este usuário.')
+      return
+    }
+    if (u.id === currentUser?.id) {
+      toast.warning('Você não pode excluir seu próprio usuário logado.')
+      return
+    }
+    if (!confirm(`Deseja realmente remover o usuário "${u.name || u.email}"?`)) {
+      return
+    }
+    try {
+      await AppDataService.deleteUser(u.id)
+      toast.success('Usuário removido com sucesso.')
+      await loadUsers()
+    } catch (err: any) {
+      toast.error('Erro ao excluir usuário: ' + err.message)
+    }
+  }
+
   const handleSave = async () => {
+    if (!canManageUsers) {
+      toast.error('Você não tem permissão para cadastrar ou editar usuários.')
+      return
+    }
+
     if (!name.trim() || !email.trim()) {
       toast.warning('Nome e e-mail são obrigatórios.')
       return
     }
 
-    if (!selectedCompanyId) {
+    // Gestor is strictly forced to their own company
+    const finalCompanyId = isAdmin ? selectedCompanyId : company?.id || selectedCompanyId
+
+    if (!finalCompanyId) {
       toast.warning('A seleção da empresa é obrigatória.')
       return
     }
@@ -115,7 +163,7 @@ export const UsersPage: React.FC = () => {
         cpf,
         phone,
         role,
-        company_id: selectedCompanyId,
+        company_id: finalCompanyId,
         active: true,
       }
 
@@ -296,7 +344,7 @@ export const UsersPage: React.FC = () => {
                 </div>
               </div>
 
-              {canManageUsers && (
+              {canEditTargetUser(u) && (
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
                   <Button
                     size="sm"
@@ -306,6 +354,16 @@ export const UsersPage: React.FC = () => {
                   >
                     <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
                   </Button>
+                  {u.id !== currentUser?.id && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDeleteUser(u)}
+                      className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Excluir
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -400,9 +458,11 @@ export const UsersPage: React.FC = () => {
                     Supervisor (Cria/revisa checklists e gerencia frota)
                   </SelectItem>
                   <SelectItem value="gestor">
-                    Gestor (Gerencia usuários, ativos e modelos)
+                    Gestor (Gerencia usuários da empresa, ativos e modelos)
                   </SelectItem>
-                  <SelectItem value="admin">Administrador (Acesso total à empresa)</SelectItem>
+                  {isAdmin && (
+                    <SelectItem value="admin">Administrador (Acesso total à empresa)</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

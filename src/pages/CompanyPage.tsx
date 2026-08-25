@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
@@ -30,7 +31,8 @@ import {
 import { toast } from 'sonner'
 
 export const CompanyPage: React.FC = () => {
-  const { company, companies, isAdmin, isSuperAdmin, switchCompany, refreshProfile } = useAuth()
+  const { company, companies, isAdmin, canManageCompanies, switchCompany, refreshProfile } =
+    useAuth()
   const { isOnline } = useOnlineStatus()
 
   const [isEditingCurrent, setIsEditingCurrent] = useState(false)
@@ -64,6 +66,10 @@ export const CompanyPage: React.FC = () => {
       setState(company.state || 'SP')
     }
   }, [company])
+
+  if (!canManageCompanies) {
+    return <Navigate to="/" replace />
+  }
 
   const handleSaveCurrentCompany = async () => {
     if (!name.trim()) {

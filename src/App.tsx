@@ -20,8 +20,11 @@ import { CompanyPage } from './pages/CompanyPage'
 import NotFound from './pages/NotFound'
 import { Loader2 } from 'lucide-react'
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth()
+const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({
+  children,
+  adminOnly = false,
+}) => {
+  const { isAuthenticated, isLoading, canManageCompanies } = useAuth()
 
   if (isLoading) {
     return (
@@ -33,6 +36,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (!isAuthenticated) {
     return <LoginModal />
+  }
+
+  if (adminOnly && !canManageCompanies) {
+    return <Navigate to="/" replace />
   }
 
   return <SidebarLayout>{children}</SidebarLayout>
@@ -122,7 +129,7 @@ const App = () => (
           <Route
             path="/empresa"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly>
                 <CompanyPage />
               </ProtectedRoute>
             }
