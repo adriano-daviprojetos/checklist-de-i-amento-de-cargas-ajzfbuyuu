@@ -101,7 +101,7 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-xl text-white">Acessar Sistema</CardTitle>
             <CardDescription className="text-slate-400">
-              Entre com seu e-mail corporativo ou CPF cadastrado
+              Entre com seu e-mail, CPF ou Nome de Usuário
             </CardDescription>
           </CardHeader>
 
@@ -116,12 +116,12 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
 
               <div className="space-y-2">
                 <Label htmlFor="identifier" className="text-slate-200">
-                  E-mail ou CPF
+                  E-mail, CPF ou Nome de Usuário
                 </Label>
                 <Input
                   id="identifier"
                   type="text"
-                  placeholder="ex: usuario@empresa.com ou 123.456.789-00"
+                  placeholder="ex: usuario@empresa.com, 123.456.789-00 ou usuario"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   required

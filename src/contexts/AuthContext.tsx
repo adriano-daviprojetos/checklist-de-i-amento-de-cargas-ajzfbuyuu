@@ -286,6 +286,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const cachedUser = JSON.parse(cachedUserStr) as AppUser
           if (
             (cachedUser.email.toLowerCase() === emailOrCpf.toLowerCase() ||
+              (cachedUser.username &&
+                cachedUser.username.toLowerCase() === emailOrCpf.toLowerCase()) ||
               cachedUser.cpf?.replace(/\D/g, '') === emailOrCpf.replace(/\D/g, '')) &&
             password === 'Skip@Pass'
           ) {
@@ -300,7 +302,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return {
         success: false,
-        error: err.message || 'Credenciais inválidas. Verifique seu e-mail/CPF e senha.',
+        error: err.message || 'Credenciais inválidas. Verifique seu e-mail/CPF/usuário e senha.',
       }
     }
   }

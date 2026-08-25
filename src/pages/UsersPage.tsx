@@ -114,6 +114,7 @@ export const UsersPage: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
   const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [cpf, setCpf] = useState('')
   const [phone, setPhone] = useState('')
@@ -165,6 +166,7 @@ export const UsersPage: React.FC = () => {
     setEditingId(null)
     setSelectedCompanyId(company?.id || companies[0]?.id || '')
     setName('')
+    setUsername('')
     setEmail('')
     setCpf('')
     setPhone('')
@@ -191,6 +193,7 @@ export const UsersPage: React.FC = () => {
     setEditingId(u.id)
     setSelectedCompanyId(isAdmin ? u.company_id || company?.id || '' : company?.id || '')
     setName(u.name || '')
+    setUsername(u.username || '')
     setEmail(u.email)
     setCpf(u.cpf || '')
     setPhone(u.phone || '')
@@ -362,6 +365,7 @@ export const UsersPage: React.FC = () => {
       } = {
         id: editingId || undefined,
         name: name.trim(),
+        username: username.trim() || undefined,
         email: email.trim(),
         cpf: cpf.trim() || undefined,
         phone: phone.trim() || undefined,
@@ -438,6 +442,7 @@ export const UsersPage: React.FC = () => {
     .filter(
       (u) =>
         u.name?.toLowerCase().includes(search.toLowerCase()) ||
+        u.username?.toLowerCase().includes(search.toLowerCase()) ||
         u.email.toLowerCase().includes(search.toLowerCase()) ||
         u.cpf?.includes(search) ||
         u.role?.toLowerCase().includes(search.toLowerCase()),
@@ -537,6 +542,12 @@ export const UsersPage: React.FC = () => {
                       'Empresa Padrão'}
                   </Badge>
                 </div>
+                {u.username && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Usuário:</span>
+                    <span className="font-mono text-blue-300">@{u.username}</span>
+                  </div>
+                )}
                 {u.cpf && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">CPF:</span>
@@ -615,6 +626,16 @@ export const UsersPage: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: Carlos Eduardo Silva"
+                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-slate-300">Nome de Usuário (username)</Label>
+                <Input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="ex: carlos.silva ou carloss"
                   className="bg-slate-950 border-slate-800 text-white text-xs"
                 />
               </div>

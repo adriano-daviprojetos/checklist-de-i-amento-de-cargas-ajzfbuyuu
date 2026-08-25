@@ -41,19 +41,19 @@ export type UserPermissions = Record<SystemModuleKey, ModulePermission>
 
 export interface AppUser {
   id: string
-  email: string
   name: string
-  avatar?: string
+  username?: string
+  email: string
   company_id?: string
-  role?: UserRole
+  role: UserRole
   cpf?: string
   phone?: string
   active?: boolean
+  avatar?: string
   permissions?: UserPermissions
   created?: string
   updated?: string
 }
-
 export interface Client {
   id: string
   company_id: string
