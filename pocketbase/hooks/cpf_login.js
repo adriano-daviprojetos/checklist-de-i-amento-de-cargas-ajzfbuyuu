@@ -3,46 +3,49 @@
 onRecordAuthRequest((e) => {
   const identity = (e.identity || '').trim()
 
+  // Só intercepta se não for e-mail (não contém @)
   if (identity && !identity.includes('@')) {
-    let email = ''
+    console.log('[cpf_login] Tentando login por CPF:', identity)
 
-    // 1. Tenta buscar pelo CPF exato como digitado
-    const query1 = $app
-      .dao()
-      .db()
-      .newQuery('SELECT email FROM users WHERE cpf = {:cpf} LIMIT 1')
-      .bind({ cpf: identity })
+    let userRecord = null
 
-    const row1 = {}
-    const err1 = query1.one(row1)
-    if (!err1 && row1.email) {
-      email = row1.email
+    // 1. Busca exata pelo CPF como digitado (ex: "135.365.528-89")
+    try {
+      userRecord = $app.dao().findFirstRecordByFilter('users', 'cpf = {:cpf}', { cpf: identity })
+      console.log('[cpf_login] Busca 1 (cpf exato):', userRecord ? 'encontrado' : 'não encontrado')
+    } catch (err) {
+      console.log('[cpf_login] Erro na busca 1:', String(err))
     }
 
-    // 2. Se não encontrar e o CPF tiver caracteres não-dígitos, tenta apenas com dígitos
-    if (!email) {
+    // 2. Se não encontrou, tenta só com dígitos (ex: "13536552889")
+    if (!userRecord) {
       const digitsOnly = identity.replace(/[^0-9]/g, '')
       if (digitsOnly && digitsOnly !== identity) {
-        const query2 = $app
-          .dao()
-          .db()
-          .newQuery(
-            "SELECT email FROM users WHERE REPLACE(REPLACE(cpf, '.', ''), '-', '') = {:cpf} LIMIT 1",
+        try {
+          userRecord = $app
+            .dao()
+            .findFirstRecordByFilter('users', 'cpf = {:cpf}', { cpf: digitsOnly })
+          console.log(
+            '[cpf_login] Busca 2 (apenas dígitos):',
+            userRecord ? 'encontrado' : 'não encontrado',
           )
-          .bind({ cpf: digitsOnly })
-
-        const row2 = {}
-        const err2 = query2.one(row2)
-        if (!err2 && row2.email) {
-          email = row2.email
+        } catch (err) {
+          console.log('[cpf_login] Erro na busca 2:', String(err))
         }
       }
     }
 
-    if (email) {
-      e.identity = email
+    // 3. Se encontrou o usuário, substitui identity pelo email
+    if (userRecord) {
+      const email = userRecord.get('email')
+      console.log('[cpf_login] CPF encontrado, email:', email)
+      if (email) {
+        e.identity = email
+      }
+    } else {
+      console.log('[cpf_login] CPF não encontrado na base')
     }
   }
 
-  return e.next()
+  e.next()
 }, 'users')
