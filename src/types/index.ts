@@ -216,6 +216,8 @@ export interface Checklist {
   notes?: string
   inspector_name?: string
   signature_data?: string
+  filled_by_name?: string
+  filled_by_signature?: string
   sync_status?: SyncStatus
   created?: string
   updated?: string

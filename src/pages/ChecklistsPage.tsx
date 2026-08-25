@@ -84,7 +84,8 @@ export const ChecklistsPage: React.FC = () => {
         chk.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         chk.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         chk.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        chk.inspector_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        chk.inspector_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        chk.filled_by_name?.toLowerCase().includes(searchTerm.toLowerCase())
 
       const matchesStatus = statusFilter === 'todos' || chk.status === statusFilter
 
@@ -258,6 +259,13 @@ export const ChecklistsPage: React.FC = () => {
                     <span className="text-slate-500">Inspetor:</span>
                     <strong className="text-slate-300">{chk.inspector_name || 'Inspetor'}</strong>
                   </div>
+
+                  {chk.filled_by_name && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500">Preenchido por:</span>
+                      <strong className="text-slate-300">{chk.filled_by_name}</strong>
+                    </div>
+                  )}
 
                   {chk.signature_data && (
                     <div className="flex items-center gap-1 text-emerald-400 font-medium">

@@ -420,6 +420,8 @@ class SyncService {
       notes: checklist.notes || '',
       inspector_name: checklist.inspector_name || (pb.authStore.record as any)?.name || 'Inspetor',
       signature_data: checklist.signature_data,
+      filled_by_name: checklist.filled_by_name || '',
+      filled_by_signature: checklist.filled_by_signature || '',
       sync_status: isOnline ? 'synced' : 'pending_sync',
       created: checklist.created || new Date().toISOString(),
       updated: new Date().toISOString(),

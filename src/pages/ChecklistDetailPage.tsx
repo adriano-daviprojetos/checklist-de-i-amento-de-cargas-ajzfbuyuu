@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
@@ -15,6 +15,7 @@ import {
 } from '@/types'
 import { CompanySelect } from '@/components/CompanySelect'
 import { FinalizeChecklistModal } from '@/components/FinalizeChecklistModal'
+import { DigitalSignaturePad, DigitalSignaturePadRef } from '@/components/DigitalSignaturePad'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -83,8 +84,11 @@ export const ChecklistDetailPage: React.FC = () => {
   const [status, setStatus] = useState<'Pendente' | 'Em Andamento' | 'Concluído' | 'Reprovado'>(
     'Em Andamento',
   )
+  const [filledByName, setFilledByName] = useState(user?.name || '')
+  const [filledBySignature, setFilledBySignature] = useState<string | undefined>(undefined)
   const [signatureData, setSignatureData] = useState<string | undefined>(undefined)
   const [completedAt, setCompletedAt] = useState<string | undefined>(undefined)
+  const filledByPadRef = useRef<DigitalSignaturePadRef>(null)
 
   // Modal State for Finalization with Digital Signature
   const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false)
@@ -124,6 +128,8 @@ export const ChecklistDetailPage: React.FC = () => {
         setCode(`CHK-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`)
         setTitle('Checklist Operacional de Içamento')
         setInspectorName(user?.name || user?.email || '')
+        setFilledByName(user?.name || '')
+        setFilledBySignature(undefined)
       } else if (id) {
         // Load existing checklist
         const { checklist, responses } = await AppDataService.getChecklistById(id, isOnline)
@@ -140,6 +146,8 @@ export const ChecklistDetailPage: React.FC = () => {
           setMaterialId(checklist.material_id || 'none')
           setRiskLevel(checklist.risk_level || 'Médio')
           setInspectorName(checklist.inspector_name || user?.name || user?.email || '')
+          setFilledByName(checklist.filled_by_name || user?.name || '')
+          setFilledBySignature(checklist.filled_by_signature)
           setNotes(checklist.notes || '')
           setStatus(checklist.status)
           setSignatureData(checklist.signature_data)
@@ -287,6 +295,8 @@ export const ChecklistDetailPage: React.FC = () => {
         risk_level: riskLevel,
         inspector_name: finalInspectorName,
         signature_data: data.signatureData,
+        filled_by_name: filledByName,
+        filled_by_signature: filledBySignature,
         notes,
         completed_at: data.signedAt,
       }
@@ -353,6 +363,8 @@ export const ChecklistDetailPage: React.FC = () => {
         risk_level: riskLevel,
         inspector_name: inspectorName,
         signature_data: signatureData,
+        filled_by_name: filledByName,
+        filled_by_signature: filledBySignature,
         notes,
         completed_at: completedAt,
       }
@@ -653,6 +665,84 @@ export const ChecklistDetailPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Card: Responsável pelo Preenchimento */}
+      <Card className="bg-slate-900 border-slate-800">
+        <CardHeader className="pb-3 border-b border-slate-800">
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <UserCheck className="w-5 h-5 text-blue-500" />
+            Responsável pelo Preenchimento
+          </CardTitle>
+          <CardDescription className="text-slate-400 text-xs">
+            Identificação do operador, rigger ou profissional que realizou a inspeção item por item
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-5 space-y-4">
+          <div className="space-y-1.5 max-w-md">
+            <Label className="text-xs text-slate-300">Nome do Responsável</Label>
+            <Input
+              value={filledByName}
+              onChange={(e) => setFilledByName(e.target.value)}
+              placeholder="Nome completo do responsável pelo preenchimento"
+              className="bg-slate-950 border-slate-800 text-white text-xs"
+            />
+          </div>
+
+          <div className="space-y-2 pt-1">
+            <Label className="text-xs text-slate-300 flex items-center justify-between">
+              <span>Assinatura do Responsável pelo Preenchimento</span>
+              <span className="text-[11px] text-slate-500">(Opcional)</span>
+            </Label>
+
+            {filledBySignature ? (
+              <div className="space-y-3 p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-blue-950/80 text-blue-400 border border-blue-800 text-xs px-2.5 py-1">
+                      <PenLine className="w-3.5 h-3.5 mr-1" /> Assinatura Registrada
+                    </Badge>
+                    <span className="text-xs text-slate-400">
+                      Responsável:{' '}
+                      <strong className="text-slate-200">{filledByName || 'Não informado'}</strong>
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFilledBySignature(undefined)
+                      if (filledByPadRef.current) {
+                        filledByPadRef.current.clear()
+                      }
+                    }}
+                    className="h-7 text-[11px] border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
+                  >
+                    <RotateCcw className="w-3 h-3 mr-1" /> Refazer Assinatura
+                  </Button>
+                </div>
+                <div className="bg-white p-3 rounded-lg flex items-center justify-center border border-slate-300 shadow-inner max-w-md">
+                  <img
+                    src={filledBySignature}
+                    alt="Assinatura do Responsável pelo Preenchimento"
+                    className="max-h-24 object-contain"
+                  />
+                </div>
+              </div>
+            ) : (
+              <DigitalSignaturePad
+                ref={filledByPadRef}
+                height={150}
+                strokeColor="#1e3a5f"
+                signerName={filledByName || user?.name || ''}
+                onSignatureChange={(_isEmpty, dataUrl) => {
+                  setFilledBySignature(dataUrl || undefined)
+                }}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

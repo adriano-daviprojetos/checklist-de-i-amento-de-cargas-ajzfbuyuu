@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T17:44:19.496Z",
+  "generatedAt": "2026-08-25T17:55:04.813Z",
   "collections": [
     {
       "name": "users",
@@ -840,6 +840,18 @@
         },
         {
           "name": "signature_data",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "filled_by_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "filled_by_signature",
           "type": "text",
           "required": false,
           "system": false
