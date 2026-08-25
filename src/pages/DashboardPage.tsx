@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
+import { syncService } from '@/lib/offline/sync-service'
 import { Checklist, Equipment, Material, ChecklistTemplate } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -47,6 +48,12 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     loadDashboardData()
+    const unsubscribe = syncService.subscribe(() => {
+      loadDashboardData()
+    })
+    return () => {
+      unsubscribe()
+    }
   }, [company?.id, isOnline])
 
   const loadDashboardData = async () => {

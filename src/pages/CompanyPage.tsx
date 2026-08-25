@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
+import { syncService } from '@/lib/offline/sync-service'
 import { Company } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -72,7 +73,13 @@ export const CompanyPage: React.FC = () => {
       setCity(company.city || '')
       setState(company.state || 'SP')
     }
-  }, [company])
+    const unsubscribe = syncService.subscribe(() => {
+      refreshProfile()
+    })
+    return () => {
+      unsubscribe()
+    }
+  }, [company, refreshProfile])
 
   if (!canManageCompanies) {
     return <Navigate to="/" replace />

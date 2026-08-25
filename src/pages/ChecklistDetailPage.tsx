@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
+import { syncService } from '@/lib/offline/sync-service'
 import {
   Checklist,
   ChecklistResponse,
@@ -104,6 +105,12 @@ export const ChecklistDetailPage: React.FC = () => {
   useEffect(() => {
     const targetCompId = selectedCompanyId || company?.id
     loadPrerequisites(targetCompId)
+    const unsubscribe = syncService.subscribe(() => {
+      loadPrerequisites(selectedCompanyId || company?.id)
+    })
+    return () => {
+      unsubscribe()
+    }
   }, [selectedCompanyId, company?.id, isOnline])
 
   const loadPrerequisites = async (targetCompanyId?: string) => {

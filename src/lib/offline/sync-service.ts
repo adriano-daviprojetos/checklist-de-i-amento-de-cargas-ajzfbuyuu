@@ -21,7 +21,7 @@ class SyncService {
     return () => this.listeners.delete(callback)
   }
 
-  private notify() {
+  public notify() {
     this.listeners.forEach((cb) => cb())
   }
 

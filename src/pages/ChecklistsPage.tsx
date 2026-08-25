@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
+import { syncService } from '@/lib/offline/sync-service'
 import { Checklist, ChecklistTemplate, Equipment, Material, Client } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,6 +51,12 @@ export const ChecklistsPage: React.FC = () => {
 
   useEffect(() => {
     loadChecklists()
+    const unsubscribe = syncService.subscribe(() => {
+      loadChecklists()
+    })
+    return () => {
+      unsubscribe()
+    }
   }, [company?.id, isOnline])
 
   const loadChecklists = async () => {

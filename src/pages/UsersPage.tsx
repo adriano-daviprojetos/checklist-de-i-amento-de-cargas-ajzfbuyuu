@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth, DEFAULT_ROLE_PERMISSIONS } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
+import { syncService } from '@/lib/offline/sync-service'
 import { AppUser, UserRole, SystemModuleKey, UserPermissions, ModulePermission } from '@/types'
 import { CompanySelect } from '@/components/CompanySelect'
 import { Card, CardContent } from '@/components/ui/card'
@@ -146,6 +147,12 @@ export const UsersPage: React.FC = () => {
 
   useEffect(() => {
     loadUsers()
+    const unsubscribe = syncService.subscribe(() => {
+      loadUsers()
+    })
+    return () => {
+      unsubscribe()
+    }
   }, [company?.id, isOnline])
 
   const loadUsers = async () => {

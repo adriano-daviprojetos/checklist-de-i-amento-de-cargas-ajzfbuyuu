@@ -17,6 +17,8 @@ import {
 } from '@/types'
 import { syncService } from '@/lib/offline/sync-service'
 import { dbGetAll, dbGetById, dbPut } from '@/lib/offline/db'
+import { useOnlineStatus } from '@/hooks/use-online-status'
+import { useRealtimeSync } from '@/hooks/use-realtime-sync'
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
   superadmin: {
@@ -168,10 +170,17 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isOnline } = useOnlineStatus()
   const [user, setUser] = useState<AppUser | null>(null)
   const [company, setCompany] = useState<Company | null>(null)
   const [companies, setCompanies] = useState<Company[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
+
+  // Real-time synchronization when online (PocketBase SSE + Auto Queue + Periodic Pull)
+  useRealtimeSync({
+    isOnline,
+    companyId: company?.id || user?.company_id,
+  })
 
   const role: UserRole = (user?.role as UserRole) || 'operador'
   const isSuperAdmin = role === 'superadmin'

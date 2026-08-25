@@ -52,6 +52,7 @@ export const OfflineSyncBar: React.FC = () => {
         toast.success(`Tudo atualizado! ${res.processed} alterações sincronizadas com sucesso.`)
       }
     } catch (err: any) {
+      console.warn('Erro na sincronização:', err)
       toast.error('Erro na sincronização: ' + err.message)
     } finally {
       setIsSyncing(false)

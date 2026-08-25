@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
+import { syncService } from '@/lib/offline/sync-service'
 import { Client } from '@/types'
 import { CompanySelect } from '@/components/CompanySelect'
 import { Card, CardContent } from '@/components/ui/card'
@@ -47,6 +48,12 @@ export const ClientsPage: React.FC = () => {
 
   useEffect(() => {
     loadClients()
+    const unsubscribe = syncService.subscribe(() => {
+      loadClients()
+    })
+    return () => {
+      unsubscribe()
+    }
   }, [company?.id, isOnline])
 
   const loadClients = async () => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
+import { syncService } from '@/lib/offline/sync-service'
 import {
   ChecklistTemplate,
   ChecklistTemplateItem,
@@ -90,6 +91,12 @@ export const TemplatesPage: React.FC = () => {
 
   useEffect(() => {
     loadTemplates()
+    const unsubscribe = syncService.subscribe(() => {
+      loadTemplates()
+    })
+    return () => {
+      unsubscribe()
+    }
   }, [company?.id, isOnline])
 
   const loadTemplates = async () => {
