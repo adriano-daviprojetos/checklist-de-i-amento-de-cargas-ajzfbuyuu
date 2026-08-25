@@ -254,12 +254,35 @@ export const ChecklistsPage: React.FC = () => {
                   )}
 
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                    <span>
-                      {new Date(chk.scheduled_date || chk.created || Date.now()).toLocaleDateString(
-                        'pt-BR',
-                      )}
-                    </span>
+                    {chk.status === 'Concluído' || chk.status === 'Reprovado' ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-500" />
+                        <span>
+                          <span className="text-slate-500">Finalizado em:</span>{' '}
+                          <strong className="text-slate-300 font-normal">
+                            {chk.completed_at
+                              ? `${new Date(chk.completed_at).toLocaleDateString('pt-BR')} às ${new Date(chk.completed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+                              : chk.updated
+                                ? `${new Date(chk.updated).toLocaleDateString('pt-BR')} às ${new Date(chk.updated).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+                                : `${new Date(chk.created || Date.now()).toLocaleDateString('pt-BR')} às ${new Date(chk.created || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
+                          </strong>
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                        <span>
+                          <span className="text-slate-500">Criado em:</span>{' '}
+                          <strong className="text-slate-300 font-normal">
+                            {chk.created
+                              ? `${new Date(chk.created).toLocaleDateString('pt-BR')} às ${new Date(chk.created).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+                              : chk.scheduled_date
+                                ? new Date(chk.scheduled_date).toLocaleDateString('pt-BR')
+                                : `${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
+                          </strong>
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5">

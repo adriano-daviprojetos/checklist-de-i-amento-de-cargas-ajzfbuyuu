@@ -163,7 +163,10 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
           </div>
           <div className="col-span-2 sm:col-span-1">
             <span className="text-slate-500 block text-[11px]">Data de Finalização</span>
-            <strong className="text-slate-200">{currentDate.toLocaleDateString('pt-BR')}</strong>
+            <strong className="text-slate-200">
+              {currentDate.toLocaleDateString('pt-BR')} às{' '}
+              {currentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </strong>
           </div>
         </div>
 
@@ -232,7 +235,7 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
               </Label>
               <span className="text-[10px] text-slate-400">
                 {currentDate.toLocaleDateString('pt-BR')} às{' '}
-                {currentDate.toLocaleTimeString('pt-BR')}
+                {currentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
 

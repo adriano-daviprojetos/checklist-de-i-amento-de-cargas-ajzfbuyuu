@@ -99,9 +99,9 @@ export const ChecklistDetailPage: React.FC = () => {
 
   // Answers Map: itemId -> ChecklistResponse
   const [responsesMap, setResponsesMap] = useState<Record<string, Partial<ChecklistResponse>>>({})
+  const [createdAt, setCreatedAt] = useState<string | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-
   useEffect(() => {
     const targetCompId = selectedCompanyId || company?.id
     loadPrerequisites(targetCompId)
@@ -159,6 +159,7 @@ export const ChecklistDetailPage: React.FC = () => {
           setStatus(checklist.status)
           setSignatureData(checklist.signature_data)
           setCompletedAt(checklist.completed_at)
+          setCreatedAt(checklist.created)
           setSelectedTemplateId(checklist.template_id)
 
           // Load template items
@@ -439,7 +440,7 @@ export const ChecklistDetailPage: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-bold text-blue-400">
                 {code || 'CHK-NOVO'}
               </span>
@@ -455,13 +456,42 @@ export const ChecklistDetailPage: React.FC = () => {
               >
                 {status}
               </Badge>
+              {completedAt ? (
+                <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>
+                    Finalizado em{' '}
+                    <strong className="text-slate-200 font-medium">
+                      {new Date(completedAt).toLocaleDateString('pt-BR')} às{' '}
+                      {new Date(completedAt).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </strong>
+                  </span>
+                </span>
+              ) : createdAt ? (
+                <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                  <span>
+                    Criado em{' '}
+                    <strong className="text-slate-200 font-medium">
+                      {new Date(createdAt).toLocaleDateString('pt-BR')} às{' '}
+                      {new Date(createdAt).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </strong>
+                  </span>
+                </span>
+              ) : null}
               {!isOnline && (
                 <Badge variant="outline" className="border-amber-500 text-amber-400 text-xs">
                   Modo Campo (Offline)
                 </Badge>
               )}
             </div>
-            <h1 className="text-xl font-bold text-white tracking-tight mt-0.5">
+            <h1 className="text-xl font-bold text-white tracking-tight mt-1">
               {title || 'Execução de Checklist de Içamento'}
             </h1>
           </div>
