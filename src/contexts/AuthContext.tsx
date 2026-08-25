@@ -267,14 +267,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const loginIdentifier = emailOrCpf.trim()
+      let appUser: AppUser
 
-      const authData = await pb.collection('users').authWithPassword(loginIdentifier, password)
-      const appUser = authData.record as unknown as AppUser
+      if (loginIdentifier.includes('@')) {
+        const authData = await pb.collection('users').authWithPassword(loginIdentifier, password)
+        appUser = authData.record as unknown as AppUser
+      } else {
+        const response = await pb.send<{ token: string; record: any }>('/api/custom-auth', {
+          method: 'POST',
+          body: {
+            identity: loginIdentifier,
+            password: password,
+          },
+        })
+
+        if (!response || !response.token || !response.record) {
+          throw new Error('Falha ao autenticar com as credenciais fornecidas.')
+        }
+
+        pb.authStore.save(response.token, response.record)
+        appUser = response.record as unknown as AppUser
+      }
+
       setUser(appUser)
       localStorage.setItem('offline_user_session', JSON.stringify(appUser))
 
       // Trigger immediate background sync
-      syncService.pullAllData(appUser.company_id)
+      if (appUser.company_id) {
+        syncService.pullAllData(appUser.company_id)
+      }
 
       await loadUserContext()
       return { success: true }
