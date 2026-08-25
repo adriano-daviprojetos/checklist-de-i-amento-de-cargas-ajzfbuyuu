@@ -1,36 +1,48 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 onRecordAuthRequest((e) => {
-  const identity = e.identity || ''
-  if (!identity.includes('@')) {
-    const cleaned = identity.replace(/[^0-9]/g, '')
-    let user = null
+  const identity = (e.identity || '').trim()
 
-    // 1. Tenta buscar pelo CPF exato como digitado pelo usuário
-    if (identity.trim().length > 0) {
-      try {
-        const users = $app.findRecordsByFilter('users', `cpf = '${identity.trim()}'`, '', 1, 0)
-        if (users && users.length > 0) {
-          user = users[0]
-        }
-      } catch (_) {}
+  if (identity && !identity.includes('@')) {
+    let email = ''
+
+    // 1. Tenta buscar pelo CPF exato como digitado
+    const query1 = $app
+      .dao()
+      .db()
+      .newQuery('SELECT email FROM users WHERE cpf = {:cpf} LIMIT 1')
+      .bind({ cpf: identity })
+
+    const row1 = {}
+    const err1 = query1.one(row1)
+    if (!err1 && row1.email) {
+      email = row1.email
     }
 
-    // 2. Se não encontrou e o limpo é diferente, tenta buscar pelo CPF limpo (apenas dígitos)
-    if (!user && cleaned.length > 0) {
-      try {
-        const users = $app.findRecordsByFilter('users', `cpf = '${cleaned}'`, '', 1, 0)
-        if (users && users.length > 0) {
-          user = users[0]
+    // 2. Se não encontrar e o CPF tiver caracteres não-dígitos, tenta apenas com dígitos
+    if (!email) {
+      const digitsOnly = identity.replace(/[^0-9]/g, '')
+      if (digitsOnly && digitsOnly !== identity) {
+        const query2 = $app
+          .dao()
+          .db()
+          .newQuery(
+            "SELECT email FROM users WHERE REPLACE(REPLACE(cpf, '.', ''), '-', '') = {:cpf} LIMIT 1",
+          )
+          .bind({ cpf: digitsOnly })
+
+        const row2 = {}
+        const err2 = query2.one(row2)
+        if (!err2 && row2.email) {
+          email = row2.email
         }
-      } catch (_) {}
+      }
     }
 
-    if (user && user.get('email')) {
-      e.identity = user.get('email')
+    if (email) {
+      e.identity = email
     }
   }
 
-  // Always let PocketBase process normally
-  e.next()
+  return e.next()
 }, 'users')
