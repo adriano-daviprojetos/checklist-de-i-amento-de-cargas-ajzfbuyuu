@@ -156,6 +156,21 @@ class SyncService {
 
     let processed = 0
     let errors = 0
+    // In-memory mapping of local IDs to real server IDs for this sync batch
+    const idMap = new Map<string, string>()
+
+    const isLocalId = (id?: string) => {
+      if (!id) return true
+      return (
+        id.startsWith('queue_') ||
+        id.startsWith('local_') ||
+        id.startsWith('eq_') ||
+        id.startsWith('mat_') ||
+        id.startsWith('cli_') ||
+        id.startsWith('tpl_') ||
+        id.startsWith('item_')
+      )
+    }
 
     try {
       const queue = await dbGetAll<OfflineSyncQueueItem>('sync_queue')
@@ -163,41 +178,101 @@ class SyncService {
 
       for (const item of sortedQueue) {
         try {
+          // Determine the target entity ID (using item.payload.id or item.id fallback)
+          const targetLocalId = item.payload?.id || item.id
+
           if (item.action === 'create') {
-            const { id: _ignoredId, local_id, expand, sync_status, ...payloadData } = item.payload
+            const {
+              id: _ignoredId,
+              local_id,
+              expand,
+              sync_status,
+              ...payloadData
+            } = item.payload || {}
+
+            // If payload has checklist_id that was created locally, remap it to server ID
+            if (payloadData.checklist_id && idMap.has(payloadData.checklist_id)) {
+              payloadData.checklist_id = idMap.get(payloadData.checklist_id)
+            }
+
+            // Clean item_id relation if local or invalid
+            if (payloadData.item_id && isLocalId(payloadData.item_id)) {
+              delete payloadData.item_id
+            }
+
             const res = await pb.collection(item.entity).create(payloadData)
+
+            // Save mapping localId -> serverId
+            if (targetLocalId) {
+              idMap.set(targetLocalId, res.id)
+            }
+            if (item.id && item.id !== targetLocalId) {
+              idMap.set(item.id, res.id)
+            }
 
             // If it was a checklist, update references and responses with server id
             if (item.entity === 'checklists') {
-              const localChk = await dbGetById<Checklist>('checklists', item.id)
+              const localChk =
+                (await dbGetById<Checklist>('checklists', targetLocalId)) ||
+                (await dbGetById<Checklist>('checklists', item.id))
               if (localChk) {
-                await dbDelete('checklists', item.id)
+                await dbDelete('checklists', localChk.id)
                 await dbPut('checklists', { ...localChk, id: res.id, sync_status: 'synced' })
               }
               // Update responses pointing to this local checklist id
               const localResponses = await dbGetByIndex<ChecklistResponse>(
                 'checklist_responses',
                 'checklist_id',
-                item.id,
+                targetLocalId,
               )
               for (const r of localResponses) {
                 await dbPut('checklist_responses', { ...r, checklist_id: res.id })
               }
             } else if (item.entity === 'checklist_responses') {
-              await dbDelete('checklist_responses', item.id)
+              await dbDelete('checklist_responses', targetLocalId)
+              if (item.id !== targetLocalId) {
+                await dbDelete('checklist_responses', item.id)
+              }
               await dbPut('checklist_responses', { ...item.payload, id: res.id })
             }
           } else if (item.action === 'update') {
-            const { id: _ignoredId, expand, sync_status, ...updatePayloadData } = item.payload
-            await pb.collection(item.entity).update(item.id, updatePayloadData)
-            if (item.entity === 'checklists') {
-              const localChk = await dbGetById<Checklist>('checklists', item.id)
-              if (localChk) {
-                await dbPut('checklists', { ...localChk, sync_status: 'synced' })
+            const { id: _ignoredId, expand, sync_status, ...updatePayloadData } = item.payload || {}
+
+            // Resolve real server ID: check idMap, targetLocalId, or item.id
+            let serverId = idMap.get(targetLocalId) || idMap.get(item.id) || targetLocalId
+
+            // If the ID is still a local ID (queue_, local_, etc.), it wasn't yet created on server
+            if (isLocalId(serverId)) {
+              // Create first (POST) then record mapping
+              const res = await pb.collection(item.entity).create(updatePayloadData)
+              serverId = res.id
+              idMap.set(targetLocalId, res.id)
+              if (item.id) idMap.set(item.id, res.id)
+
+              if (item.entity === 'checklists') {
+                const localChk =
+                  (await dbGetById<Checklist>('checklists', targetLocalId)) ||
+                  (await dbGetById<Checklist>('checklists', item.id))
+                if (localChk) {
+                  await dbDelete('checklists', localChk.id)
+                  await dbPut('checklists', { ...localChk, id: res.id, sync_status: 'synced' })
+                }
+              }
+            } else {
+              // Real server ID is known, perform update (PATCH/PUT)
+              await pb.collection(item.entity).update(serverId, updatePayloadData)
+              if (item.entity === 'checklists') {
+                const localChk = await dbGetById<Checklist>('checklists', serverId)
+                if (localChk) {
+                  await dbPut('checklists', { ...localChk, sync_status: 'synced' })
+                }
               }
             }
           } else if (item.action === 'delete') {
-            await pb.collection(item.entity).delete(item.id)
+            const targetId = idMap.get(targetLocalId) || idMap.get(item.id) || targetLocalId
+            if (!isLocalId(targetId)) {
+              await pb.collection(item.entity).delete(targetId)
+            }
           }
 
           // Remove successfully processed item from queue
