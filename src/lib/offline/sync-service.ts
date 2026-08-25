@@ -184,13 +184,13 @@ class SyncService {
           if (item.action === 'create') {
             const {
               id: _ignoredId,
-              local_id,
-              expand,
-              sync_status,
-              created,
-              updated,
-              collectionId,
-              collectionName,
+              local_id: _ignoredLocalId,
+              expand: _ignoredExpand,
+              sync_status: _ignoredSyncStatus,
+              created: _ignoredCreated,
+              updated: _ignoredUpdated,
+              collectionId: _ignoredCollectionId,
+              collectionName: _ignoredCollectionName,
               ...rawPayloadData
             } = item.payload || {}
 
@@ -259,13 +259,13 @@ class SyncService {
           } else if (item.action === 'update') {
             const {
               id: _ignoredId,
-              local_id,
-              expand,
-              sync_status,
-              created,
-              updated,
-              collectionId,
-              collectionName,
+              local_id: _ignoredLocalId,
+              expand: _ignoredExpand,
+              sync_status: _ignoredSyncStatus,
+              created: _ignoredCreated,
+              updated: _ignoredUpdated,
+              collectionId: _ignoredCollectionId,
+              collectionName: _ignoredCollectionName,
               ...rawUpdatePayloadData
             } = item.payload || {}
 
@@ -416,10 +416,12 @@ class SyncService {
         if (isNew) {
           const {
             id: _ignoredId,
-            expand,
-            sync_status,
-            created,
-            updated,
+            expand: _ignoredExpand,
+            sync_status: _ignoredSyncStatus,
+            created: _ignoredCreated,
+            updated: _ignoredUpdated,
+            collectionId: _ignoredCollectionId,
+            collectionName: _ignoredCollectionName,
             ...rawCreatePayload
           } = fullChecklist as any
           const createPayload: Record<string, any> = { ...rawCreatePayload }
@@ -437,10 +439,12 @@ class SyncService {
           serverChkId = checklistId
           const {
             id: _ignoredId,
-            expand,
-            sync_status,
-            created,
-            updated,
+            expand: _ignoredExpand,
+            sync_status: _ignoredSyncStatus,
+            created: _ignoredCreated,
+            updated: _ignoredUpdated,
+            collectionId: _ignoredCollectionId,
+            collectionName: _ignoredCollectionName,
             ...rawUpdatePayload
           } = fullChecklist as any
           const updatePayload: Record<string, any> = { ...rawUpdatePayload }
