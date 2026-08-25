@@ -174,7 +174,22 @@ class SyncService {
 
     try {
       const queue = await dbGetAll<OfflineSyncQueueItem>('sync_queue')
-      const sortedQueue = queue.sort((a, b) => a.timestamp - b.timestamp)
+      const entityPriority: Record<OfflineSyncQueueItem['entity'], number> = {
+        clients: 1,
+        equipment: 1,
+        materials: 1,
+        templates: 1,
+        checklists: 2,
+        checklist_responses: 3,
+      }
+      const sortedQueue = queue.sort((a, b) => {
+        const priorityA = entityPriority[a.entity] ?? 99
+        const priorityB = entityPriority[b.entity] ?? 99
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB
+        }
+        return a.timestamp - b.timestamp
+      })
 
       for (const item of sortedQueue) {
         try {
@@ -218,16 +233,23 @@ class SyncService {
               }
             }
 
-            // Resolve local IDs in relation fields (e.g. checklist_id) using idMap
+            // Resolve local IDs in relation fields (e.g. checklist_id) using idMap or IndexedDB fallback
             if (payloadData.checklist_id) {
               if (idMap.has(payloadData.checklist_id)) {
                 payloadData.checklist_id = idMap.get(payloadData.checklist_id)
               } else if (this.isLocalId(payloadData.checklist_id)) {
-                // Checklist local ID couldn't be resolved (not created on server yet or failed)
-                console.warn(
-                  `Cannot sync item ${item.id} (${item.entity}): checklist_id '${payloadData.checklist_id}' not found in idMap`,
-                )
-                delete payloadData.checklist_id
+                // Fallback: try to find the checklist in IndexedDB
+                const localChk = await dbGetById<Checklist>('checklists', payloadData.checklist_id)
+                if (localChk && localChk.sync_status === 'synced' && !this.isLocalId(localChk.id)) {
+                  payloadData.checklist_id = localChk.id
+                  idMap.set(payloadData.checklist_id, localChk.id)
+                } else {
+                  // Checklist has not been synced yet or does not exist — skip this item for now
+                  console.warn(
+                    `Skipping sync for item ${item.id} (${item.entity}): checklist '${payloadData.checklist_id}' is pending sync or not found`,
+                  )
+                  continue
+                }
               }
             }
 
