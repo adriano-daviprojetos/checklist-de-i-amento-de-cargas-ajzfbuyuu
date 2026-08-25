@@ -1,6 +1,6 @@
 // Native IndexedDB wrapper for full Offline-First persistence
 const DB_NAME = 'RiggingChecklistDB'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 export interface DBStoreSchema {
   companies: string // key: id
