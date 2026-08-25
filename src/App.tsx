@@ -19,12 +19,16 @@ import { ClientsPage } from './pages/ClientsPage'
 import { UsersPage } from './pages/UsersPage'
 import { CompanyPage } from './pages/CompanyPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { AuditLogPage } from './pages/AuditLogPage'
 import NotFound from './pages/NotFound'
 import { Loader2 } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
+import { auditLogService } from './services/auditLogService'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
   adminOnly?: boolean
+  adminOrGestorOnly?: boolean
   module?: SystemModuleKey
   action?: 'read' | 'edit' | 'delete'
 }
@@ -32,10 +36,13 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   adminOnly = false,
+  adminOrGestorOnly = false,
   module,
   action = 'read',
 }) => {
-  const { isAuthenticated, isLoading, canManageCompanies, hasModulePermission } = useAuth()
+  const { isAuthenticated, isLoading, canManageCompanies, isAdmin, isGestor, hasModulePermission } =
+    useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -50,10 +57,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (adminOnly && !canManageCompanies) {
+    // Log access denial
+    auditLogService.logAccessDenied(module || 'company', location.pathname)
+    return <Navigate to="/" replace />
+  }
+
+  if (adminOrGestorOnly && !(isAdmin || isGestor)) {
+    // Log access denial
+    auditLogService.logAccessDenied(module || 'audit', location.pathname)
     return <Navigate to="/" replace />
   }
 
   if (module && !hasModulePermission(module, action)) {
+    // Log access denial
+    auditLogService.logAccessDenied(module, location.pathname)
     return <Navigate to="/" replace />
   }
 
@@ -144,8 +161,17 @@ const App = () => (
           <Route
             path="/empresa"
             element={
-              <ProtectedRoute adminOnly>
+              <ProtectedRoute adminOnly module="company" action="edit">
                 <CompanyPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auditoria"
+            element={
+              <ProtectedRoute adminOrGestorOnly module="audit" action="read">
+                <AuditLogPage />
               </ProtectedRoute>
             }
           />

@@ -27,6 +27,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     clients: { read: true, edit: true, delete: true },
     users: { read: true, edit: true, delete: true },
     company: { read: true, edit: true, delete: true },
+    audit: { read: true, edit: true, delete: true },
   },
   admin: {
     checklists: { read: true, edit: true, delete: true },
@@ -36,6 +37,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     clients: { read: true, edit: true, delete: true },
     users: { read: true, edit: true, delete: true },
     company: { read: true, edit: true, delete: true },
+    audit: { read: true, edit: true, delete: true },
   },
   gestor: {
     checklists: { read: true, edit: true, delete: true },
@@ -45,6 +47,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     clients: { read: true, edit: true, delete: true },
     users: { read: true, edit: true, delete: true },
     company: { read: true, edit: false, delete: false },
+    audit: { read: true, edit: false, delete: false },
   },
   supervisor: {
     checklists: { read: true, edit: true, delete: true },
@@ -54,6 +57,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     clients: { read: true, edit: true, delete: false },
     users: { read: true, edit: false, delete: false },
     company: { read: true, edit: false, delete: false },
+    audit: { read: false, edit: false, delete: false },
   },
   rigger: {
     checklists: { read: true, edit: true, delete: false },
@@ -63,6 +67,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     clients: { read: true, edit: false, delete: false },
     users: { read: false, edit: false, delete: false },
     company: { read: false, edit: false, delete: false },
+    audit: { read: false, edit: false, delete: false },
   },
   sinaleiro: {
     checklists: { read: true, edit: true, delete: false },
@@ -72,6 +77,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     clients: { read: true, edit: false, delete: false },
     users: { read: false, edit: false, delete: false },
     company: { read: false, edit: false, delete: false },
+    audit: { read: false, edit: false, delete: false },
   },
   operador: {
     checklists: { read: true, edit: true, delete: false },
@@ -81,6 +87,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     clients: { read: true, edit: false, delete: false },
     users: { read: false, edit: false, delete: false },
     company: { read: false, edit: false, delete: false },
+    audit: { read: false, edit: false, delete: false },
   },
 }
 
@@ -94,6 +101,7 @@ export function getUserEffectivePermissions(user: AppUser | null): UserPermissio
       clients: { read: false, edit: false, delete: false },
       users: { read: false, edit: false, delete: false },
       company: { read: false, edit: false, delete: false },
+      audit: { read: false, edit: false, delete: false },
     }
   }
 
@@ -114,6 +122,7 @@ export function getUserEffectivePermissions(user: AppUser | null): UserPermissio
       'clients',
       'users',
       'company',
+      'audit',
     ]
 
     const merged: Partial<UserPermissions> = {}

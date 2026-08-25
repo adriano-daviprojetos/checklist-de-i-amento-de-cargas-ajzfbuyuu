@@ -30,6 +30,7 @@ export type SystemModuleKey =
   | 'clients'
   | 'users'
   | 'company'
+  | 'audit'
 
 export interface ModulePermission {
   read: boolean
@@ -238,4 +239,42 @@ export interface OfflineSyncQueueItem {
   timestamp: number
   attempts: number
   error?: string
+}
+
+export type AuditAction =
+  | 'access_denied'
+  | 'permission_changed'
+  | 'user_deleted'
+  | 'company_deleted'
+  | 'checklist_deleted'
+  | 'equipment_deleted'
+  | 'material_deleted'
+  | 'client_deleted'
+  | 'template_deleted'
+  | 'user_created'
+  | 'user_updated'
+  | string
+
+export interface AuditLog {
+  id: string
+  company?: string
+  user?: string
+  user_name?: string
+  action: AuditAction
+  module?: string
+  details?: string
+  metadata?: Record<string, any>
+  created: string
+  updated?: string
+  expand?: {
+    company?: Company
+    user?: AppUser
+  }
+}
+
+export interface AuditLogFilters {
+  startDate?: string
+  endDate?: string
+  action?: string
+  module?: string
 }

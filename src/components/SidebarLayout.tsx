@@ -19,6 +19,7 @@ import {
   HardHat,
   User,
   KeyRound,
+  ScrollText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -44,6 +45,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     switchCompany,
     role,
     isAdmin,
+    isGestor,
     canManageCompanies,
     hasModulePermission,
   } = useAuth()
@@ -98,6 +100,12 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       path: '/empresa',
       icon: Building,
       isVisible: canManageCompanies,
+    },
+    {
+      title: 'Auditoria',
+      path: '/auditoria',
+      icon: ScrollText,
+      isVisible: isAdmin || isGestor || hasModulePermission('audit', 'read'),
     },
     {
       title: 'Meu Perfil',

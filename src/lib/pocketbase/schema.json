@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T16:48:43.455Z",
+  "generatedAt": "2026-08-25T16:55:49.033Z",
   "collections": [
     {
       "name": "users",
@@ -922,6 +922,84 @@
         }
       ],
       "indexes": ["CREATE INDEX idx_responses_checklist ON checklist_responses (checklist_id)"]
+    },
+    {
+      "name": "audit_logs",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'superadmin' || @request.auth.role = 'gestor')",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'superadmin' || @request.auth.role = 'gestor')",
+        "create": null,
+        "update": null,
+        "delete": null
+      },
+      "fields": [
+        {
+          "name": "company",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "user",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "user_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "module",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "details",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "metadata",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_audit_logs_company ON audit_logs (company)",
+        "CREATE INDEX idx_audit_logs_user ON audit_logs (user)",
+        "CREATE INDEX idx_audit_logs_action ON audit_logs (action)",
+        "CREATE INDEX idx_audit_logs_module ON audit_logs (module)",
+        "CREATE INDEX idx_audit_logs_created ON audit_logs (created DESC)"
+      ]
     }
   ]
 }
