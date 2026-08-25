@@ -197,11 +197,6 @@ class SyncService {
 
             const payloadData: Record<string, any> = { ...rawPayloadData }
 
-            // If payload has checklist_id that was created locally, remap it to server ID
-            if (payloadData.checklist_id && idMap.has(payloadData.checklist_id)) {
-              payloadData.checklist_id = idMap.get(payloadData.checklist_id)
-            }
-
             // Clean item_id relation if local or invalid
             if (payloadData.item_id && this.isLocalId(payloadData.item_id)) {
               delete payloadData.item_id
@@ -216,9 +211,23 @@ class SyncService {
               'template_id',
               'user_id',
               'company_id',
+              'checklist_id',
             ]) {
               if (payloadData[relField] === '') {
                 delete payloadData[relField]
+              }
+            }
+
+            // Resolve local IDs in relation fields (e.g. checklist_id) using idMap
+            if (payloadData.checklist_id) {
+              if (idMap.has(payloadData.checklist_id)) {
+                payloadData.checklist_id = idMap.get(payloadData.checklist_id)
+              } else if (this.isLocalId(payloadData.checklist_id)) {
+                // Checklist local ID couldn't be resolved (not created on server yet or failed)
+                console.warn(
+                  `Cannot sync item ${item.id} (${item.entity}): checklist_id '${payloadData.checklist_id}' not found in idMap`,
+                )
+                delete payloadData.checklist_id
               }
             }
 
