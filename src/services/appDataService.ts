@@ -122,18 +122,20 @@ export class AppDataService {
   }
 
   static async saveEquipment(item: Partial<Equipment>, isOnline: boolean): Promise<Equipment> {
-    const id = item.id || `eq_${Date.now()}`
-    const fullItem = { ...item, id } as Equipment
+    const userCompId = item.company_id || (pb.authStore.record as any)?.company_id || ''
+    const itemWithCompany = { ...item, company_id: userCompId }
+    const id = itemWithCompany.id || `eq_${Date.now()}`
+    const fullItem = { ...itemWithCompany, id } as Equipment
     await dbPut('equipment', fullItem)
 
     if (isOnline && pb.authStore.isValid) {
-      if (!item.id || item.id.startsWith('eq_')) {
-        const res = await pb.collection('equipment').create(item)
+      if (!itemWithCompany.id || itemWithCompany.id.startsWith('eq_')) {
+        const res = await pb.collection('equipment').create(itemWithCompany)
         await dbDelete('equipment', id)
         await dbPut('equipment', res as unknown as Equipment)
         return res as unknown as Equipment
       } else {
-        const res = await pb.collection('equipment').update(item.id, item)
+        const res = await pb.collection('equipment').update(itemWithCompany.id, itemWithCompany)
         await dbPut('equipment', res as unknown as Equipment)
         return res as unknown as Equipment
       }
@@ -169,18 +171,20 @@ export class AppDataService {
   }
 
   static async saveMaterial(item: Partial<Material>, isOnline: boolean): Promise<Material> {
-    const id = item.id || `mat_${Date.now()}`
-    const fullItem = { ...item, id } as Material
+    const userCompId = item.company_id || (pb.authStore.record as any)?.company_id || ''
+    const itemWithCompany = { ...item, company_id: userCompId }
+    const id = itemWithCompany.id || `mat_${Date.now()}`
+    const fullItem = { ...itemWithCompany, id } as Material
     await dbPut('materials', fullItem)
 
     if (isOnline && pb.authStore.isValid) {
-      if (!item.id || item.id.startsWith('mat_')) {
-        const res = await pb.collection('materials').create(item)
+      if (!itemWithCompany.id || itemWithCompany.id.startsWith('mat_')) {
+        const res = await pb.collection('materials').create(itemWithCompany)
         await dbDelete('materials', id)
         await dbPut('materials', res as unknown as Material)
         return res as unknown as Material
       } else {
-        const res = await pb.collection('materials').update(item.id, item)
+        const res = await pb.collection('materials').update(itemWithCompany.id, itemWithCompany)
         await dbPut('materials', res as unknown as Material)
         return res as unknown as Material
       }
@@ -216,18 +220,20 @@ export class AppDataService {
   }
 
   static async saveClient(item: Partial<Client>, isOnline: boolean): Promise<Client> {
-    const id = item.id || `cli_${Date.now()}`
-    const fullItem = { ...item, id } as Client
+    const userCompId = item.company_id || (pb.authStore.record as any)?.company_id || ''
+    const itemWithCompany = { ...item, company_id: userCompId }
+    const id = itemWithCompany.id || `cli_${Date.now()}`
+    const fullItem = { ...itemWithCompany, id } as Client
     await dbPut('clients', fullItem)
 
     if (isOnline && pb.authStore.isValid) {
-      if (!item.id || item.id.startsWith('cli_')) {
-        const res = await pb.collection('clients').create(item)
+      if (!itemWithCompany.id || itemWithCompany.id.startsWith('cli_')) {
+        const res = await pb.collection('clients').create(itemWithCompany)
         await dbDelete('clients', id)
         await dbPut('clients', res as unknown as Client)
         return res as unknown as Client
       } else {
-        const res = await pb.collection('clients').update(item.id, item)
+        const res = await pb.collection('clients').update(itemWithCompany.id, itemWithCompany)
         await dbPut('clients', res as unknown as Client)
         return res as unknown as Client
       }
@@ -294,10 +300,11 @@ export class AppDataService {
     items: Partial<ChecklistTemplateItem>[],
     isOnline: boolean,
   ): Promise<ChecklistTemplate> {
+    const userCompId = template.company_id || (pb.authStore.record as any)?.company_id || ''
     const tplId = template.id || `tpl_${Date.now()}`
     const fullTpl: ChecklistTemplate = {
       id: tplId,
-      company_id: template.company_id || '',
+      company_id: userCompId,
       title: template.title || 'Novo Modelo',
       description: template.description || '',
       category: template.category || 'Geral de Içamento',
@@ -373,16 +380,19 @@ export class AppDataService {
   }
 
   static async saveUser(user: Partial<AppUser> & { password?: string }): Promise<AppUser> {
-    if (!user.id) {
+    const userCompId = user.company_id || (pb.authStore.record as any)?.company_id || ''
+    const userWithCompany = { ...user, company_id: userCompId }
+
+    if (!userWithCompany.id) {
       const res = await pb.collection('users').create({
-        ...user,
+        ...userWithCompany,
         password: user.password || 'Skip@Pass',
         passwordConfirm: user.password || 'Skip@Pass',
         emailVisibility: true,
       })
       return res as unknown as AppUser
     } else {
-      const res = await pb.collection('users').update(user.id, user)
+      const res = await pb.collection('users').update(userWithCompany.id, userWithCompany)
       return res as unknown as AppUser
     }
   }

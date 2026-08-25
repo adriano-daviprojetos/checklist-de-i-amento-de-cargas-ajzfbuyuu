@@ -170,11 +170,13 @@ export const TemplatesPage: React.FC = () => {
     }
   }
 
-  const filtered = templates.filter(
-    (t) =>
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.category.toLowerCase().includes(search.toLowerCase()),
-  )
+  const filtered = templates
+    .filter((t) => (company?.id ? t.company_id === company.id : true))
+    .filter(
+      (t) =>
+        t.title.toLowerCase().includes(search.toLowerCase()) ||
+        t.category.toLowerCase().includes(search.toLowerCase()),
+    )
 
   return (
     <div className="space-y-6">

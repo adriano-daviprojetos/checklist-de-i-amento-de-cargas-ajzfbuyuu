@@ -69,10 +69,23 @@ export const DashboardPage: React.FC = () => {
     }
   }
 
-  const completedCount = checklists.filter((c) => c.status === 'Concluído').length
-  const inProgressCount = checklists.filter((c) => c.status === 'Em Andamento').length
-  const pendingCount = checklists.filter((c) => c.status === 'Pendente').length
-  const rejectedCount = checklists.filter((c) => c.status === 'Reprovado').length
+  const scopedChecklists = company?.id
+    ? checklists.filter((c) => c.company_id === company.id)
+    : checklists
+  const scopedEquipment = company?.id
+    ? equipment.filter((e) => e.company_id === company.id)
+    : equipment
+  const scopedMaterials = company?.id
+    ? materials.filter((m) => m.company_id === company.id)
+    : materials
+  const scopedTemplates = company?.id
+    ? templates.filter((t) => t.company_id === company.id)
+    : templates
+
+  const completedCount = scopedChecklists.filter((c) => c.status === 'Concluído').length
+  const inProgressCount = scopedChecklists.filter((c) => c.status === 'Em Andamento').length
+  const pendingCount = scopedChecklists.filter((c) => c.status === 'Pendente').length
+  const rejectedCount = scopedChecklists.filter((c) => c.status === 'Reprovado').length
 
   const pieData = [
     { name: 'Concluído', value: completedCount, color: '#10b981' },
@@ -82,14 +95,14 @@ export const DashboardPage: React.FC = () => {
   ].filter((item) => item.value > 0)
 
   const categoryBarData = [
-    { name: 'Guindastes', total: equipment.filter((e) => e.type === 'Guindaste').length },
-    { name: 'Muncks', total: equipment.filter((e) => e.type === 'Munck').length },
+    { name: 'Guindastes', total: scopedEquipment.filter((e) => e.type === 'Guindaste').length },
+    { name: 'Muncks', total: scopedEquipment.filter((e) => e.type === 'Munck').length },
     {
       name: 'Cintas/Cabos',
-      total: materials.filter((m) => m.type === 'Cinta' || m.type === 'Cabos de Aço').length,
+      total: scopedMaterials.filter((m) => m.type === 'Cinta' || m.type === 'Cabos de Aço').length,
     },
-    { name: 'Manilhas', total: materials.filter((m) => m.type === 'Manilhas').length },
-    { name: 'Ganchos', total: materials.filter((m) => m.type === 'Ganchos').length },
+    { name: 'Manilhas', total: scopedMaterials.filter((m) => m.type === 'Manilhas').length },
+    { name: 'Ganchos', total: scopedMaterials.filter((m) => m.type === 'Ganchos').length },
   ]
 
   return (
@@ -139,7 +152,7 @@ export const DashboardPage: React.FC = () => {
           <CardContent className="p-5 flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-xs font-medium text-slate-400">Total de Inspeções</span>
-              <div className="text-2xl font-bold text-white">{checklists.length}</div>
+              <div className="text-2xl font-bold text-white">{scopedChecklists.length}</div>
               <span className="text-[11px] text-slate-500">Içamentos registrados</span>
             </div>
             <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/20">
@@ -296,13 +309,16 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="flex items-center justify-between text-xs text-slate-400 mt-2 pt-2 border-t border-slate-800">
               <span>
-                Total de Equipamentos: <strong className="text-white">{equipment.length}</strong>
+                Total de Equipamentos:{' '}
+                <strong className="text-white">{scopedEquipment.length}</strong>
               </span>
               <span>
-                Total de Materiais/TAGs: <strong className="text-white">{materials.length}</strong>
+                Total de Materiais/TAGs:{' '}
+                <strong className="text-white">{scopedMaterials.length}</strong>
               </span>
               <span>
-                Modelos de Inspeção: <strong className="text-white">{templates.length}</strong>
+                Modelos de Inspeção:{' '}
+                <strong className="text-white">{scopedTemplates.length}</strong>
               </span>
             </div>
           </CardContent>
@@ -343,7 +359,7 @@ export const DashboardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800 text-slate-300">
-                {checklists.slice(0, 5).map((chk) => {
+                {scopedChecklists.slice(0, 5).map((chk) => {
                   const getStatusBadge = (s: string) => {
                     switch (s) {
                       case 'Concluído':
@@ -411,7 +427,7 @@ export const DashboardPage: React.FC = () => {
                     </tr>
                   )
                 })}
-                {checklists.length === 0 && (
+                {scopedChecklists.length === 0 && (
                   <tr>
                     <td colSpan={6} className="text-center py-8 text-slate-500">
                       Nenhum checklist registrado nesta empresa. Clique em &quot;Iniciar Novo

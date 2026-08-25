@@ -138,15 +138,17 @@ export const MaterialsPage: React.FC = () => {
     }
   }
 
-  const filtered = materials.filter((mat) => {
-    const matchesSearch =
-      mat.tag.toLowerCase().includes(search.toLowerCase()) ||
-      mat.type.toLowerCase().includes(search.toLowerCase()) ||
-      mat.manufacturer?.toLowerCase().includes(search.toLowerCase()) ||
-      mat.model?.toLowerCase().includes(search.toLowerCase())
-    const matchesType = filterType === 'todos' || mat.type === filterType
-    return matchesSearch && matchesType
-  })
+  const filtered = materials
+    .filter((mat) => (company?.id ? mat.company_id === company.id : true))
+    .filter((mat) => {
+      const matchesSearch =
+        mat.tag.toLowerCase().includes(search.toLowerCase()) ||
+        mat.type.toLowerCase().includes(search.toLowerCase()) ||
+        mat.manufacturer?.toLowerCase().includes(search.toLowerCase()) ||
+        mat.model?.toLowerCase().includes(search.toLowerCase())
+      const matchesType = filterType === 'todos' || mat.type === filterType
+      return matchesSearch && matchesType
+    })
 
   return (
     <div className="space-y-6">

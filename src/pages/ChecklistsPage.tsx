@@ -73,17 +73,19 @@ export const ChecklistsPage: React.FC = () => {
     }
   }
 
-  const filtered = checklists.filter((chk) => {
-    const matchesSearch =
-      chk.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      chk.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      chk.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      chk.inspector_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = checklists
+    .filter((chk) => (company?.id ? chk.company_id === company.id : true))
+    .filter((chk) => {
+      const matchesSearch =
+        chk.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        chk.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        chk.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        chk.inspector_name?.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesStatus = statusFilter === 'todos' || chk.status === statusFilter
+      const matchesStatus = statusFilter === 'todos' || chk.status === statusFilter
 
-    return matchesSearch && matchesStatus
-  })
+      return matchesSearch && matchesStatus
+    })
 
   const getStatusBadge = (status: string) => {
     switch (status) {

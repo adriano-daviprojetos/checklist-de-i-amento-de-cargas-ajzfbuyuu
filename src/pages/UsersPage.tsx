@@ -165,13 +165,15 @@ export const UsersPage: React.FC = () => {
     }
   }
 
-  const filtered = users.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase()) ||
-      u.cpf?.includes(search) ||
-      u.role?.toLowerCase().includes(search.toLowerCase()),
-  )
+  const filtered = users
+    .filter((u) => (company?.id ? u.company_id === company.id : true))
+    .filter(
+      (u) =>
+        u.name?.toLowerCase().includes(search.toLowerCase()) ||
+        u.email.toLowerCase().includes(search.toLowerCase()) ||
+        u.cpf?.includes(search) ||
+        u.role?.toLowerCase().includes(search.toLowerCase()),
+    )
 
   return (
     <div className="space-y-6">

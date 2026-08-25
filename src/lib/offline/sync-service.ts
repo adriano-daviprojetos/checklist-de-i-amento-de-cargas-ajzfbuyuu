@@ -43,7 +43,7 @@ class SyncService {
         console.warn('Sync companies failed', err)
       }
 
-      // 2. Clients
+      // 2. Clients (filtered strictly by company_id)
       try {
         const clients = await pb.collection('clients').getFullList<Client>({
           filter: compFilter || undefined,
@@ -54,7 +54,7 @@ class SyncService {
         console.warn('Sync clients failed', err)
       }
 
-      // 3. Equipment
+      // 3. Equipment (filtered strictly by company_id)
       try {
         const equipment = await pb.collection('equipment').getFullList<Equipment>({
           filter: compFilter || undefined,
@@ -65,7 +65,7 @@ class SyncService {
         console.warn('Sync equipment failed', err)
       }
 
-      // 4. Materials
+      // 4. Materials (filtered strictly by company_id)
       try {
         const materials = await pb.collection('materials').getFullList<Material>({
           filter: compFilter || undefined,
@@ -76,7 +76,7 @@ class SyncService {
         console.warn('Sync materials failed', err)
       }
 
-      // 5. Checklist Templates
+      // 5. Checklist Templates (filtered strictly by company_id)
       try {
         const templates = await pb
           .collection('checklist_templates')
@@ -229,9 +229,11 @@ class SyncService {
     const checklistId =
       checklist.id || `local_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
 
+    const userCompanyId = checklist.company_id || (pb.authStore.record as any)?.company_id || ''
+
     const fullChecklist: Checklist = {
       id: checklistId,
-      company_id: checklist.company_id || '',
+      company_id: userCompanyId,
       template_id: checklist.template_id || '',
       client_id: checklist.client_id,
       equipment_id: checklist.equipment_id,

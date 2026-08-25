@@ -143,14 +143,16 @@ export const EquipmentPage: React.FC = () => {
     }
   }
 
-  const filtered = equipmentList.filter((eq) => {
-    const matchesSearch =
-      eq.model.toLowerCase().includes(search.toLowerCase()) ||
-      eq.manufacturer.toLowerCase().includes(search.toLowerCase()) ||
-      eq.license_plate?.toLowerCase().includes(search.toLowerCase())
-    const matchesType = filterType === 'todos' || eq.type === filterType
-    return matchesSearch && matchesType
-  })
+  const filtered = equipmentList
+    .filter((eq) => (company?.id ? eq.company_id === company.id : true))
+    .filter((eq) => {
+      const matchesSearch =
+        eq.model.toLowerCase().includes(search.toLowerCase()) ||
+        eq.manufacturer.toLowerCase().includes(search.toLowerCase()) ||
+        eq.license_plate?.toLowerCase().includes(search.toLowerCase())
+      const matchesType = filterType === 'todos' || eq.type === filterType
+      return matchesSearch && matchesType
+    })
 
   return (
     <div className="space-y-6">

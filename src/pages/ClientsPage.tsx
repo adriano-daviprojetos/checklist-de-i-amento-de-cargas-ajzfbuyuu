@@ -129,13 +129,15 @@ export const ClientsPage: React.FC = () => {
     }
   }
 
-  const filtered = clients.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.trade_name?.toLowerCase().includes(search.toLowerCase()) ||
-      c.document?.includes(search) ||
-      c.city?.toLowerCase().includes(search.toLowerCase()),
-  )
+  const filtered = clients
+    .filter((c) => (company?.id ? c.company_id === company.id : true))
+    .filter(
+      (c) =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.trade_name?.toLowerCase().includes(search.toLowerCase()) ||
+        c.document?.includes(search) ||
+        c.city?.toLowerCase().includes(search.toLowerCase()),
+    )
 
   return (
     <div className="space-y-6">
