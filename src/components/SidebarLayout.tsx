@@ -36,24 +36,78 @@ interface SidebarLayoutProps {
 }
 
 export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
-  const { user, company, companies, logout, switchCompany, role, isAdmin, canManageCompanies } =
-    useAuth()
+  const {
+    user,
+    company,
+    companies,
+    logout,
+    switchCompany,
+    role,
+    isAdmin,
+    canManageCompanies,
+    hasModulePermission,
+  } = useAuth()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const allNavItems = [
-    { title: 'Dashboard', path: '/', icon: LayoutDashboard, adminOnly: false },
-    { title: 'Checklists', path: '/checklists', icon: ClipboardCheck, adminOnly: false },
-    { title: 'Modelos de Inspeção', path: '/modelos', icon: FileSpreadsheet, adminOnly: false },
-    { title: 'Equipamentos', path: '/equipamentos', icon: Truck, adminOnly: false },
-    { title: 'Materiais & Acessórios', path: '/materiais', icon: Anchor, adminOnly: false },
-    { title: 'Clientes & Obras', path: '/clientes', icon: Building2, adminOnly: false },
-    { title: 'Usuários & Perfis', path: '/usuarios', icon: Users, adminOnly: false },
-    { title: 'Dados da Empresa', path: '/empresa', icon: Building, adminOnly: true },
-    { title: 'Meu Perfil', path: '/meu-perfil', icon: User, adminOnly: false },
+    {
+      title: 'Dashboard',
+      path: '/',
+      icon: LayoutDashboard,
+      isVisible: true,
+    },
+    {
+      title: 'Checklists',
+      path: '/checklists',
+      icon: ClipboardCheck,
+      isVisible: hasModulePermission('checklists', 'read'),
+    },
+    {
+      title: 'Modelos de Inspeção',
+      path: '/modelos',
+      icon: FileSpreadsheet,
+      isVisible: hasModulePermission('templates', 'read'),
+    },
+    {
+      title: 'Equipamentos',
+      path: '/equipamentos',
+      icon: Truck,
+      isVisible: hasModulePermission('equipment', 'read'),
+    },
+    {
+      title: 'Materiais & Acessórios',
+      path: '/materiais',
+      icon: Anchor,
+      isVisible: hasModulePermission('materials', 'read'),
+    },
+    {
+      title: 'Clientes & Obras',
+      path: '/clientes',
+      icon: Building2,
+      isVisible: hasModulePermission('clients', 'read'),
+    },
+    {
+      title: 'Usuários & Perfis',
+      path: '/usuarios',
+      icon: Users,
+      isVisible: hasModulePermission('users', 'read'),
+    },
+    {
+      title: 'Dados da Empresa',
+      path: '/empresa',
+      icon: Building,
+      isVisible: canManageCompanies,
+    },
+    {
+      title: 'Meu Perfil',
+      path: '/meu-perfil',
+      icon: User,
+      isVisible: true,
+    },
   ]
 
-  const navItems = allNavItems.filter((item) => !item.adminOnly || canManageCompanies)
+  const navItems = allNavItems.filter((item) => item.isVisible)
 
   const getRoleLabel = (r: string) => {
     switch (r) {

@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { SystemModuleKey } from '@/types'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -21,11 +22,20 @@ import { ProfilePage } from './pages/ProfilePage'
 import NotFound from './pages/NotFound'
 import { Loader2 } from 'lucide-react'
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({
+interface ProtectedRouteProps {
+  children: React.ReactNode
+  adminOnly?: boolean
+  module?: SystemModuleKey
+  action?: 'read' | 'edit' | 'delete'
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   adminOnly = false,
+  module,
+  action = 'read',
 }) => {
-  const { isAuthenticated, isLoading, canManageCompanies } = useAuth()
+  const { isAuthenticated, isLoading, canManageCompanies, hasModulePermission } = useAuth()
 
   if (isLoading) {
     return (
@@ -40,6 +50,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean 
   }
 
   if (adminOnly && !canManageCompanies) {
+    return <Navigate to="/" replace />
+  }
+
+  if (module && !hasModulePermission(module, action)) {
     return <Navigate to="/" replace />
   }
 
@@ -58,7 +72,7 @@ const App = () => (
           <Route
             path="/checklists"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="checklists" action="read">
                 <ChecklistsPage />
               </ProtectedRoute>
             }
@@ -67,7 +81,7 @@ const App = () => (
           <Route
             path="/checklists/novo"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="checklists" action="edit">
                 <ChecklistDetailPage />
               </ProtectedRoute>
             }
@@ -76,7 +90,7 @@ const App = () => (
           <Route
             path="/checklists/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="checklists" action="read">
                 <ChecklistDetailPage />
               </ProtectedRoute>
             }
@@ -85,7 +99,7 @@ const App = () => (
           <Route
             path="/modelos"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="templates" action="read">
                 <TemplatesPage />
               </ProtectedRoute>
             }
@@ -94,7 +108,7 @@ const App = () => (
           <Route
             path="/equipamentos"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="equipment" action="read">
                 <EquipmentPage />
               </ProtectedRoute>
             }
@@ -103,7 +117,7 @@ const App = () => (
           <Route
             path="/materiais"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="materials" action="read">
                 <MaterialsPage />
               </ProtectedRoute>
             }
@@ -112,7 +126,7 @@ const App = () => (
           <Route
             path="/clientes"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="clients" action="read">
                 <ClientsPage />
               </ProtectedRoute>
             }
@@ -121,7 +135,7 @@ const App = () => (
           <Route
             path="/usuarios"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="users" action="read">
                 <UsersPage />
               </ProtectedRoute>
             }
