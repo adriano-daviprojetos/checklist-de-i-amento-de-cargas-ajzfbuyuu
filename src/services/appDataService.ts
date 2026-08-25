@@ -396,30 +396,31 @@ export class AppDataService {
   }
 
   static async saveUser(
-    user: Partial<AppUser> & { password?: string; newPassword?: string },
+    user: Partial<AppUser> & { password?: string; newPassword?: string; passwordConfirm?: string },
   ): Promise<AppUser> {
     const userCompId = user.company_id || (pb.authStore.record as any)?.company_id || ''
     const userWithCompany = { ...user, company_id: userCompId }
 
     if (!userWithCompany.id) {
-      const { id, newPassword, ...createFields } = userWithCompany
+      const { id, newPassword, passwordConfirm, ...createFields } = userWithCompany
       const initialPassword = user.password || newPassword || 'Skip@Pass'
+      const finalPasswordConfirm = passwordConfirm || initialPassword
       const res = await pb.collection('users').create({
         ...createFields,
         password: initialPassword,
-        passwordConfirm: initialPassword,
+        passwordConfirm: finalPasswordConfirm,
         emailVisibility: true,
       })
       return res as unknown as AppUser
     } else {
-      const { id, password, newPassword, ...updateFields } = userWithCompany
+      const { id, password, newPassword, passwordConfirm, ...updateFields } = userWithCompany
       const payload: Record<string, any> = { ...updateFields }
 
       // If a new password or password is provided on edit, include it
       const passToSet = newPassword || password
       if (passToSet && passToSet.trim().length >= 8) {
         payload.password = passToSet.trim()
-        payload.passwordConfirm = passToSet.trim()
+        payload.passwordConfirm = (passwordConfirm || passToSet).trim()
       }
 
       const res = await pb.collection('users').update(id, payload)
