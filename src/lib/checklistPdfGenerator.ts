@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import 'jspdf-autotable'
 import {
   Checklist,
   ChecklistResponse,
@@ -13,9 +14,9 @@ import {
 
 export interface GenerateChecklistPdfOptions {
   checklist: Checklist
-  responses: ChecklistResponse[]
-  items: ChecklistTemplateItem[]
-  groups: ChecklistItemGroup[]
+  responses?: ChecklistResponse[] | null
+  items?: ChecklistTemplateItem[] | null
+  groups?: ChecklistItemGroup[] | null
   company?: Company | null
   client?: Client | null
   equipment?: Equipment | null
@@ -37,6 +38,21 @@ interface ProcessedGroup {
     observation?: string
     value?: string
   }>
+}
+
+/**
+ * Helper to safely run autoTable across different jspdf-autotable versions & bundler environments
+ */
+function applyAutoTable(doc: jsPDF, options: any): void {
+  if (typeof (doc as any).autoTable === 'function') {
+    ;(doc as any).autoTable(options)
+  } else if (typeof autoTable === 'function') {
+    autoTable(doc, options)
+  } else if (autoTable && typeof (autoTable as any).default === 'function') {
+    ;(autoTable as any).default(doc, options)
+  } else {
+    throw new Error('Plugin autoTable do jsPDF não foi inicializado corretamente.')
+  }
 }
 
 /**
@@ -137,14 +153,18 @@ function getStatusDisplay(status?: string): {
 
 export async function generateChecklistPdf({
   checklist,
-  responses,
-  items,
-  groups,
+  responses = [],
+  items = [],
+  groups = [],
   company,
   client,
   equipment,
   material,
 }: GenerateChecklistPdfOptions): Promise<void> {
+  const safeResponses = Array.isArray(responses) ? responses : []
+  const safeItems = Array.isArray(items) ? items : []
+  const safeGroups = Array.isArray(groups) ? groups : []
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -171,39 +191,42 @@ export async function generateChecklistPdf({
   const clientName =
     client?.trade_name ||
     client?.name ||
-    checklist.expand?.client_id?.trade_name ||
-    checklist.expand?.client_id?.name ||
+    checklist?.expand?.client_id?.trade_name ||
+    checklist?.expand?.client_id?.name ||
     'Não informado'
 
   // Map of responses by itemId and by title for fallback
   const responseByItemId = new Map<string, ChecklistResponse>()
   const responseByTitle = new Map<string, ChecklistResponse>()
-  responses.forEach((r) => {
-    if (r.item_id) responseByItemId.set(r.item_id, r)
-    if (r.item_title) responseByTitle.set(r.item_title, r)
+  safeResponses.forEach((r) => {
+    if (r?.item_id) responseByItemId.set(r.item_id, r)
+    if (r?.item_title) responseByTitle.set(r.item_title, r)
   })
 
   // Group items by groups
-  const sortedGroups = [...groups].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+  const sortedGroups = [...safeGroups].sort((a, b) => (a?.sort_order ?? 0) - (b?.sort_order ?? 0))
   const processedGroups: ProcessedGroup[] = []
 
   // Defined groups
   sortedGroups.forEach((grp, gIdx) => {
-    const groupItems = items
-      .filter((it) => it.group === grp.id)
+    if (!grp?.id) return
+    const groupItems = safeItems
+      .filter((it) => it && it.group === grp.id)
       .sort((a, b) => (a.sort_order ?? a.order_num ?? 0) - (b.sort_order ?? b.order_num ?? 0))
 
     if (groupItems.length > 0) {
       processedGroups.push({
         id: grp.id,
-        name: grp.name,
+        name: grp.name || `Grupo ${gIdx + 1}`,
         groupNumber: gIdx + 1,
         items: groupItems.map((it, itemIdx) => {
-          const resp = responseByItemId.get(it.id) || responseByTitle.get(it.title)
+          const resp =
+            (it.id ? responseByItemId.get(it.id) : undefined) ||
+            (it.title ? responseByTitle.get(it.title) : undefined)
           const disp = getStatusDisplay(resp?.status)
           return {
             itemNumberLabel: `${gIdx + 1}.${itemIdx + 1}`,
-            title: it.title,
+            title: it.title || 'Item sem título',
             description: it.description,
             isCritical: it.is_critical,
             isMandatory: it.is_mandatory,
@@ -218,9 +241,9 @@ export async function generateChecklistPdf({
   })
 
   // Geral / Unassigned items
-  const knownGroupIds = new Set(groups.map((g) => g.id))
-  const unassignedItems = items
-    .filter((it) => !it.group || !knownGroupIds.has(it.group))
+  const knownGroupIds = new Set(safeGroups.map((g) => g?.id).filter(Boolean))
+  const unassignedItems = safeItems
+    .filter((it) => it && (!it.group || !knownGroupIds.has(it.group)))
     .sort((a, b) => (a.sort_order ?? a.order_num ?? 0) - (b.sort_order ?? b.order_num ?? 0))
 
   if (unassignedItems.length > 0 || processedGroups.length === 0) {
@@ -230,11 +253,13 @@ export async function generateChecklistPdf({
       name: isSingleGroup ? 'Itens de Verificação' : 'Geral',
       groupNumber: isSingleGroup ? 1 : null,
       items: unassignedItems.map((it, itemIdx) => {
-        const resp = responseByItemId.get(it.id) || responseByTitle.get(it.title)
+        const resp =
+          (it.id ? responseByItemId.get(it.id) : undefined) ||
+          (it.title ? responseByTitle.get(it.title) : undefined)
         const disp = getStatusDisplay(resp?.status)
         return {
-          itemNumberLabel: isSingleGroup ? `${itemIdx + 1}.` : `${itemIdx + 1}.`,
-          title: it.title,
+          itemNumberLabel: `${itemIdx + 1}.`,
+          title: it.title || 'Item sem título',
           description: it.description,
           isCritical: it.is_critical,
           isMandatory: it.is_mandatory,
@@ -251,7 +276,11 @@ export async function generateChecklistPdf({
   let inspectorSigDimensions: { width: number; height: number; format: string } | null = null
   let filledBySigDimensions: { width: number; height: number; format: string } | null = null
 
-  if (checklist.signature_data && checklist.signature_data.startsWith('data:image')) {
+  if (
+    checklist?.signature_data &&
+    typeof checklist.signature_data === 'string' &&
+    checklist.signature_data.startsWith('data:image')
+  ) {
     try {
       inspectorSigDimensions = await getImageDimensions(checklist.signature_data)
     } catch (e) {
@@ -259,7 +288,11 @@ export async function generateChecklistPdf({
     }
   }
 
-  if (checklist.filled_by_signature && checklist.filled_by_signature.startsWith('data:image')) {
+  if (
+    checklist?.filled_by_signature &&
+    typeof checklist.filled_by_signature === 'string' &&
+    checklist.filled_by_signature.startsWith('data:image')
+  ) {
     try {
       filledBySigDimensions = await getImageDimensions(checklist.filled_by_signature)
     } catch (e) {
@@ -267,8 +300,10 @@ export async function generateChecklistPdf({
     }
   }
 
+  const safeChecklistCode = checklist?.code || 'CHK-N/A'
+
   // Render Header (applied to every page)
-  const renderHeader = (isFirstPage: boolean = false) => {
+  const renderHeader = (_isFirstPage: boolean = false) => {
     // Outer Header Box
     doc.setFillColor(headerBgColor[0], headerBgColor[1], headerBgColor[2])
     doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2])
@@ -297,16 +332,16 @@ export async function generateChecklistPdf({
     doc.setTextColor(darkText[0], darkText[1], darkText[2])
     doc.text(`Código: `, margin + 6, margin + 17)
     doc.setFont('helvetica', 'bold')
-    doc.text(checklist.code || 'CHK-N/A', margin + 18, margin + 17)
+    doc.text(safeChecklistCode, margin + 18, margin + 17)
 
     // Status Badge inside header
-    const isCompleted = checklist.status === 'Concluído'
-    const isRejected = checklist.status === 'Reprovado'
+    const isCompleted = checklist?.status === 'Concluído'
+    const isRejected = checklist?.status === 'Reprovado'
     const stBadgeText = isCompleted
       ? 'LIBERADO (CONCLUÍDO)'
       : isRejected
         ? 'REPROVADO'
-        : (checklist.status || 'EM ANDAMENTO').toUpperCase()
+        : (checklist?.status || 'EM ANDAMENTO').toUpperCase()
 
     const badgeX = margin + 55
     const badgeY = margin + 13.5
@@ -345,13 +380,13 @@ export async function generateChecklistPdf({
     doc.setFontSize(7.5)
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
 
-    const createdFormatted = formatDateTime(checklist.created || checklist.scheduled_date)
-    const completedFormatted = formatDateTime(checklist.completed_at || checklist.updated)
+    const createdFormatted = formatDateTime(checklist?.created || checklist?.scheduled_date)
+    const completedFormatted = formatDateTime(checklist?.completed_at || checklist?.updated)
 
     doc.text(`Criação: ${createdFormatted}`, rightColX, margin + 6.5, { align: 'right' })
     doc.text(`Finalização: ${completedFormatted}`, rightColX, margin + 11.5, { align: 'right' })
 
-    if (checklist.risk_level) {
+    if (checklist?.risk_level) {
       doc.text(`Grau de Risco: `, rightColX - 18, margin + 17, { align: 'right' })
       doc.setFont('helvetica', 'bold')
       if (checklist.risk_level === 'Alto' || checklist.risk_level === 'Crítico') {
@@ -398,15 +433,15 @@ export async function generateChecklistPdf({
     const row2Y = startY + 19.5
 
     // Equipment string
-    const eqObj = equipment || checklist.expand?.equipment_id
+    const eqObj = equipment || checklist?.expand?.equipment_id
     const eqStr = eqObj
-      ? `${eqObj.type} ${eqObj.manufacturer} ${eqObj.model} (${eqObj.capacity})`
+      ? `${eqObj.type || ''} ${eqObj.manufacturer || ''} ${eqObj.model || ''} (${eqObj.capacity || 'S/ Cap'})`.trim()
       : 'Não especificado'
 
     // Material string
-    const matObj = material || checklist.expand?.material_id
+    const matObj = material || checklist?.expand?.material_id
     const matStr = matObj
-      ? `TAG: ${matObj.tag} - ${matObj.type} (${matObj.capacity})`
+      ? `TAG: ${matObj.tag || ''} - ${matObj.type || ''} (${matObj.capacity || 'S/ Cap'})`.trim()
       : 'Não especificado'
 
     // Cell helper
@@ -419,7 +454,9 @@ export async function generateChecklistPdf({
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(8)
       doc.setTextColor(darkText[0], darkText[1], darkText[2])
-      const textToDraw = val.length > maxLen ? val.substring(0, maxLen - 2) + '...' : val
+      const safeVal = val || '-'
+      const textToDraw =
+        safeVal.length > maxLen ? safeVal.substring(0, maxLen - 2) + '...' : safeVal
       doc.text(textToDraw, x, y + 4)
     }
 
@@ -427,10 +464,15 @@ export async function generateChecklistPdf({
       col1X,
       row1Y,
       'DATA / HORA PROGRAMADA',
-      formatDateTime(checklist.scheduled_date || checklist.created),
+      formatDateTime(checklist?.scheduled_date || checklist?.created),
     )
-    drawCell(col2X, row1Y, 'LOCAL / FRENTE DE SERVIÇO', checklist.location || 'Não informado')
-    drawCell(col3X, row1Y, 'MANOBRA / OPERAÇÃO', checklist.operation_type || checklist.title)
+    drawCell(col2X, row1Y, 'LOCAL / FRENTE DE SERVIÇO', checklist?.location || 'Não informado')
+    drawCell(
+      col3X,
+      row1Y,
+      'MANOBRA / OPERAÇÃO',
+      checklist?.operation_type || checklist?.title || 'Içamento de Carga',
+    )
 
     drawCell(col1X, row2Y, 'EQUIPAMENTO UTILIZADO', eqStr)
     drawCell(col2X, row2Y, 'ACESSÓRIOS / MATERIAIS', matStr)
@@ -438,7 +480,7 @@ export async function generateChecklistPdf({
       col3X,
       row2Y,
       'RESP. PELO PREENCHIMENTO',
-      checklist.filled_by_name || checklist.inspector_name || 'Não informado',
+      checklist?.filled_by_name || checklist?.inspector_name || 'Não informado',
     )
 
     return startY + boxHeight + 4
@@ -489,18 +531,21 @@ export async function generateChecklistPdf({
     currentY += 9
 
     // Table of items for this group
-    const tableBody = group.items.map((item) => {
-      let fullTitle = `${item.itemNumberLabel}  ${item.title}`
-      if (item.isCritical) fullTitle += ' [ITEM CRÍTICO]'
-      if (item.isMandatory) fullTitle += ' (Obrigatório)'
-      if (item.description) fullTitle += `\n${item.description}`
-      if (item.value) fullTitle += `\nMedição: ${item.value}`
-      if (item.observation) fullTitle += `\nObs: ${item.observation}`
+    const tableBody =
+      group.items.length > 0
+        ? group.items.map((item) => {
+            let fullTitle = `${item.itemNumberLabel}  ${item.title}`
+            if (item.isCritical) fullTitle += ' [ITEM CRÍTICO]'
+            if (item.isMandatory) fullTitle += ' (Obrigatório)'
+            if (item.description) fullTitle += `\n${item.description}`
+            if (item.value) fullTitle += `\nMedição: ${item.value}`
+            if (item.observation) fullTitle += `\nObs: ${item.observation}`
 
-      return [item.itemNumberLabel, fullTitle, item.statusText]
-    })
+            return [item.itemNumberLabel, fullTitle, item.statusText]
+          })
+        : [['-', 'Nenhum item cadastrado nesta seção', '-']]
 
-    autoTable(doc, {
+    applyAutoTable(doc, {
       startY: currentY,
       head: [['Nº', 'ITEM DE VERIFICAÇÃO / DESCRIÇÃO / OBSERVAÇÕES', 'AVALIAÇÃO']],
       body: tableBody,
@@ -527,7 +572,7 @@ export async function generateChecklistPdf({
         textColor: darkText,
         overflow: 'linebreak',
       },
-      didParseCell: (data) => {
+      didParseCell: (data: any) => {
         // Style evaluation column badge cells
         if (data.section === 'body' && data.column.index === 2) {
           const rawText = data.cell.raw as string
@@ -575,7 +620,7 @@ export async function generateChecklistPdf({
   doc.setTextColor(darkText[0], darkText[1], darkText[2])
 
   const notesText =
-    checklist.notes?.trim() ||
+    checklist?.notes?.trim() ||
     'Operação vistoriada conforme normas regulamentadoras de segurança vigentes (NR-11, NR-12 e NR-18). Equipamentos, acessórios de amarração e isolamento de raio de giro inspecionados no canteiro de obras.'
   const splitNotes = doc.splitTextToSize(notesText, contentWidth - 7)
   doc.text(splitNotes, margin + 3.5, sigY + 12)
@@ -586,11 +631,11 @@ export async function generateChecklistPdf({
   doc.setFontSize(8)
   doc.text('Conclusão da Vistoria:', margin + 3.5, conclusionY)
 
-  const isApproved = checklist.status === 'Concluído'
+  const isApproved = checklist?.status === 'Concluído'
   if (isApproved) {
     doc.setTextColor(6, 95, 70)
     doc.text('OPERAÇÃO LIBERADA - CONFORMIDADE ATESTADA', margin + 38, conclusionY)
-  } else if (checklist.status === 'Reprovado') {
+  } else if (checklist?.status === 'Reprovado') {
     doc.setTextColor(153, 27, 27)
     doc.text('OPERAÇÃO BLOQUEADA - NÃO CONFORMIDADES IDENTIFICADAS', margin + 38, conclusionY)
   } else {
@@ -632,7 +677,11 @@ export async function generateChecklistPdf({
   })
 
   // Signature Image / Placeholder for Filled By
-  if (checklist.filled_by_signature && checklist.filled_by_signature.startsWith('data:image')) {
+  if (
+    checklist?.filled_by_signature &&
+    typeof checklist.filled_by_signature === 'string' &&
+    checklist.filled_by_signature.startsWith('data:image')
+  ) {
     try {
       const dim = filledBySigDimensions || { width: 400, height: 200, format: 'PNG' }
       const maxImgW = sigBoxWidth - 10
@@ -681,7 +730,7 @@ export async function generateChecklistPdf({
   doc.setFontSize(8.5)
   doc.setTextColor(darkText[0], darkText[1], darkText[2])
   const filledName =
-    checklist.filled_by_name || checklist.inspector_name || 'Profissional Responsável'
+    checklist?.filled_by_name || checklist?.inspector_name || 'Profissional Responsável'
   doc.text(filledName, box1X + sigBoxWidth / 2, line1Y + 4.5, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
@@ -690,7 +739,7 @@ export async function generateChecklistPdf({
   doc.text('Operador / Rigger Responsável', box1X + sigBoxWidth / 2, line1Y + 8.5, {
     align: 'center',
   })
-  if (checklist.created) {
+  if (checklist?.created) {
     doc.text(`Data: ${formatDateTime(checklist.created)}`, box1X + sigBoxWidth / 2, line1Y + 12.5, {
       align: 'center',
     })
@@ -714,7 +763,11 @@ export async function generateChecklistPdf({
   })
 
   // Signature Image / Placeholder for Inspector
-  if (checklist.signature_data && checklist.signature_data.startsWith('data:image')) {
+  if (
+    checklist?.signature_data &&
+    typeof checklist.signature_data === 'string' &&
+    checklist.signature_data.startsWith('data:image')
+  ) {
     try {
       const dim = inspectorSigDimensions || { width: 400, height: 200, format: 'PNG' }
       const maxImgW = sigBoxWidth - 10
@@ -756,7 +809,7 @@ export async function generateChecklistPdf({
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(8.5)
   doc.setTextColor(darkText[0], darkText[1], darkText[2])
-  const inspName = checklist.inspector_name || 'Inspetor Técnico'
+  const inspName = checklist?.inspector_name || 'Inspetor Técnico'
   doc.text(inspName, box2X + sigBoxWidth / 2, line1Y + 4.5, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
@@ -765,7 +818,7 @@ export async function generateChecklistPdf({
   doc.text('Inspetor / Responsável Técnico de Rigging', box2X + sigBoxWidth / 2, line1Y + 8.5, {
     align: 'center',
   })
-  if (checklist.completed_at) {
+  if (checklist?.completed_at) {
     doc.text(
       `Autenticado em: ${formatDateTime(checklist.completed_at)}`,
       box2X + sigBoxWidth / 2,
@@ -803,7 +856,7 @@ export async function generateChecklistPdf({
     doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
 
     // Left
-    doc.text(`${companyName} | ${checklist.code || 'CHK-N/A'}`, margin, footerY)
+    doc.text(`${companyName} | ${safeChecklistCode}`, margin, footerY)
 
     // Center
     const emissionDateStr = new Date().toLocaleDateString('pt-BR', {
@@ -818,9 +871,30 @@ export async function generateChecklistPdf({
   }
 
   // Download filename: checklist-{codigo}-{data}.pdf
-  const safeCode = (checklist.code || 'CHK').replace(/[^a-zA-Z0-9-_]/g, '_').toLowerCase()
+  const rawCode = checklist?.code || 'CHK'
+  const safeCode = rawCode.replace(/[^a-zA-Z0-9-_]/g, '_').toLowerCase()
   const todayStr = new Date().toISOString().split('T')[0]
   const filename = `checklist-${safeCode}-${todayStr}.pdf`
 
-  doc.save(filename)
+  try {
+    doc.save(filename)
+  } catch (saveErr: any) {
+    console.error('Erro ao salvar/baixar o arquivo PDF gerado:', saveErr)
+    // Fallback: tentar gerar Blob e disparar download via URL do navegador
+    try {
+      const pdfBlob = doc.output('blob')
+      const blobUrl = URL.createObjectURL(pdfBlob)
+      const downloadLink = document.createElement('a')
+      downloadLink.href = blobUrl
+      downloadLink.download = filename
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      document.body.removeChild(downloadLink)
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000)
+    } catch (fallbackErr: any) {
+      throw new Error(
+        `Falha ao salvar o PDF (${saveErr?.message || 'Erro de download'}). Detalhes: ${fallbackErr?.message || 'Desconhecido'}`,
+      )
+    }
+  }
 }
