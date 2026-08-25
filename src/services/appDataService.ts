@@ -315,7 +315,7 @@ export class AppDataService {
 
     if (isOnline && pb.authStore.isValid && !group.template?.startsWith('tpl_')) {
       try {
-        if (!group.id || group.id.startsWith('grp_')) {
+        if (!group.id || group.id.startsWith('grp_') || group.id.startsWith('temp_')) {
           const { id: _ignoredId, ...createData } = fullGroup
           const created = await pb.collection('checklist_item_groups').create(createData)
           await dbDelete('checklist_item_groups', groupId)
@@ -481,10 +481,15 @@ export class AppDataService {
       if (isOnline && pb.authStore.isValid) {
         try {
           const { id: _ignoredItemId, expand: _ignoredExpand, ...itemPayload } = fullItem
-          if (itemPayload.group === '' || itemPayload.group === 'none') {
+          if (
+            !itemPayload.group ||
+            itemPayload.group === '' ||
+            itemPayload.group === 'none' ||
+            itemPayload.group.startsWith('temp_')
+          ) {
             itemPayload.group = null as any
           }
-          if (!it.id || it.id.startsWith('item_')) {
+          if (!it.id || it.id.startsWith('item_') || it.id.startsWith('temp_')) {
             const createdItem = await pb.collection('checklist_template_items').create(itemPayload)
             await dbDelete('checklist_template_items', itemId)
             await dbPut('checklist_template_items', createdItem as unknown as ChecklistTemplateItem)
@@ -523,6 +528,21 @@ export class AppDataService {
 
     if (isOnline && !id.startsWith('tpl_')) {
       try {
+        // Buscar e deletar itens vinculados
+        const items = await pb
+          .collection('checklist_template_items')
+          .getFullList({ filter: `template_id='${id}'` })
+        for (const item of items) {
+          await pb.collection('checklist_template_items').delete(item.id)
+        }
+        // Buscar e deletar grupos vinculados
+        const groups = await pb
+          .collection('checklist_item_groups')
+          .getFullList({ filter: `template='${id}'` })
+        for (const group of groups) {
+          await pb.collection('checklist_item_groups').delete(group.id)
+        }
+        // Agora deletar o template
         await pb.collection('checklist_templates').delete(id)
       } catch (err) {
         console.warn('Failed to delete template online:', err)
