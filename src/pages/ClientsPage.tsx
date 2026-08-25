@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
 import { Client } from '@/types'
+import { CompanySelect } from '@/components/CompanySelect'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +20,7 @@ import { Building2, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, FileText }
 import { toast } from 'sonner'
 
 export const ClientsPage: React.FC = () => {
-  const { company, canManageAssets } = useAuth()
+  const { company, companies, canManageAssets } = useAuth()
   const { isOnline } = useOnlineStatus()
 
   const [clients, setClients] = useState<Client[]>([])
@@ -29,6 +30,7 @@ export const ClientsPage: React.FC = () => {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
   const [name, setName] = useState('')
   const [tradeName, setTradeName] = useState('')
   const [document, setDocument] = useState('')
@@ -58,6 +60,7 @@ export const ClientsPage: React.FC = () => {
 
   const openNewModal = () => {
     setEditingId(null)
+    setSelectedCompanyId(company?.id || companies[0]?.id || '')
     setName('')
     setTradeName('')
     setDocument('')
@@ -73,6 +76,7 @@ export const ClientsPage: React.FC = () => {
 
   const openEditModal = (c: Client) => {
     setEditingId(c.id)
+    setSelectedCompanyId(c.company_id || company?.id || companies[0]?.id || '')
     setName(c.name)
     setTradeName(c.trade_name || '')
     setDocument(c.document || '')
@@ -87,6 +91,11 @@ export const ClientsPage: React.FC = () => {
   }
 
   const handleSave = async () => {
+    if (!selectedCompanyId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+
     if (!name.trim()) {
       toast.warning('Razão Social ou Nome do Cliente é obrigatório.')
       return
@@ -95,7 +104,7 @@ export const ClientsPage: React.FC = () => {
     try {
       const payload: Partial<Client> = {
         id: editingId || undefined,
-        company_id: company?.id || '',
+        company_id: selectedCompanyId,
         name,
         trade_name: tradeName,
         document,
@@ -200,6 +209,18 @@ export const ClientsPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5 text-xs text-slate-300 pt-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Empresa:</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                  >
+                    {companies.find((comp) => comp.id === c.company_id)?.trade_name ||
+                      companies.find((comp) => comp.id === c.company_id)?.name ||
+                      company?.name ||
+                      'Empresa Padrão'}
+                  </Badge>
+                </div>
                 {c.contact_name && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Contato:</span>
@@ -276,6 +297,14 @@ export const ClientsPage: React.FC = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Empresa Selector */}
+            <CompanySelect
+              value={selectedCompanyId}
+              onChange={setSelectedCompanyId}
+              required
+              label="Empresa Prestadora do Serviço"
+            />
+
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Razão Social / Nome Completo *</Label>
               <Input

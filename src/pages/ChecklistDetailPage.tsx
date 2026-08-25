@@ -13,6 +13,7 @@ import {
   Client,
   ResponseStatus,
 } from '@/types'
+import { CompanySelect } from '@/components/CompanySelect'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -51,7 +52,7 @@ export const ChecklistDetailPage: React.FC = () => {
   const isNew = !id || id === 'novo'
   const navigate = useNavigate()
 
-  const { company, user } = useAuth()
+  const { company, companies, user } = useAuth()
   const { isOnline } = useOnlineStatus()
 
   // Reference lists
@@ -62,6 +63,7 @@ export const ChecklistDetailPage: React.FC = () => {
   const [clientsList, setClientsList] = useState<Client[]>([])
 
   // Checklist state
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
   const [title, setTitle] = useState('')
   const [code, setCode] = useState('')
@@ -83,17 +85,19 @@ export const ChecklistDetailPage: React.FC = () => {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    loadPrerequisites()
-  }, [company?.id, isOnline])
+    const targetCompId = selectedCompanyId || company?.id
+    loadPrerequisites(targetCompId)
+  }, [selectedCompanyId, company?.id, isOnline])
 
-  const loadPrerequisites = async () => {
+  const loadPrerequisites = async (targetCompanyId?: string) => {
     setLoading(true)
     try {
+      const compToLoad = targetCompanyId || company?.id
       const [tpls, eqs, mats, cls] = await Promise.all([
-        AppDataService.getTemplates(company?.id, isOnline),
-        AppDataService.getEquipment(company?.id, isOnline),
-        AppDataService.getMaterials(company?.id, isOnline),
-        AppDataService.getClients(company?.id, isOnline),
+        AppDataService.getTemplates(compToLoad, isOnline),
+        AppDataService.getEquipment(compToLoad, isOnline),
+        AppDataService.getMaterials(compToLoad, isOnline),
+        AppDataService.getClients(compToLoad, isOnline),
       ])
       setTemplates(tpls)
       setEquipmentList(eqs)
@@ -111,6 +115,9 @@ export const ChecklistDetailPage: React.FC = () => {
         // Load existing checklist
         const { checklist, responses } = await AppDataService.getChecklistById(id, isOnline)
         if (checklist) {
+          if (checklist.company_id && checklist.company_id !== selectedCompanyId) {
+            setSelectedCompanyId(checklist.company_id)
+          }
           setTitle(checklist.title || '')
           setCode(checklist.code || '')
           setLocation(checklist.location || '')
@@ -215,6 +222,11 @@ export const ChecklistDetailPage: React.FC = () => {
   const handleSave = async (
     targetStatus?: 'Pendente' | 'Em Andamento' | 'Concluído' | 'Reprovado',
   ) => {
+    const effectiveCompId = selectedCompanyId || company?.id
+    if (!effectiveCompId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
     if (!selectedTemplateId) {
       toast.warning('Selecione um modelo de checklist.')
       return
@@ -240,7 +252,7 @@ export const ChecklistDetailPage: React.FC = () => {
 
       const checklistData: Partial<Checklist> = {
         id: isNew ? undefined : id,
-        company_id: company?.id || '',
+        company_id: effectiveCompId,
         template_id: selectedTemplateId,
         client_id: clientId === 'none' ? undefined : clientId,
         equipment_id: equipmentId === 'none' ? undefined : equipmentId,
@@ -432,6 +444,17 @@ export const ChecklistDetailPage: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-5 space-y-4">
+          {/* Seletor de Empresa no Topo do Formulário */}
+          <CompanySelect
+            value={selectedCompanyId}
+            onChange={(val) => {
+              setSelectedCompanyId(val)
+              loadPrerequisites(val)
+            }}
+            required
+            label="Empresa Responsável pela Operação"
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Modelo de Checklist *</Label>

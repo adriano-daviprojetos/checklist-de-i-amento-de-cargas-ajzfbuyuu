@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
 import { AppUser, UserRole } from '@/types'
+import { CompanySelect } from '@/components/CompanySelect'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,7 +38,7 @@ import {
 import { toast } from 'sonner'
 
 export const UsersPage: React.FC = () => {
-  const { company, canManageUsers, isSuperAdmin } = useAuth()
+  const { company, companies, canManageUsers, isAdmin, isSuperAdmin } = useAuth()
   const { isOnline } = useOnlineStatus()
 
   const [users, setUsers] = useState<AppUser[]>([])
@@ -47,6 +48,7 @@ export const UsersPage: React.FC = () => {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [cpf, setCpf] = useState('')
@@ -72,6 +74,7 @@ export const UsersPage: React.FC = () => {
 
   const openNewModal = () => {
     setEditingId(null)
+    setSelectedCompanyId(company?.id || companies[0]?.id || '')
     setName('')
     setEmail('')
     setCpf('')
@@ -83,6 +86,7 @@ export const UsersPage: React.FC = () => {
 
   const openEditModal = (u: AppUser) => {
     setEditingId(u.id)
+    setSelectedCompanyId(u.company_id || company?.id || companies[0]?.id || '')
     setName(u.name || '')
     setEmail(u.email)
     setCpf(u.cpf || '')
@@ -98,6 +102,11 @@ export const UsersPage: React.FC = () => {
       return
     }
 
+    if (!selectedCompanyId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+
     try {
       const payload: Partial<AppUser> & { password?: string } = {
         id: editingId || undefined,
@@ -106,7 +115,7 @@ export const UsersPage: React.FC = () => {
         cpf,
         phone,
         role,
-        company_id: company?.id || '',
+        company_id: selectedCompanyId,
         active: true,
       }
 
@@ -257,6 +266,18 @@ export const UsersPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5 text-xs text-slate-300 pt-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Empresa:</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                  >
+                    {companies.find((c) => c.id === u.company_id)?.trade_name ||
+                      companies.find((c) => c.id === u.company_id)?.name ||
+                      company?.name ||
+                      'Empresa Padrão'}
+                  </Badge>
+                </div>
                 {u.cpf && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">CPF:</span>
@@ -308,6 +329,14 @@ export const UsersPage: React.FC = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Empresa Selector */}
+            <CompanySelect
+              value={selectedCompanyId}
+              onChange={setSelectedCompanyId}
+              required
+              label="Empresa Vinculada"
+            />
+
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Nome Completo *</Label>
               <Input

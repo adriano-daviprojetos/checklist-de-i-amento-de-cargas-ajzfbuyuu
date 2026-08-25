@@ -9,6 +9,7 @@ import {
   TargetRole,
   ItemType,
 } from '@/types'
+import { CompanySelect } from '@/components/CompanySelect'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -43,7 +44,7 @@ import {
 import { toast } from 'sonner'
 
 export const TemplatesPage: React.FC = () => {
-  const { company, canManageTemplates } = useAuth()
+  const { company, companies, canManageTemplates } = useAuth()
   const { isOnline } = useOnlineStatus()
 
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([])
@@ -54,6 +55,7 @@ export const TemplatesPage: React.FC = () => {
 
   // Modal create/edit
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
   const [editTitle, setEditTitle] = useState('')
   const [editDesc, setEditDesc] = useState('')
   const [editCategory, setEditCategory] = useState<TemplateCategory>('Guindaste')
@@ -90,6 +92,7 @@ export const TemplatesPage: React.FC = () => {
   }
 
   const openNewTemplateModal = () => {
+    setSelectedCompanyId(company?.id || companies[0]?.id || '')
     setEditTitle('')
     setEditDesc('')
     setEditCategory('Guindaste')
@@ -114,6 +117,7 @@ export const TemplatesPage: React.FC = () => {
   }
 
   const openEditModal = async (tpl: ChecklistTemplate) => {
+    setSelectedCompanyId(tpl.company_id || company?.id || companies[0]?.id || '')
     setEditTitle(tpl.title)
     setEditDesc(tpl.description || '')
     setEditCategory(tpl.category)
@@ -141,6 +145,11 @@ export const TemplatesPage: React.FC = () => {
   }
 
   const handleSaveTemplate = async () => {
+    if (!selectedCompanyId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+
     if (!editTitle.trim()) {
       toast.warning('Informe um título para o modelo.')
       return
@@ -152,7 +161,7 @@ export const TemplatesPage: React.FC = () => {
           selectedTemplate?.id && isModalOpen && editTitle === selectedTemplate.title
             ? selectedTemplate.id
             : undefined,
-        company_id: company?.id || '',
+        company_id: selectedCompanyId,
         title: editTitle,
         description: editDesc,
         category: editCategory,
@@ -238,6 +247,17 @@ export const TemplatesPage: React.FC = () => {
                     Perfil: {tpl.target_role || 'Todos'}
                   </span>
                 </div>
+                <div className="mb-1">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                  >
+                    {companies.find((comp) => comp.id === tpl.company_id)?.trade_name ||
+                      companies.find((comp) => comp.id === tpl.company_id)?.name ||
+                      company?.name ||
+                      'Empresa Padrão'}
+                  </Badge>
+                </div>
                 <h4 className="font-semibold text-white text-sm">{tpl.title}</h4>
                 {tpl.description && (
                   <p className="text-xs text-slate-400 line-clamp-2 mt-1">{tpl.description}</p>
@@ -265,6 +285,16 @@ export const TemplatesPage: React.FC = () => {
                     </Badge>
                     <Badge variant="outline" className="border-slate-700 text-slate-400 text-xs">
                       Alvo: {selectedTemplate.target_role || 'Todos'}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-xs bg-slate-950 border-slate-800 text-slate-300"
+                    >
+                      {companies.find((comp) => comp.id === selectedTemplate.company_id)
+                        ?.trade_name ||
+                        companies.find((comp) => comp.id === selectedTemplate.company_id)?.name ||
+                        company?.name ||
+                        'Empresa'}
                     </Badge>
                   </div>
                   <CardTitle className="text-lg text-white mt-2">
@@ -352,6 +382,14 @@ export const TemplatesPage: React.FC = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Seletor de Empresa */}
+            <CompanySelect
+              value={selectedCompanyId}
+              onChange={setSelectedCompanyId}
+              required
+              label="Empresa Proprietária do Modelo"
+            />
+
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Título do Modelo *</Label>
               <Input

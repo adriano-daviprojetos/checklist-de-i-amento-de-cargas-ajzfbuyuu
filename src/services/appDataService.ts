@@ -384,15 +384,17 @@ export class AppDataService {
     const userWithCompany = { ...user, company_id: userCompId }
 
     if (!userWithCompany.id) {
+      const { id, ...createFields } = userWithCompany
       const res = await pb.collection('users').create({
-        ...userWithCompany,
+        ...createFields,
         password: user.password || 'Skip@Pass',
         passwordConfirm: user.password || 'Skip@Pass',
         emailVisibility: true,
       })
       return res as unknown as AppUser
     } else {
-      const res = await pb.collection('users').update(userWithCompany.id, userWithCompany)
+      const { id, password, ...updateFields } = userWithCompany
+      const res = await pb.collection('users').update(id, updateFields)
       return res as unknown as AppUser
     }
   }

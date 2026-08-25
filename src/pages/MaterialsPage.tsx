@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
 import { Material, MaterialType, MaterialStatus } from '@/types'
+import { CompanySelect } from '@/components/CompanySelect'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,7 +37,7 @@ import {
 import { toast } from 'sonner'
 
 export const MaterialsPage: React.FC = () => {
-  const { company, canManageAssets } = useAuth()
+  const { company, companies, canManageAssets } = useAuth()
   const { isOnline } = useOnlineStatus()
 
   const [materials, setMaterials] = useState<Material[]>([])
@@ -47,6 +48,7 @@ export const MaterialsPage: React.FC = () => {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
   const [type, setType] = useState<MaterialType>('Cinta')
   const [tag, setTag] = useState('')
   const [manufacturer, setManufacturer] = useState('')
@@ -74,6 +76,7 @@ export const MaterialsPage: React.FC = () => {
 
   const openNewModal = () => {
     setEditingId(null)
+    setSelectedCompanyId(company?.id || companies[0]?.id || '')
     setType('Cinta')
     setTag(`CIN-${Math.floor(100 + Math.random() * 900)}-10T`)
     setManufacturer('')
@@ -87,6 +90,7 @@ export const MaterialsPage: React.FC = () => {
 
   const openEditModal = (mat: Material) => {
     setEditingId(mat.id)
+    setSelectedCompanyId(mat.company_id || company?.id || companies[0]?.id || '')
     setType(mat.type)
     setTag(mat.tag)
     setManufacturer(mat.manufacturer || '')
@@ -99,6 +103,11 @@ export const MaterialsPage: React.FC = () => {
   }
 
   const handleSave = async () => {
+    if (!selectedCompanyId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+
     if (!tag.trim() || !capacity.trim()) {
       toast.warning('Preencha a TAG e a Capacidade (WLL).')
       return
@@ -107,7 +116,7 @@ export const MaterialsPage: React.FC = () => {
     try {
       const item: Partial<Material> = {
         id: editingId || undefined,
-        company_id: company?.id || '',
+        company_id: selectedCompanyId,
         type,
         tag,
         manufacturer,
@@ -237,6 +246,18 @@ export const MaterialsPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5 text-xs text-slate-300 pt-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Empresa:</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                  >
+                    {companies.find((c) => c.id === mat.company_id)?.trade_name ||
+                      companies.find((c) => c.id === mat.company_id)?.name ||
+                      company?.name ||
+                      'Empresa Padrão'}
+                  </Badge>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Capacidade (WLL):</span>
                   <span className="font-semibold text-emerald-400">{mat.capacity}</span>
@@ -302,6 +323,14 @@ export const MaterialsPage: React.FC = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Empresa Selector */}
+            <CompanySelect
+              value={selectedCompanyId}
+              onChange={setSelectedCompanyId}
+              required
+              label="Empresa Proprietária / Base"
+            />
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-slate-300">Tipo de Acessório *</Label>

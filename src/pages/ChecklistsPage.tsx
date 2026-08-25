@@ -35,7 +35,7 @@ import {
 import { toast } from 'sonner'
 
 export const ChecklistsPage: React.FC = () => {
-  const { company } = useAuth()
+  const { company, companies } = useAuth()
   const { isOnline } = useOnlineStatus()
   const navigate = useNavigate()
 
@@ -192,6 +192,15 @@ export const ChecklistsPage: React.FC = () => {
                   <h3 className="font-semibold text-white text-base group-hover:text-blue-400 transition-colors">
                     {chk.title}
                   </h3>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                  >
+                    {companies.find((comp) => comp.id === chk.company_id)?.trade_name ||
+                      companies.find((comp) => comp.id === chk.company_id)?.name ||
+                      company?.name ||
+                      'Empresa Padrão'}
+                  </Badge>
                   {getStatusBadge(chk.status)}
                   {chk.sync_status === 'pending_sync' && (
                     <Badge

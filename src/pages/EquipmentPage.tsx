@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
 import { Equipment, EquipmentType, EquipmentStatus } from '@/types'
+import { CompanySelect } from '@/components/CompanySelect'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,7 +38,7 @@ import {
 import { toast } from 'sonner'
 
 export const EquipmentPage: React.FC = () => {
-  const { company, canManageAssets } = useAuth()
+  const { company, companies, canManageAssets } = useAuth()
   const { isOnline } = useOnlineStatus()
 
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([])
@@ -48,6 +49,7 @@ export const EquipmentPage: React.FC = () => {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
   const [type, setType] = useState<EquipmentType>('Guindaste')
   const [manufacturer, setManufacturer] = useState('')
   const [model, setModel] = useState('')
@@ -76,6 +78,7 @@ export const EquipmentPage: React.FC = () => {
 
   const openNewModal = () => {
     setEditingId(null)
+    setSelectedCompanyId(company?.id || companies[0]?.id || '')
     setType('Guindaste')
     setManufacturer('')
     setModel('')
@@ -90,6 +93,7 @@ export const EquipmentPage: React.FC = () => {
 
   const openEditModal = (eq: Equipment) => {
     setEditingId(eq.id)
+    setSelectedCompanyId(eq.company_id || company?.id || companies[0]?.id || '')
     setType(eq.type)
     setManufacturer(eq.manufacturer)
     setModel(eq.model)
@@ -103,6 +107,11 @@ export const EquipmentPage: React.FC = () => {
   }
 
   const handleSave = async () => {
+    if (!selectedCompanyId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+
     if (!manufacturer.trim() || !model.trim() || !capacity.trim()) {
       toast.warning('Preencha fabricante, modelo e capacidade.')
       return
@@ -111,7 +120,7 @@ export const EquipmentPage: React.FC = () => {
     try {
       const item: Partial<Equipment> = {
         id: editingId || undefined,
-        company_id: company?.id || '',
+        company_id: selectedCompanyId,
         type,
         manufacturer,
         model,
@@ -237,6 +246,18 @@ export const EquipmentPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5 text-xs text-slate-300 pt-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Empresa:</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                  >
+                    {companies.find((c) => c.id === eq.company_id)?.trade_name ||
+                      companies.find((c) => c.id === eq.company_id)?.name ||
+                      company?.name ||
+                      'Empresa Padrão'}
+                  </Badge>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Capacidade Máxima:</span>
                   <span className="font-semibold text-blue-400">{eq.capacity}</span>
@@ -304,6 +325,14 @@ export const EquipmentPage: React.FC = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Empresa Selector */}
+            <CompanySelect
+              value={selectedCompanyId}
+              onChange={setSelectedCompanyId}
+              required
+              label="Empresa Proprietária / Operadora"
+            />
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-slate-300">Tipo de Equipamento *</Label>
