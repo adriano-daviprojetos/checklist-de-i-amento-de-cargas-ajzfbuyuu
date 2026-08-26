@@ -280,12 +280,41 @@ export class AppDataService {
   // --- Templates & Items ---
   static async getTemplates(companyId?: string, isOnline = true): Promise<ChecklistTemplate[]> {
     const local = await dbGetAll<ChecklistTemplate>('checklist_templates')
-    const filtered = companyId ? local.filter((t) => t.company_id === companyId) : local
+    const userRole = ((pb.authStore.record as any)?.role || '').toLowerCase()
+
+    const restrictedRoles = ['supervisor', 'sinaleiro', 'rigger', 'operador']
+    const isRestrictedRole = restrictedRoles.includes(userRole)
+
+    // Build filter expressions
+    const filterParts: string[] = []
+    if (companyId) {
+      filterParts.push(`company_id='${companyId}'`)
+    }
+    if (isRestrictedRole) {
+      // Map user role to capitalized value used in target_role (or check lowercase if needed)
+      // PocketBase equality check. The options are 'Supervisor', 'Sinaleiro', 'Rigger', 'Operador', 'Todos'
+      const capitalizedRole = userRole.charAt(0).toUpperCase() + userRole.slice(1)
+      filterParts.push(`(target_role='${capitalizedRole}' || target_role='Todos')`)
+    }
+
+    const onlineFilter = filterParts.length > 0 ? filterParts.join(' && ') : undefined
+
+    // Offline filter
+    let filtered = local
+    if (companyId) {
+      filtered = filtered.filter((t) => t.company_id === companyId)
+    }
+    if (isRestrictedRole) {
+      filtered = filtered.filter((t) => {
+        const target = (t.target_role || '').toLowerCase()
+        return target === userRole || target === 'todos' || !t.target_role
+      })
+    }
 
     if (isOnline && pb.authStore.isValid) {
       try {
         const list = await pb.collection('checklist_templates').getFullList<ChecklistTemplate>({
-          filter: companyId ? `company_id='${companyId}'` : undefined,
+          filter: onlineFilter,
           sort: 'title',
         })
         await dbPutMany('checklist_templates', list)
