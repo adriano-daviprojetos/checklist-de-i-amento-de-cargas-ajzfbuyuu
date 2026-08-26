@@ -7,6 +7,7 @@ import { syncService } from '@/lib/offline/sync-service'
 import { Checklist, ChecklistTemplate, Equipment, Material, Client } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -16,6 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Plus,
   Search,
@@ -34,11 +43,13 @@ import {
   Trash2,
   PenLine,
   FileDown,
+  FileText,
   Loader2,
   Eye,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { generateChecklistPdf } from '@/lib/checklistPdfGenerator'
+import { generateChecklistReportPdf } from '@/lib/checklistReportPdfGenerator'
 
 export const ChecklistsPage: React.FC = () => {
   const { company, companies, role, isAdmin, isGestor, hasModulePermission, isCliente } = useAuth()
@@ -58,6 +69,21 @@ export const ChecklistsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('todos')
   const [exportingId, setExportingId] = useState<string | null>(null)
 
+  // Report Modal States
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [equipmentList, setEquipmentList] = useState<Equipment[]>([])
+  const [clientsList, setClientsList] = useState<Client[]>([])
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState<string>('all')
+  const [reportDateFrom, setReportDateFrom] = useState<string>(() => {
+    const d = new Date()
+    d.setDate(1) // First day of current month
+    return d.toISOString().split('T')[0]
+  })
+  const [reportDateTo, setReportDateTo] = useState<string>(() => {
+    return new Date().toISOString().split('T')[0]
+  })
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+
   useEffect(() => {
     loadChecklists()
     const unsubscribe = syncService.subscribe(() => {
@@ -71,8 +97,14 @@ export const ChecklistsPage: React.FC = () => {
   const loadChecklists = async () => {
     setLoading(true)
     try {
-      const data = await AppDataService.getChecklists(company?.id, isOnline)
+      const [data, eqData, cliData] = await Promise.all([
+        AppDataService.getChecklists(company?.id, isOnline),
+        AppDataService.getEquipment(company?.id, isOnline),
+        AppDataService.getClients(company?.id, isOnline),
+      ])
       setChecklists(data)
+      setEquipmentList(eqData)
+      setClientsList(cliData)
     } catch (err) {
       console.error('Error loading checklists:', err)
       toast.error('Erro ao carregar checklists')
@@ -148,6 +180,130 @@ export const ChecklistsPage: React.FC = () => {
     }
   }
 
+  const handleOpenReportModal = async () => {
+    try {
+      const [eqData, cliData] = await Promise.all([
+        AppDataService.getEquipment(company?.id, isOnline),
+        AppDataService.getClients(company?.id, isOnline),
+      ])
+      setEquipmentList(eqData)
+      setClientsList(cliData)
+    } catch (e) {
+      console.warn('Erro ao atualizar lista de equipamentos para o relatório:', e)
+    }
+    setIsReportModalOpen(true)
+  }
+
+  const handleGenerateReport = async () => {
+    if (!reportDateFrom || !reportDateTo) {
+      toast.warning('Por favor, informe as datas inicial e final do período.')
+      return
+    }
+
+    const start = new Date(`${reportDateFrom}T00:00:00`)
+    const end = new Date(`${reportDateTo}T23:59:59`)
+
+    if (start > end) {
+      toast.warning('A data inicial não pode ser posterior à data final.')
+      return
+    }
+
+    setIsGeneratingReport(true)
+    try {
+      // Filter checklists by company, dates (completed_at or created or scheduled_date) and equipment
+      const filteredForReport = checklists.filter((chk) => {
+        if (company?.id && chk.company_id && chk.company_id !== company.id) {
+          return false
+        }
+
+        if (selectedEquipmentId !== 'all') {
+          if (chk.equipment_id !== selectedEquipmentId) {
+            return false
+          }
+        }
+
+        // Check date in range
+        const rawDate = chk.completed_at || chk.created || chk.scheduled_date
+        if (!rawDate) return false
+        const chkDate = new Date(rawDate)
+        if (isNaN(chkDate.getTime())) return false
+
+        return chkDate >= start && chkDate <= end
+      })
+
+      // Map to ChecklistReportItem
+      const formattedItems = filteredForReport.map((chk) => {
+        // Resolve client
+        const clientObj = chk.expand?.client_id || clientsList.find((c) => c.id === chk.client_id)
+        const clientName = clientObj?.trade_name || clientObj?.name || 'Não informado'
+
+        // Resolve equipment
+        const eqObj =
+          chk.expand?.equipment_id || equipmentList.find((e) => e.id === chk.equipment_id)
+
+        let equipmentInfo = '-'
+        if (eqObj) {
+          const mfgModel =
+            [eqObj.manufacturer, eqObj.model].filter(Boolean).join(' ') ||
+            eqObj.type ||
+            'Equipamento'
+          const plate = eqObj.license_plate ? ` — ${eqObj.license_plate}` : ''
+          equipmentInfo = `${mfgModel}${plate}`
+        }
+
+        return {
+          id: chk.id,
+          code: chk.code || 'CHK-N/A',
+          title: chk.title || 'Checklist',
+          status: chk.status || 'Pendente',
+          completed_at: chk.completed_at,
+          created: chk.created,
+          location: chk.location || '-',
+          clientName,
+          equipmentInfo,
+        }
+      })
+
+      // Format date labels
+      const [fromYear, fromMonth, fromDay] = reportDateFrom.split('-')
+      const [toYear, toMonth, toDay] = reportDateTo.split('-')
+      const dateFromFormatted = `${fromDay}/${fromMonth}/${fromYear}`
+      const dateToFormatted = `${toDay}/${toMonth}/${toYear}`
+
+      let selectedEqName = 'Todos os Equipamentos'
+      if (selectedEquipmentId !== 'all') {
+        const foundEq = equipmentList.find((e) => e.id === selectedEquipmentId)
+        if (foundEq) {
+          const mfgModel =
+            [foundEq.manufacturer, foundEq.model].filter(Boolean).join(' ') ||
+            foundEq.type ||
+            'Equipamento'
+          const plate = foundEq.license_plate ? ` — ${foundEq.license_plate}` : ''
+          selectedEqName = `${mfgModel}${plate}`
+        }
+      }
+
+      const activeCompanyName =
+        company?.trade_name || company?.name || 'Davi Projetos - Engenharia e Rigging'
+
+      await generateChecklistReportPdf({
+        checklists: formattedItems,
+        dateFrom: dateFromFormatted,
+        dateTo: dateToFormatted,
+        equipmentName: selectedEqName,
+        companyName: activeCompanyName,
+      })
+
+      toast.success('Relatório consolidado gerado com sucesso!')
+      setIsReportModalOpen(false)
+    } catch (err: any) {
+      console.error('Error generating consolidated report:', err)
+      toast.error('Erro ao gerar relatório consolidado: ' + (err?.message || 'Erro desconhecido'))
+    } finally {
+      setIsGeneratingReport(false)
+    }
+  }
+
   const filtered = checklists
     .filter((chk) => (company?.id ? chk.company_id === company.id : true))
     .filter((chk) => {
@@ -206,13 +362,26 @@ export const ChecklistsPage: React.FC = () => {
         </div>
 
         {canEdit && (
-          <Button
-            onClick={() => navigate('/checklists/novo')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Checklist de Campo
-          </Button>
+          <div className="flex items-center gap-2">
+            {(isAdmin || isGestor) && (
+              <Button
+                variant="outline"
+                onClick={handleOpenReportModal}
+                className="bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-200 hover:text-white"
+              >
+                <FileText className="w-4 h-4 mr-2 text-blue-400" />
+                Relatório Consolidado
+              </Button>
+            )}
+
+            <Button
+              onClick={() => navigate('/checklists/novo')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Checklist de Campo
+            </Button>
+          </div>
         )}
       </div>
 
@@ -446,6 +615,114 @@ export const ChecklistsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Consolidated Report Modal */}
+      <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+        <DialogContent className="bg-slate-900 border-slate-800 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-500" />
+              Relatório Consolidado de Checklists
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 text-xs">
+              Defina o intervalo de datas e selecione o equipamento desejado para gerar o relatório
+              PDF detalhado.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="report-from" className="text-xs text-slate-300">
+                  Data Inicial
+                </Label>
+                <Input
+                  id="report-from"
+                  type="date"
+                  value={reportDateFrom}
+                  onChange={(e) => setReportDateFrom(e.target.value)}
+                  className="bg-slate-950 border-slate-800 text-white text-xs focus:border-blue-500 [color-scheme:dark]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="report-to" className="text-xs text-slate-300">
+                  Data Final
+                </Label>
+                <Input
+                  id="report-to"
+                  type="date"
+                  value={reportDateTo}
+                  onChange={(e) => setReportDateTo(e.target.value)}
+                  className="bg-slate-950 border-slate-800 text-white text-xs focus:border-blue-500 [color-scheme:dark]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="report-equipment" className="text-xs text-slate-300">
+                Equipamento
+              </Label>
+              <Select value={selectedEquipmentId} onValueChange={setSelectedEquipmentId}>
+                <SelectTrigger
+                  id="report-equipment"
+                  className="bg-slate-950 border-slate-800 text-slate-200 text-xs"
+                >
+                  <SelectValue placeholder="Selecione o equipamento" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-60">
+                  <SelectItem value="all">Todos os Equipamentos</SelectItem>
+                  {equipmentList.map((eq) => {
+                    const label = [
+                      eq.type,
+                      eq.manufacturer,
+                      eq.model,
+                      eq.license_plate ? `(${eq.license_plate})` : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                    return (
+                      <SelectItem key={eq.id} value={eq.id} className="text-xs">
+                        {label}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsReportModalOpen(false)}
+              disabled={isGeneratingReport}
+              className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleGenerateReport}
+              disabled={isGeneratingReport}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md shadow-blue-500/20"
+            >
+              {isGeneratingReport ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Gerando PDF...
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-3.5 h-3.5 mr-1.5" />
+                  Gerar Relatório PDF
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
