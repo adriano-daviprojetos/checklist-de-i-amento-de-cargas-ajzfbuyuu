@@ -600,17 +600,20 @@ export class AppDataService {
       const initialPassword = user.password || newPassword || 'Skip@Pass'
       const finalPasswordConfirm = passwordConfirm || initialPassword
       const formattedUsername = createFields.username ? createFields.username.trim() : ''
+      const rawEmail = createFields.email ? createFields.email.trim() : ''
+      // Ensure email is NEVER empty string — fallback to username@cliente.local or user_id@cliente.local
+      const fallbackEmail = formattedUsername
+        ? `${formattedUsername.replace(/\s+/g, '.').toLowerCase()}@cliente.local`
+        : `user_${Date.now()}@cliente.local`
+      const finalEmail = rawEmail || fallbackEmail
+
       const payload: Record<string, any> = {
         ...createFields,
         username: formattedUsername,
+        email: finalEmail,
         password: initialPassword,
         passwordConfirm: finalPasswordConfirm,
         emailVisibility: true,
-      }
-      if (!payload.email || !payload.email.trim()) {
-        delete payload.email
-      } else {
-        payload.email = payload.email.trim()
       }
       const res = await pb.collection('users').create(payload)
       return res as unknown as AppUser
@@ -621,10 +624,12 @@ export class AppDataService {
         payload.username = payload.username ? payload.username.trim() : ''
       }
       if (payload.email !== undefined) {
-        if (!payload.email || !payload.email.trim()) {
-          payload.email = ''
+        const rawEmail = payload.email ? payload.email.trim() : ''
+        if (!rawEmail) {
+          const currentUsername = payload.username || 'user'
+          payload.email = `${currentUsername.replace(/\s+/g, '.').toLowerCase()}@cliente.local`
         } else {
-          payload.email = payload.email.trim()
+          payload.email = rawEmail
         }
       }
 

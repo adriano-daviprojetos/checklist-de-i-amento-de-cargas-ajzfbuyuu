@@ -243,6 +243,7 @@ export const UsersPage: React.FC = () => {
     setSelectedClientId(u.client_id || '')
     setName(u.name || '')
     setUsername(u.username || '')
+    // If the email is a generated local fallback, keep field cleaner or show it
     setEmail(u.email || '')
     setCpf(u.cpf || '')
     setPhone(u.phone || '')
@@ -412,6 +413,10 @@ export const UsersPage: React.FC = () => {
     }
 
     try {
+      const cleanUsername = username.trim()
+      const cleanEmail =
+        email.trim() || `${cleanUsername.replace(/\s+/g, '.').toLowerCase()}@cliente.local`
+
       const payload: Partial<AppUser> & {
         password?: string
         newPassword?: string
@@ -419,8 +424,8 @@ export const UsersPage: React.FC = () => {
       } = {
         id: editingId || undefined,
         name: name.trim(),
-        username: username.trim() || undefined,
-        email: email.trim() || undefined,
+        username: cleanUsername,
+        email: cleanEmail,
         cpf: cpf.trim() || undefined,
         phone: phone.trim() || undefined,
         role,
