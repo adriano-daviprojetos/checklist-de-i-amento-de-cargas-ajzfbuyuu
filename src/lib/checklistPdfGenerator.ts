@@ -702,18 +702,14 @@ export async function generateChecklistPdf({
             if (item.isCritical) fullTitle += ' [CRÍTICO]'
             if (item.isMandatory) fullTitle += ' (Obrigatório)'
             const pesoLabel = item.isCritical ? 'Crítico (Alto)' : 'Padrão'
-            const obsList: string[] = []
-            if (item.value) obsList.push(`Medição: ${item.value}`)
-            if (item.observation) obsList.push(item.observation)
-            const obsText = obsList.length > 0 ? obsList.join(' | ') : '—'
 
-            return [item.itemNumberLabel, fullTitle, pesoLabel, item.statusText, obsText]
+            return [item.itemNumberLabel, fullTitle, pesoLabel, item.statusText]
           })
-        : [['-', 'Nenhum item cadastrado nesta seção', '-', '-', '-']]
+        : [['-', 'Nenhum item cadastrado nesta seção', '-', '-']]
 
     applyAutoTable(doc, {
       startY: currentY,
-      head: [['Nº', 'ITEM DE VERIFICAÇÃO', 'PESO', 'RESULTADO', 'OBSERVAÇÕES']],
+      head: [['Nº', 'ITEM DE VERIFICAÇÃO', 'PESO', 'RESULTADO']],
       body: tableBody,
       theme: 'grid',
       margin: { left: margin, right: margin, bottom: bottomFooterReserve + 2 },
@@ -731,7 +727,6 @@ export async function generateChecklistPdf({
         1: { cellWidth: 'auto', fontSize: 7 },
         2: { cellWidth: 22, halign: 'center', fontSize: 6.8 },
         3: { cellWidth: 26, halign: 'center', fontStyle: 'bold', fontSize: 6.8 },
-        4: { cellWidth: 48, fontSize: 6.8 },
       },
       styles: {
         cellPadding: 1.2,
