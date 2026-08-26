@@ -37,6 +37,7 @@ import {
   Plus,
   Trash2,
   Edit2,
+  Copy,
   Search,
   FolderPlus,
   Folder,
@@ -47,6 +48,7 @@ import {
   MoveRight,
   Sparkles,
   Check,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -63,6 +65,7 @@ export const TemplatesPage: React.FC = () => {
   const [templateGroups, setTemplateGroups] = useState<ChecklistItemGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
 
   // Modal create/edit Template
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -135,6 +138,27 @@ export const TemplatesPage: React.FC = () => {
       setTemplateGroups(groups)
     } catch (err) {
       console.error('Error loading template details:', err)
+    }
+  }
+
+  const handleDuplicateTemplate = async (e: React.MouseEvent, tpl: ChecklistTemplate) => {
+    e.stopPropagation()
+    if (!canEdit) {
+      toast.error('Você não tem permissão para duplicar modelos.')
+      return
+    }
+
+    try {
+      setDuplicatingId(tpl.id)
+      const duplicated = await AppDataService.duplicateTemplate(tpl.id, isOnline)
+      toast.success(`Modelo "${duplicated.title}" criado com sucesso!`)
+      await loadTemplates()
+      handleSelectTemplate(duplicated)
+    } catch (err: any) {
+      console.error('Error duplicating template:', err)
+      toast.error('Erro ao duplicar modelo: ' + (err.message || 'Erro desconhecido'))
+    } finally {
+      setDuplicatingId(null)
     }
   }
 
@@ -667,17 +691,35 @@ export const TemplatesPage: React.FC = () => {
                     <span className="text-[10px] text-slate-500">
                       Perfil: {tpl.target_role || 'Todos'}
                     </span>
-                    {canDelete && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleDeleteTemplate(e, tpl.id)}
-                        className="h-5 w-5 text-slate-500 hover:text-red-400 hover:bg-red-950/20 ml-1"
-                        title="Excluir Modelo"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-0.5 ml-1">
+                      {canEdit && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => handleDuplicateTemplate(e, tpl)}
+                          disabled={duplicatingId === tpl.id}
+                          className="h-5 w-5 text-slate-500 hover:text-blue-400 hover:bg-blue-950/20"
+                          title="Duplicar Modelo"
+                        >
+                          {duplicatingId === tpl.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => handleDeleteTemplate(e, tpl.id)}
+                          className="h-5 w-5 text-slate-500 hover:text-red-400 hover:bg-red-950/20"
+                          title="Excluir Modelo"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="mb-1">
@@ -742,14 +784,31 @@ export const TemplatesPage: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   {canEdit && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openEditModal(selectedTemplate)}
-                      className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
-                    >
-                      <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar Modelo
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => handleDuplicateTemplate(e, selectedTemplate)}
+                        disabled={duplicatingId === selectedTemplate.id}
+                        className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
+                        title="Criar cópia deste modelo"
+                      >
+                        {duplicatingId === selectedTemplate.id ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-blue-400" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5 mr-1 text-blue-400" />
+                        )}
+                        Duplicar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openEditModal(selectedTemplate)}
+                        className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar Modelo
+                      </Button>
+                    </>
                   )}
                   {canDelete && (
                     <Button

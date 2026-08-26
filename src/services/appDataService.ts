@@ -556,6 +556,89 @@ export class AppDataService {
     return resultTpl
   }
 
+  static async duplicateTemplate(templateId: string, isOnline = true): Promise<ChecklistTemplate> {
+    // 1. Fetch source template
+    let sourceTemplate: ChecklistTemplate | null = await dbGetById<ChecklistTemplate>(
+      'checklist_templates',
+      templateId,
+    )
+
+    if (isOnline && pb.authStore.isValid && !templateId.startsWith('tpl_')) {
+      try {
+        sourceTemplate = await pb
+          .collection('checklist_templates')
+          .getOne<ChecklistTemplate>(templateId)
+      } catch (err) {
+        console.warn('Could not fetch source template online, using local cache:', err)
+      }
+    }
+
+    if (!sourceTemplate) {
+      throw new Error('Modelo de checklist original não encontrado.')
+    }
+
+    // 2. Fetch source groups and items
+    const [sourceGroups, sourceItems] = await Promise.all([
+      AppDataService.getItemGroups(templateId, isOnline),
+      AppDataService.getTemplateItems(templateId, isOnline),
+    ])
+
+    // 3. Prepare duplicated template payload
+    const newTitle = `${sourceTemplate.title} (Cópia)`
+    const newTemplatePayload: Partial<ChecklistTemplate> = {
+      company_id: sourceTemplate.company_id,
+      title: newTitle,
+      description: sourceTemplate.description || '',
+      category: sourceTemplate.category,
+      target_role: sourceTemplate.target_role || 'Todos',
+      active: true,
+      version: 1,
+    }
+
+    // 4. Prepare cloned groups with new temporary local ids to preserve mapping
+    // We map old group IDs to new group payload references
+    const clonedGroups: Partial<ChecklistItemGroup>[] = sourceGroups.map((g, idx) => ({
+      id: `temp_grp_dup_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
+      name: g.name,
+      sort_order: g.sort_order ?? idx + 1,
+    }))
+
+    const oldGroupIdToNewTempIdMap = new Map<string, string>()
+    sourceGroups.forEach((g, idx) => {
+      oldGroupIdToNewTempIdMap.set(g.id, clonedGroups[idx].id!)
+    })
+
+    // 5. Prepare cloned items
+    const clonedItems: Partial<ChecklistTemplateItem>[] = sourceItems.map((item, idx) => {
+      const mappedGroupTempId = item.group
+        ? oldGroupIdToNewTempIdMap.get(item.group) || undefined
+        : undefined
+
+      return {
+        id: `temp_item_dup_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
+        section: item.section || 'Geral',
+        group: mappedGroupTempId,
+        title: item.title,
+        description: item.description || '',
+        type: item.type,
+        is_mandatory: item.is_mandatory ?? true,
+        is_critical: item.is_critical ?? false,
+        sort_order: item.sort_order ?? item.order_num ?? idx + 1,
+        order_num: idx + 1,
+      }
+    })
+
+    // 6. Save through existing saveTemplate handler (handles both online PocketBase & offline IndexedDB + group ID mapping)
+    const createdTemplate = await AppDataService.saveTemplate(
+      newTemplatePayload,
+      clonedItems,
+      isOnline,
+      clonedGroups,
+    )
+
+    return createdTemplate
+  }
+
   static async deleteTemplate(id: string, isOnline: boolean): Promise<void> {
     await dbDelete('checklist_templates', id)
     // Delete associated template items and groups in local DB
