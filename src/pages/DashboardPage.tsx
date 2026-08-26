@@ -36,7 +36,7 @@ import {
 } from 'recharts'
 
 export const DashboardPage: React.FC = () => {
-  const { company, user } = useAuth()
+  const { company, user, canCreateChecklist } = useAuth()
   const { isOnline } = useOnlineStatus()
   const navigate = useNavigate()
 
@@ -136,13 +136,15 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            onClick={() => navigate('/checklists/novo')}
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Iniciar Novo Checklist
-          </Button>
+          {canCreateChecklist && (
+            <Button
+              onClick={() => navigate('/checklists/novo')}
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Iniciar Novo Checklist
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => navigate('/checklists')}

@@ -91,6 +91,16 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, UserPermissions> = {
     company: { read: false, edit: false, delete: false },
     audit: { read: false, edit: false, delete: false },
   },
+  cliente: {
+    checklists: { read: true, edit: false, delete: false },
+    templates: { read: false, edit: false, delete: false },
+    equipment: { read: true, edit: false, delete: false },
+    materials: { read: true, edit: false, delete: false },
+    clients: { read: true, edit: false, delete: false },
+    users: { read: false, edit: false, delete: false },
+    company: { read: false, edit: false, delete: false },
+    audit: { read: false, edit: false, delete: false },
+  },
 }
 
 export function getUserEffectivePermissions(user: AppUser | null): UserPermissions {
@@ -147,6 +157,7 @@ interface AuthContextType {
   user: AppUser | null
   company: Company | null
   companies: Company[]
+  clientId: string | null
   isAuthenticated: boolean
   isLoading: boolean
   role: UserRole
@@ -155,6 +166,8 @@ interface AuthContextType {
   isAdmin: boolean
   isGestor: boolean
   isSupervisor: boolean
+  isCliente: boolean
+  hasRole: (targetRole: UserRole) => boolean
   canManageUsers: boolean
   canManageCompanies: boolean
   canManageTemplates: boolean
@@ -183,10 +196,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   })
 
   const role: UserRole = (user?.role as UserRole) || 'operador'
+  const clientId = user?.client_id || null
   const isSuperAdmin = role === 'superadmin'
   const isAdmin = role === 'admin' || isSuperAdmin
   const isGestor = role === 'gestor' || isAdmin
   const isSupervisor = role === 'supervisor' || isGestor
+  const isCliente = role === 'cliente'
+
+  const hasRole = useCallback((targetRole: UserRole) => role === targetRole, [role])
 
   const permissions = getUserEffectivePermissions(user)
 
@@ -377,12 +394,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         companies,
         isAuthenticated: !!user,
         isLoading,
+        clientId,
         role,
         permissions,
         isSuperAdmin,
         isAdmin,
         isGestor,
         isSupervisor,
+        isCliente,
+        hasRole,
         canManageUsers,
         canManageCompanies,
         canManageTemplates,

@@ -64,7 +64,8 @@ export const ChecklistDetailPage: React.FC = () => {
   const isNew = !id || id === 'novo'
   const navigate = useNavigate()
 
-  const { company, companies, user } = useAuth()
+  const { company, companies, user, hasModulePermission, isCliente } = useAuth()
+  const canEdit = hasModulePermission('checklists', 'edit') && !isCliente
   const { isOnline } = useOnlineStatus()
 
   // Reference lists
@@ -237,6 +238,7 @@ export const ChecklistDetailPage: React.FC = () => {
     val: any,
     itemMeta?: ChecklistTemplateItem,
   ) => {
+    if (!canEdit) return
     setResponsesMap((prev) => {
       const current = prev[itemId] || {
         item_id: itemId,
@@ -619,31 +621,35 @@ export const ChecklistDetailPage: React.FC = () => {
             </Button>
           )}
 
-          <Button
-            variant="outline"
-            onClick={handleSaveDraft}
-            disabled={saving || exportingPdf}
-            className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800 text-xs"
-          >
-            <Save className="w-3.5 h-3.5 mr-1.5" /> Salvar Rascunho
-          </Button>
+          {canEdit && (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleSaveDraft}
+                disabled={saving || exportingPdf}
+                className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800 text-xs"
+              >
+                <Save className="w-3.5 h-3.5 mr-1.5" /> Salvar Rascunho
+              </Button>
 
-          <Button
-            onClick={() => handleOpenFinalizeModal('Concluído')}
-            disabled={saving || exportingPdf}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-md shadow-emerald-600/20"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar Operação
-          </Button>
+              <Button
+                onClick={() => handleOpenFinalizeModal('Concluído')}
+                disabled={saving || exportingPdf}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-md shadow-emerald-600/20"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar Operação
+              </Button>
 
-          <Button
-            onClick={() => handleOpenFinalizeModal('Reprovado')}
-            disabled={saving || exportingPdf}
-            variant="destructive"
-            className="text-xs bg-red-600/90 hover:bg-red-600 font-medium"
-          >
-            <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reprovar
-          </Button>
+              <Button
+                onClick={() => handleOpenFinalizeModal('Reprovado')}
+                disabled={saving || exportingPdf}
+                variant="destructive"
+                className="text-xs bg-red-600/90 hover:bg-red-600 font-medium"
+              >
+                <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reprovar
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -1298,24 +1304,28 @@ export const ChecklistDetailPage: React.FC = () => {
             </Button>
           )}
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSaveDraft}
-            disabled={saving || exportingPdf}
-            className="border-slate-800 bg-slate-900 text-slate-300 text-xs"
-          >
-            Salvar Rascunho
-          </Button>
+          {canEdit && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveDraft}
+                disabled={saving || exportingPdf}
+                className="border-slate-800 bg-slate-900 text-slate-300 text-xs"
+              >
+                Salvar Rascunho
+              </Button>
 
-          <Button
-            size="sm"
-            onClick={() => handleOpenFinalizeModal('Concluído')}
-            disabled={saving || exportingPdf}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar Operação
-          </Button>
+              <Button
+                size="sm"
+                onClick={() => handleOpenFinalizeModal('Concluído')}
+                disabled={saving || exportingPdf}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar Operação
+              </Button>
+            </>
+          )}
         </div>{' '}
       </div>
 

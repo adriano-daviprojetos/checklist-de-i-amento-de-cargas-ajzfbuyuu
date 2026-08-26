@@ -17,20 +17,31 @@ import {
 export class AppDataService {
   // --- Checklists ---
   static async getChecklists(companyId?: string, isOnline = true): Promise<Checklist[]> {
+    const authUser = pb.authStore.record as any
+    const isClientRole = authUser?.role === 'cliente'
+    const clientScopeId = isClientRole ? authUser?.client_id : undefined
+
     // 1. Try local IndexedDB first for instant UI response
     const local = await dbGetAll<Checklist>('checklists')
-    const filteredLocal = companyId ? local.filter((c) => c.company_id === companyId) : local
+    let filteredLocal = companyId ? local.filter((c) => c.company_id === companyId) : local
+    if (clientScopeId) {
+      filteredLocal = filteredLocal.filter((c) => c.client_id === clientScopeId)
+    }
 
     if (isOnline && pb.authStore.isValid) {
       try {
-        const filter = companyId ? `company_id='${companyId}'` : ''
+        const filterParts: string[] = []
+        if (companyId) filterParts.push(`company_id='${companyId}'`)
+        if (clientScopeId) filterParts.push(`client_id='${clientScopeId}'`)
+        const filter = filterParts.length > 0 ? filterParts.join(' && ') : ''
+
         const onlineList = await pb.collection('checklists').getFullList<Checklist>({
           filter: filter || undefined,
           sort: '-created',
           expand: 'template_id,client_id,equipment_id,material_id,user_id',
         })
         // Merge with local queue
-        const pendingLocals = local.filter((c) => c.sync_status === 'pending_sync')
+        const pendingLocals = filteredLocal.filter((c) => c.sync_status === 'pending_sync')
         const onlineIds = new Set(onlineList.map((c) => c.id))
         const combined = [...onlineList, ...pendingLocals.filter((c) => !onlineIds.has(c.id))]
 
@@ -206,24 +217,35 @@ export class AppDataService {
 
   // --- Clients ---
   static async getClients(companyId?: string, isOnline = true): Promise<Client[]> {
+    const authUser = pb.authStore.record as any
+    const isClientRole = authUser?.role === 'cliente'
+    const clientScopeId = isClientRole ? authUser?.client_id : undefined
+
     const local = await dbGetAll<Client>('clients')
-    const filtered = companyId ? local.filter((c) => c.company_id === companyId) : local
+    let filtered = companyId ? local.filter((c) => c.company_id === companyId) : local
+    if (clientScopeId) {
+      filtered = filtered.filter((c) => c.id === clientScopeId)
+    }
 
     if (isOnline && pb.authStore.isValid) {
       try {
+        const filterParts: string[] = []
+        if (companyId) filterParts.push(`company_id='${companyId}'`)
+        if (clientScopeId) filterParts.push(`id='${clientScopeId}'`)
+        const filter = filterParts.length > 0 ? filterParts.join(' && ') : undefined
+
         const list = await pb.collection('clients').getFullList<Client>({
-          filter: companyId ? `company_id='${companyId}'` : undefined,
+          filter,
           sort: 'name',
         })
         await dbPutMany('clients', list)
         return list
       } catch (err) {
-        console.warn('Online clients fetch failed:', err)
+        console.warn('Online clients fetch failed, fallback to offline:', err)
       }
     }
     return filtered
   }
-
   static async saveClient(item: Partial<Client>, isOnline: boolean): Promise<Client> {
     const userCompId = item.company_id || (pb.authStore.record as any)?.company_id || ''
     const itemWithCompany = { ...item, company_id: userCompId }
@@ -557,6 +579,7 @@ export class AppDataService {
         const list = await pb.collection('users').getFullList<AppUser>({
           filter: companyId ? `company_id='${companyId}'` : undefined,
           sort: 'name',
+          expand: 'company_id,client_id',
         })
         return list
       } catch (err) {

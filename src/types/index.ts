@@ -21,6 +21,7 @@ export type UserRole =
   | 'rigger'
   | 'sinaleiro'
   | 'operador'
+  | 'cliente'
 
 export type SystemModuleKey =
   | 'checklists'
@@ -46,6 +47,7 @@ export interface AppUser {
   username?: string
   email?: string
   company_id?: string
+  client_id?: string
   role: UserRole
   cpf?: string
   phone?: string
@@ -54,6 +56,10 @@ export interface AppUser {
   permissions?: UserPermissions
   created?: string
   updated?: string
+  expand?: {
+    company_id?: Company
+    client_id?: Client
+  }
 }
 export interface Client {
   id: string

@@ -46,6 +46,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     role,
     isAdmin,
     isGestor,
+    isCliente,
     canManageCompanies,
     hasModulePermission,
   } = useAuth()
@@ -69,43 +70,43 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       title: 'Modelos de Inspeção',
       path: '/modelos',
       icon: FileSpreadsheet,
-      isVisible: hasModulePermission('templates', 'read'),
+      isVisible: !isCliente && hasModulePermission('templates', 'read'),
     },
     {
       title: 'Equipamentos',
       path: '/equipamentos',
       icon: Truck,
-      isVisible: hasModulePermission('equipment', 'read'),
+      isVisible: !isCliente && hasModulePermission('equipment', 'read'),
     },
     {
       title: 'Materiais & Acessórios',
       path: '/materiais',
       icon: Anchor,
-      isVisible: hasModulePermission('materials', 'read'),
+      isVisible: !isCliente && hasModulePermission('materials', 'read'),
     },
     {
       title: 'Clientes & Obras',
       path: '/clientes',
       icon: Building2,
-      isVisible: hasModulePermission('clients', 'read'),
+      isVisible: !isCliente && hasModulePermission('clients', 'read'),
     },
     {
       title: 'Usuários & Perfis',
       path: '/usuarios',
       icon: Users,
-      isVisible: hasModulePermission('users', 'read'),
+      isVisible: !isCliente && hasModulePermission('users', 'read'),
     },
     {
       title: 'Dados da Empresa',
       path: '/empresa',
       icon: Building,
-      isVisible: canManageCompanies,
+      isVisible: !isCliente && canManageCompanies,
     },
     {
       title: 'Auditoria',
       path: '/auditoria',
       icon: ScrollText,
-      isVisible: isAdmin || isGestor || hasModulePermission('audit', 'read'),
+      isVisible: !isCliente && (isAdmin || isGestor || hasModulePermission('audit', 'read')),
     },
     {
       title: 'Meu Perfil',
@@ -133,6 +134,8 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
         return 'Sinaleiro / Amarrador'
       case 'operador':
         return 'Operador de Guindaste'
+      case 'cliente':
+        return 'Cliente & Obra'
       default:
         return r
     }
@@ -149,6 +152,8 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
         return 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30'
       case 'rigger':
         return 'bg-amber-600/20 text-amber-400 border-amber-500/30'
+      case 'cliente':
+        return 'bg-teal-600/20 text-teal-400 border-teal-500/30'
       default:
         return 'bg-slate-800 text-slate-300 border-slate-700'
     }

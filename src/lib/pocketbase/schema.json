@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T20:16:24.670Z",
+  "generatedAt": "2026-08-26T01:26:42.477Z",
   "collections": [
     {
       "name": "users",
@@ -69,7 +69,8 @@
             "supervisor",
             "rigger",
             "sinaleiro",
-            "operador"
+            "operador",
+            "cliente"
           ]
         },
         {
@@ -89,13 +90,21 @@
           "type": "text",
           "required": true,
           "system": false
+        },
+        {
+          "name": "client_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "clients"
         }
       ],
       "indexes": [
         "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
         "CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users` (`email`) WHERE `email` != ''",
         "CREATE UNIQUE INDEX `idx_username_users` ON `users` (`username`) WHERE `username` != ''",
-        "CREATE UNIQUE INDEX `idx_cpf_users` ON `users` (`cpf`) WHERE `cpf` != ''"
+        "CREATE UNIQUE INDEX `idx_cpf_users` ON `users` (`cpf`) WHERE `cpf` != ''",
+        "CREATE INDEX `idx_users_client` ON `users` (client_id)"
       ]
     },
     {

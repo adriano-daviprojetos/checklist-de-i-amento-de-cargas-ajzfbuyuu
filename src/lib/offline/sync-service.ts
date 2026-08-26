@@ -32,7 +32,11 @@ class SyncService {
     }
 
     try {
-      const userCompanyId = companyId || (pb.authStore.record as any)?.company_id
+      const authUser = pb.authStore.record as any
+      const isClientRole = authUser?.role === 'cliente'
+      const clientScopeId = isClientRole ? authUser?.client_id : undefined
+
+      const userCompanyId = companyId || authUser?.company_id
       const compFilter = userCompanyId ? `company_id='${userCompanyId}'` : ''
 
       // 1. Companies
@@ -43,10 +47,16 @@ class SyncService {
         console.warn('Sync companies failed', err)
       }
 
-      // 2. Clients (filtered strictly by company_id)
+      // 2. Clients (filtered strictly by company_id and clientScopeId if client role)
       try {
+        const clientFilterParts: string[] = []
+        if (compFilter) clientFilterParts.push(compFilter)
+        if (clientScopeId) clientFilterParts.push(`id='${clientScopeId}'`)
+        const finalClientFilter =
+          clientFilterParts.length > 0 ? clientFilterParts.join(' && ') : undefined
+
         const clients = await pb.collection('clients').getFullList<Client>({
-          filter: compFilter || undefined,
+          filter: finalClientFilter,
           sort: 'name',
         })
         await dbPutMany('clients', clients)
@@ -113,8 +123,13 @@ class SyncService {
 
       // 7. Checklists
       try {
+        const chkFilterParts: string[] = []
+        if (compFilter) chkFilterParts.push(compFilter)
+        if (clientScopeId) chkFilterParts.push(`client_id='${clientScopeId}'`)
+        const finalChkFilter = chkFilterParts.length > 0 ? chkFilterParts.join(' && ') : undefined
+
         const checklists = await pb.collection('checklists').getFullList<Checklist>({
-          filter: compFilter || undefined,
+          filter: finalChkFilter,
           sort: '-created',
           expand: 'template_id,client_id,equipment_id,material_id,user_id',
         })

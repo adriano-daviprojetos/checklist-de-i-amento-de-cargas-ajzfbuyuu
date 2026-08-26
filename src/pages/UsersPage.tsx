@@ -3,7 +3,14 @@ import { useAuth, DEFAULT_ROLE_PERMISSIONS } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { AppDataService } from '@/services/appDataService'
 import { syncService } from '@/lib/offline/sync-service'
-import { AppUser, UserRole, SystemModuleKey, UserPermissions, ModulePermission } from '@/types'
+import {
+  AppUser,
+  Client,
+  UserRole,
+  SystemModuleKey,
+  UserPermissions,
+  ModulePermission,
+} from '@/types'
 import { CompanySelect } from '@/components/CompanySelect'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -117,6 +124,7 @@ export const UsersPage: React.FC = () => {
   const canDeleteUsers = hasModulePermission('users', 'delete')
 
   const [users, setUsers] = useState<AppUser[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
@@ -124,6 +132,7 @@ export const UsersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
+  const [selectedClientId, setSelectedClientId] = useState<string>('')
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -146,26 +155,39 @@ export const UsersPage: React.FC = () => {
   const canEditPermissions = isAdmin || isGestor
 
   useEffect(() => {
-    loadUsers()
+    loadData()
     const unsubscribe = syncService.subscribe(() => {
-      loadUsers()
+      loadData()
     })
     return () => {
       unsubscribe()
     }
   }, [company?.id, isOnline])
 
-  const loadUsers = async () => {
+  const loadData = async () => {
     setLoading(true)
     try {
-      const data = await AppDataService.getUsers(company?.id, isOnline)
-      setUsers(data)
+      const [usersData, clientsData] = await Promise.all([
+        AppDataService.getUsers(company?.id, isOnline),
+        AppDataService.getClients(company?.id, isOnline),
+      ])
+      setUsers(usersData)
+      setClients(clientsData)
     } catch (err) {
-      console.error('Error loading users:', err)
+      console.error('Error loading users/clients:', err)
     } finally {
       setLoading(false)
     }
   }
+
+  // Reload clients if modal company changes
+  useEffect(() => {
+    if (selectedCompanyId) {
+      AppDataService.getClients(selectedCompanyId, isOnline)
+        .then((data) => setClients(data))
+        .catch((err) => console.warn('Failed to load clients for company:', err))
+    }
+  }, [selectedCompanyId, isOnline])
 
   // Permission helper to check if current logged-in user can edit a specific user target
   const canEditTargetUser = (targetUser: AppUser) => {
@@ -190,6 +212,7 @@ export const UsersPage: React.FC = () => {
     }
     setEditingId(null)
     setSelectedCompanyId(company?.id || companies[0]?.id || '')
+    setSelectedClientId('')
     setName('')
     setUsername('')
     setEmail('')
@@ -217,6 +240,7 @@ export const UsersPage: React.FC = () => {
     }
     setEditingId(u.id)
     setSelectedCompanyId(isAdmin ? u.company_id || company?.id || '' : company?.id || '')
+    setSelectedClientId(u.client_id || '')
     setName(u.name || '')
     setUsername(u.username || '')
     setEmail(u.email || '')
@@ -325,7 +349,7 @@ export const UsersPage: React.FC = () => {
     try {
       await AppDataService.deleteUser(u.id)
       toast.success('Usuário removido com sucesso.')
-      await loadUsers()
+      await loadData()
     } catch (err: any) {
       toast.error('Erro ao excluir usuário: ' + err.message)
     }
@@ -347,6 +371,11 @@ export const UsersPage: React.FC = () => {
 
     if (!finalCompanyId) {
       toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+
+    if (role === 'cliente' && !selectedClientId) {
+      toast.warning('Para o perfil Cliente, a seleção do Cliente & Obra vinculado é obrigatória.')
       return
     }
 
@@ -396,6 +425,7 @@ export const UsersPage: React.FC = () => {
         phone: phone.trim() || undefined,
         role,
         company_id: finalCompanyId,
+        client_id: role === 'cliente' ? selectedClientId : undefined,
         permissions,
         active: true,
       }
@@ -413,7 +443,7 @@ export const UsersPage: React.FC = () => {
         editingId ? 'Usuário e permissões atualizados com sucesso!' : 'Usuário criado com sucesso!',
       )
       setIsModalOpen(false)
-      await loadUsers()
+      await loadData()
     } catch (err: any) {
       console.error('Error saving user:', err)
       toast.error('Erro ao salvar usuário: ' + (err.message || 'Erro inesperado'))
@@ -453,6 +483,12 @@ export const UsersPage: React.FC = () => {
             <Radio className="w-3 h-3 mr-1" /> Sinaleiro
           </Badge>
         )
+      case 'cliente':
+        return (
+          <Badge className="bg-teal-950 text-teal-400 border border-teal-800 text-[10px]">
+            <Building2 className="w-3 h-3 mr-1" /> Cliente
+          </Badge>
+        )
       default:
         return (
           <Badge className="bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">
@@ -461,7 +497,6 @@ export const UsersPage: React.FC = () => {
         )
     }
   }
-
   const filtered = users
     .filter((u) => (company?.id ? u.company_id === company.id : true))
     .filter(
@@ -498,7 +533,7 @@ export const UsersPage: React.FC = () => {
       </div>
 
       {/* Role Explanations Banner */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 text-xs">
         <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
           <div className="font-semibold text-blue-400">Admin</div>
           <p className="text-[10px] text-slate-400 mt-0.5">Acesso total e gestão da empresa</p>
@@ -522,6 +557,10 @@ export const UsersPage: React.FC = () => {
         <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
           <div className="font-semibold text-slate-300">Operador</div>
           <p className="text-[10px] text-slate-400 mt-0.5">Checklist pré-uso de guindaste</p>
+        </div>
+        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+          <div className="font-semibold text-teal-400">Cliente</div>
+          <p className="text-[10px] text-slate-400 mt-0.5">Consulta checklists da sua obra</p>
         </div>
       </div>
 
@@ -587,6 +626,24 @@ export const UsersPage: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-slate-500">Telefone:</span>
                     <span>{u.phone}</span>
+                  </div>
+                )}
+                {u.role === 'cliente' && (
+                  <div className="flex justify-between items-center pt-0.5">
+                    <span className="text-slate-500">Cliente / Obra:</span>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] bg-teal-950/40 border-teal-800/60 text-teal-300 font-medium max-w-[170px] truncate"
+                    >
+                      <Building2 className="w-3 h-3 mr-1 shrink-0" />
+                      <span className="truncate">
+                        {u.expand?.client_id?.trade_name ||
+                          u.expand?.client_id?.name ||
+                          clients.find((c) => c.id === u.client_id)?.trade_name ||
+                          clients.find((c) => c.id === u.client_id)?.name ||
+                          (u.client_id ? 'Cliente Vinculado' : 'Não vinculado')}
+                      </span>
+                    </Badge>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -733,6 +790,9 @@ export const UsersPage: React.FC = () => {
                   <SelectItem value="gestor">
                     Gestor (Gerencia usuários da empresa, ativos e modelos)
                   </SelectItem>
+                  <SelectItem value="cliente">
+                    Cliente (Acesso de leitura restrito ao Cliente & Obra vinculado)
+                  </SelectItem>
                   {isAdmin && (
                     <SelectItem value="admin">Administrador (Acesso total à empresa)</SelectItem>
                   )}
@@ -742,6 +802,42 @@ export const UsersPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Vinculação do Cliente / Obra (Exibido e Obrigatório apenas para role 'cliente') */}
+            {role === 'cliente' && (
+              <div className="space-y-1.5 p-3.5 bg-teal-950/30 border border-teal-800/40 rounded-lg animate-in fade-in-50 duration-200">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-teal-300 font-semibold flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5" /> Cliente & Obra Vinculado *
+                  </Label>
+                  <span className="text-[10px] text-teal-400/80 font-normal">
+                    Obrigatório para o perfil Cliente
+                  </span>
+                </div>
+                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                  <SelectTrigger className="bg-slate-950 border-teal-800/60 text-slate-200 text-xs focus:border-teal-500">
+                    <SelectValue placeholder="Selecione o Cliente & Obra da empresa" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="text-xs cursor-pointer">
+                        {c.trade_name ? `${c.trade_name} (${c.name})` : c.name}
+                      </SelectItem>
+                    ))}
+                    {clients.length === 0 && (
+                      <div className="p-3 text-center text-xs text-slate-500">
+                        Nenhum cliente cadastrado nesta empresa. Cadastre na tela &quot;Clientes &
+                        Obras&quot;.
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-slate-400 pt-0.5">
+                  Este usuário visualizará exclusivamente os checklists e relatórios associados a
+                  este cliente.
+                </p>
+              </div>
+            )}
 
             {/* PASSWORD SECTION */}
             <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800 space-y-3">
