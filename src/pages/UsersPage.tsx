@@ -362,8 +362,8 @@ export const UsersPage: React.FC = () => {
       return
     }
 
-    if (!name.trim() || !username.trim() || !cpf.trim()) {
-      toast.warning('Nome, nome de usuário e CPF são obrigatórios.')
+    if (!name.trim() || !username.trim()) {
+      toast.warning('Nome completo e nome de usuário são obrigatórios.')
       return
     }
 
@@ -745,11 +745,11 @@ export const UsersPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">CPF (Obrigatório) *</Label>
+                <Label className="text-xs text-slate-300">CPF (Opcional)</Label>
                 <Input
                   value={cpf}
                   onChange={(e) => setCpf(e.target.value)}
-                  placeholder="000.000.000-00"
+                  placeholder="000.000.000-00 (Opcional)"
                   className="bg-slate-950 border-slate-800 text-white text-xs font-mono"
                 />
               </div>
