@@ -64,8 +64,8 @@ export const ChecklistDetailPage: React.FC = () => {
   const isNew = !id || id === 'novo'
   const navigate = useNavigate()
 
-  const { company, companies, user, hasModulePermission, isCliente } = useAuth()
-  const canEdit = hasModulePermission('checklists', 'edit') && !isCliente
+  const { company, companies, user, role, isAdmin, isGestor, hasModulePermission, isCliente } =
+    useAuth()
   const { isOnline } = useOnlineStatus()
 
   // Reference lists
@@ -95,6 +95,16 @@ export const ChecklistDetailPage: React.FC = () => {
   const [filledBySignature, setFilledBySignature] = useState<string | undefined>(undefined)
   const [completedAt, setCompletedAt] = useState<string | undefined>(undefined)
   const filledByPadRef = useRef<DigitalSignaturePadRef>(null)
+
+  const isFinalized = status === 'Concluído' || status === 'Reprovado'
+
+  // Regra de Negócio: Operador, Rigger, Sinaleiro ou Supervisor NÃO podem editar checklist após finalizado/assinado.
+  // Apenas Gestor e Admin podem editar checklists finalizados.
+  const isRestrictedRole =
+    role === 'operador' || role === 'rigger' || role === 'sinaleiro' || role === 'supervisor'
+  const isFinalizedLocked = isFinalized && isRestrictedRole && !(isAdmin || isGestor)
+
+  const canEdit = hasModulePermission('checklists', 'edit') && !isCliente && !isFinalizedLocked
 
   // Modal State for Finalization with Digital Signature
   const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false)
@@ -343,8 +353,6 @@ export const ChecklistDetailPage: React.FC = () => {
     }
   }
 
-  const isFinalized = status === 'Concluído' || status === 'Reprovado'
-
   const handleExportPdf = async () => {
     if (!isFinalized) {
       toast.warning('Finalize o checklist antes de exportar o PDF.')
@@ -535,6 +543,20 @@ export const ChecklistDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-16">
+      {/* Locked Alert Notice for Restricted Roles on Finalized Checklists */}
+      {isFinalizedLocked && (
+        <div className="p-4 bg-amber-950/40 border border-amber-800/60 rounded-xl flex items-center gap-3 text-amber-300 text-xs">
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+          <div>
+            <strong className="font-semibold block text-amber-200">
+              Checklist Finalizado e Assinado (Modo Somente Leitura)
+            </strong>
+            Este checklist foi concluído/assinado e não pode ser editado por seu perfil de usuário (
+            {role}). Apenas Gestores e Administradores possuem permissão de edição após a conclusão.
+          </div>
+        </div>
+      )}
+
       {/* Top Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -717,6 +739,7 @@ export const ChecklistDetailPage: React.FC = () => {
               setSelectedCompanyId(val)
               loadPrerequisites(val)
             }}
+            disabled={!canEdit}
             required
             label="Empresa Responsável pela Operação"
           />
@@ -727,9 +750,9 @@ export const ChecklistDetailPage: React.FC = () => {
               <Select
                 value={selectedTemplateId}
                 onValueChange={(val) => handleSelectTemplate(val)}
-                disabled={!isNew}
+                disabled={!isNew || !canEdit}
               >
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o modelo" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -747,8 +770,9 @@ export const ChecklistDetailPage: React.FC = () => {
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                disabled={!canEdit}
                 placeholder="Ex: Içamento de Transformador 40t"
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-950 border-slate-800 text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -757,8 +781,9 @@ export const ChecklistDetailPage: React.FC = () => {
               <Input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+                disabled={!canEdit}
                 placeholder="Ex: Refinaria RPBC - Setor U-20"
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-950 border-slate-800 text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -766,8 +791,8 @@ export const ChecklistDetailPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Cliente / Contratante</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+              <Select value={clientId} onValueChange={setClientId} disabled={!canEdit}>
+                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o cliente" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -783,8 +808,8 @@ export const ChecklistDetailPage: React.FC = () => {
 
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Guindaste / Munck</Label>
-              <Select value={equipmentId} onValueChange={setEquipmentId}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+              <Select value={equipmentId} onValueChange={setEquipmentId} disabled={!canEdit}>
+                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o equipamento" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -800,8 +825,8 @@ export const ChecklistDetailPage: React.FC = () => {
 
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Acessório / TAG de Rigging</Label>
-              <Select value={materialId} onValueChange={setMaterialId}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+              <Select value={materialId} onValueChange={setMaterialId} disabled={!canEdit}>
+                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o material" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -817,8 +842,12 @@ export const ChecklistDetailPage: React.FC = () => {
 
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Grau de Risco</Label>
-              <Select value={riskLevel} onValueChange={(val: any) => setRiskLevel(val)}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+              <Select
+                value={riskLevel}
+                onValueChange={(val: any) => setRiskLevel(val)}
+                disabled={!canEdit}
+              >
+                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Nível de risco" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -921,8 +950,9 @@ export const ChecklistDetailPage: React.FC = () => {
             <Input
               value={filledByName}
               onChange={(e) => setFilledByName(e.target.value)}
+              disabled={!canEdit}
               placeholder="Nome completo do responsável pelo preenchimento"
-              className="bg-slate-950 border-slate-800 text-white text-xs"
+              className="bg-slate-950 border-slate-800 text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -944,20 +974,22 @@ export const ChecklistDetailPage: React.FC = () => {
                       <strong className="text-slate-200">{filledByName || 'Não informado'}</strong>
                     </span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setFilledBySignature(undefined)
-                      if (filledByPadRef.current) {
-                        filledByPadRef.current.clear()
-                      }
-                    }}
-                    className="h-7 text-[11px] border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
-                  >
-                    <RotateCcw className="w-3 h-3 mr-1" /> Refazer Assinatura
-                  </Button>
+                  {canEdit && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFilledBySignature(undefined)
+                        if (filledByPadRef.current) {
+                          filledByPadRef.current.clear()
+                        }
+                      }}
+                      className="h-7 text-[11px] border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
+                    >
+                      <RotateCcw className="w-3 h-3 mr-1" /> Refazer Assinatura
+                    </Button>
+                  )}
                 </div>
                 <div className="bg-white p-3 rounded-lg flex items-center justify-center border border-slate-300 shadow-inner max-w-md">
                   <img
@@ -967,7 +999,7 @@ export const ChecklistDetailPage: React.FC = () => {
                   />
                 </div>
               </div>
-            ) : (
+            ) : canEdit ? (
               <DigitalSignaturePad
                 ref={filledByPadRef}
                 height={150}
@@ -978,6 +1010,10 @@ export const ChecklistDetailPage: React.FC = () => {
                   setFilledBySignature(dataUrl || undefined)
                 }}
               />
+            ) : (
+              <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-500">
+                Sem assinatura registrada.
+              </div>
             )}
           </div>
         </CardContent>
@@ -1060,8 +1096,11 @@ export const ChecklistDetailPage: React.FC = () => {
                           <>
                             <button
                               type="button"
+                              disabled={!canEdit}
                               onClick={() => handleResponseChange(item.id, 'status', 'C', item)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition ${
+                                !canEdit ? 'cursor-not-allowed opacity-75' : ''
+                              } ${
                                 currentStatus === 'C'
                                   ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
                                   : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1072,8 +1111,11 @@ export const ChecklistDetailPage: React.FC = () => {
 
                             <button
                               type="button"
+                              disabled={!canEdit}
                               onClick={() => handleResponseChange(item.id, 'status', 'NC', item)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition ${
+                                !canEdit ? 'cursor-not-allowed opacity-75' : ''
+                              } ${
                                 currentStatus === 'NC'
                                   ? 'bg-red-600 border-red-500 text-white shadow-sm'
                                   : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1084,8 +1126,11 @@ export const ChecklistDetailPage: React.FC = () => {
 
                             <button
                               type="button"
+                              disabled={!canEdit}
                               onClick={() => handleResponseChange(item.id, 'status', 'NA', item)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition ${
+                                !canEdit ? 'cursor-not-allowed opacity-75' : ''
+                              } ${
                                 currentStatus === 'NA'
                                   ? 'bg-slate-700 border-slate-600 text-white shadow-sm'
                                   : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1100,8 +1145,11 @@ export const ChecklistDetailPage: React.FC = () => {
                           <>
                             <button
                               type="button"
+                              disabled={!canEdit}
                               onClick={() => handleResponseChange(item.id, 'status', 'SIM', item)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition ${
+                                !canEdit ? 'cursor-not-allowed opacity-75' : ''
+                              } ${
                                 currentStatus === 'SIM'
                                   ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
                                   : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1112,8 +1160,11 @@ export const ChecklistDetailPage: React.FC = () => {
 
                             <button
                               type="button"
+                              disabled={!canEdit}
                               onClick={() => handleResponseChange(item.id, 'status', 'NAO', item)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition ${
+                                !canEdit ? 'cursor-not-allowed opacity-75' : ''
+                              } ${
                                 currentStatus === 'NAO'
                                   ? 'bg-red-600 border-red-500 text-white shadow-sm'
                                   : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1124,8 +1175,11 @@ export const ChecklistDetailPage: React.FC = () => {
 
                             <button
                               type="button"
+                              disabled={!canEdit}
                               onClick={() => handleResponseChange(item.id, 'status', 'NA', item)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition ${
+                                !canEdit ? 'cursor-not-allowed opacity-75' : ''
+                              } ${
                                 currentStatus === 'NA'
                                   ? 'bg-slate-700 border-slate-600 text-white shadow-sm'
                                   : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1140,13 +1194,14 @@ export const ChecklistDetailPage: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <Input
                               type="number"
+                              disabled={!canEdit}
                               placeholder="Valor / Medição"
                               value={currentResp.value || ''}
                               onChange={(e) => {
                                 handleResponseChange(item.id, 'value', e.target.value, item)
                                 handleResponseChange(item.id, 'status', 'C', item)
                               }}
-                              className="w-32 bg-slate-950 border-slate-800 text-white text-xs h-8"
+                              className="w-32 bg-slate-950 border-slate-800 text-white text-xs h-8 disabled:opacity-70 disabled:cursor-not-allowed"
                             />
                             <Badge
                               variant="outline"
@@ -1160,6 +1215,7 @@ export const ChecklistDetailPage: React.FC = () => {
                         {item.type === 'foto_obrigatoria' && (
                           <button
                             type="button"
+                            disabled={!canEdit}
                             onClick={() => {
                               handleResponseChange(item.id, 'status', 'C', item)
                               handleResponseChange(
@@ -1171,6 +1227,8 @@ export const ChecklistDetailPage: React.FC = () => {
                               toast.success('Foto de evidência anexada.')
                             }}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition ${
+                              !canEdit ? 'cursor-not-allowed opacity-75' : ''
+                            } ${
                               currentResp.photo_url
                                 ? 'bg-blue-600 border-blue-500 text-white'
                                 : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
@@ -1191,10 +1249,11 @@ export const ChecklistDetailPage: React.FC = () => {
                         <Input
                           placeholder="Observação detalhada / motivo da não-conformidade..."
                           value={currentResp.observation || ''}
+                          disabled={!canEdit}
                           onChange={(e) =>
                             handleResponseChange(item.id, 'observation', e.target.value, item)
                           }
-                          className="bg-slate-950 border-red-900/60 text-white text-xs placeholder:text-slate-500"
+                          className="bg-slate-950 border-red-900/60 text-white text-xs placeholder:text-slate-500 disabled:opacity-70 disabled:cursor-not-allowed"
                         />
                       </div>
                     )}
@@ -1228,17 +1287,22 @@ export const ChecklistDetailPage: React.FC = () => {
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              disabled={!canEdit}
               placeholder="Ex: Velocidade do vento aferida em 14 km/h. Isolamento de área verificado e aprovado com raio de 25 metros."
               rows={3}
-              className="bg-slate-950 border-slate-800 text-white text-xs placeholder:text-slate-500"
+              className="bg-slate-950 border-slate-800 text-white text-xs placeholder:text-slate-500 disabled:opacity-70 disabled:cursor-not-allowed"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-300">Status Geral do Checklist</Label>
-              <Select value={status} onValueChange={(val: any) => setStatus(val)}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+              <Select
+                value={status}
+                onValueChange={(val: any) => setStatus(val)}
+                disabled={!canEdit}
+              >
+                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -1250,25 +1314,27 @@ export const ChecklistDetailPage: React.FC = () => {
               </Select>
             </div>
 
-            <div className="flex items-end gap-2">
-              <Button
-                type="button"
-                onClick={() => handleOpenFinalizeModal('Concluído')}
-                disabled={saving || exportingPdf}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => handleOpenFinalizeModal('Reprovado')}
-                disabled={saving || exportingPdf}
-                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
-              >
-                <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reprovar
-              </Button>
-            </div>
+            {canEdit && (
+              <div className="flex items-end gap-2">
+                <Button
+                  type="button"
+                  onClick={() => handleOpenFinalizeModal('Concluído')}
+                  disabled={saving || exportingPdf}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Finalizar & Liberar
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => handleOpenFinalizeModal('Reprovado')}
+                  disabled={saving || exportingPdf}
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+                >
+                  <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reprovar
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

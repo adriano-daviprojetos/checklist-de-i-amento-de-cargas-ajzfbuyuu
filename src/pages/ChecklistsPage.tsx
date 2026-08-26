@@ -35,16 +35,21 @@ import {
   PenLine,
   FileDown,
   Loader2,
+  Eye,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { generateChecklistPdf } from '@/lib/checklistPdfGenerator'
 
 export const ChecklistsPage: React.FC = () => {
-  const { company, companies, hasModulePermission } = useAuth()
+  const { company, companies, role, isAdmin, isGestor, hasModulePermission, isCliente } = useAuth()
   const { isOnline } = useOnlineStatus()
   const navigate = useNavigate()
 
-  const canEdit = hasModulePermission('checklists', 'edit')
+  const isRestrictedRole =
+    role === 'operador' || role === 'rigger' || role === 'sinaleiro' || role === 'supervisor'
+  const canManageFinalized = isAdmin || isGestor
+
+  const canEdit = hasModulePermission('checklists', 'edit') && !isCliente
   const canDelete = hasModulePermission('checklists', 'delete')
 
   const [checklists, setChecklists] = useState<Checklist[]>([])
@@ -378,12 +383,33 @@ export const ChecklistsPage: React.FC = () => {
                   </Button>
                 )}
 
-                <Button
-                  size="sm"
-                  className="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/20 text-xs"
-                >
-                  Abrir Checklist
-                </Button>
+                {(() => {
+                  const isFinalized = chk.status === 'Concluído' || chk.status === 'Reprovado'
+                  const isReadOnlyForUser = isFinalized && isRestrictedRole && !canManageFinalized
+
+                  if (isReadOnlyForUser) {
+                    return (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800 text-xs flex items-center gap-1.5"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-blue-400" />
+                        Visualizar
+                      </Button>
+                    )
+                  }
+
+                  return (
+                    <Button
+                      size="sm"
+                      className="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/20 text-xs flex items-center gap-1.5"
+                    >
+                      <PenLine className="w-3.5 h-3.5" />
+                      Abrir Checklist
+                    </Button>
+                  )
+                })()}
                 {canDelete && (
                   <Button
                     variant="ghost"
