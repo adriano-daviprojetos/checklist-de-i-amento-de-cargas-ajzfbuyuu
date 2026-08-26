@@ -777,7 +777,7 @@ export const ChecklistDetailPage: React.FC = () => {
               <Select
                 value={selectedTemplateId}
                 onValueChange={(val) => handleSelectTemplate(val)}
-                disabled={!isNew || !canEdit}
+                disabled={!canEdit}
               >
                 <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o modelo" />
