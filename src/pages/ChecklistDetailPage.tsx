@@ -287,6 +287,15 @@ export const ChecklistDetailPage: React.FC = () => {
       return
     }
 
+    if (target === 'Concluído') {
+      if (nonConformingCount > 0 || pendingCount > 0) {
+        toast.warning(
+          `Não é possível finalizar como 'Concluído/Liberado'. Todos os itens devem estar respondidos como 'Conforme' ou 'Não Aplicável'. Itens pendentes: ${pendingCount}. Não conformidades: ${nonConformingCount}.`,
+        )
+        return
+      }
+    }
+
     setFinalizeTargetStatus(target)
     setIsFinalizeModalOpen(true)
   }
@@ -299,6 +308,13 @@ export const ChecklistDetailPage: React.FC = () => {
     const effectiveCompId = selectedCompanyId || company?.id
     if (!effectiveCompId) {
       toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+
+    if (data.status === 'Concluído' && (nonConformingCount > 0 || pendingCount > 0)) {
+      toast.warning(
+        `Não é possível finalizar como 'Concluído/Liberado'. Todos os itens devem estar respondidos como 'Conforme' ou 'Não Aplicável'. Itens pendentes: ${pendingCount}. Não conformidades: ${nonConformingCount}.`,
+      )
       return
     }
 
@@ -540,6 +556,19 @@ export const ChecklistDetailPage: React.FC = () => {
     (r) => r.status && r.status !== 'PENDENTE',
   ).length
   const criticalFailsCount = Object.values(responsesMap).filter((r) => r.is_critical_fail).length
+
+  // Contagem de itens não conformes e pendentes para validação de liberação/conclusão
+  const nonConformingCount = templateItems.filter((item) => {
+    const r = responsesMap[item.id]
+    const status = r?.status
+    return status === 'NC' || status === 'NAO'
+  }).length
+
+  const pendingCount = templateItems.filter((item) => {
+    const r = responsesMap[item.id]
+    const status = r?.status
+    return !status || status === 'PENDENTE'
+  }).length
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-16">
@@ -1406,6 +1435,8 @@ export const ChecklistDetailPage: React.FC = () => {
         answeredCount={answeredCount}
         totalItems={totalItems}
         criticalFailsCount={criticalFailsCount}
+        nonConformingCount={nonConformingCount}
+        pendingCount={pendingCount}
         saving={saving}
       />
     </div>

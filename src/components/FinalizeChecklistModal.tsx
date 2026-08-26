@@ -34,6 +34,8 @@ interface FinalizeChecklistModalProps {
   answeredCount: number
   totalItems: number
   criticalFailsCount: number
+  nonConformingCount?: number
+  pendingCount?: number
   saving?: boolean
 }
 
@@ -47,6 +49,8 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
   answeredCount,
   totalItems,
   criticalFailsCount,
+  nonConformingCount = 0,
+  pendingCount = 0,
   saving = false,
 }) => {
   const { user } = useAuth()
@@ -111,8 +115,9 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
           </div>
           <div>
             <span className="text-slate-500 block text-[11px]">Não-Conformidades</span>
-            <strong className={criticalFailsCount > 0 ? 'text-red-400' : 'text-emerald-400'}>
-              {criticalFailsCount} {criticalFailsCount > 0 ? '(Críticas)' : '(0)'}
+            <strong className={nonConformingCount > 0 ? 'text-red-400' : 'text-emerald-400'}>
+              {nonConformingCount}{' '}
+              {criticalFailsCount > 0 ? `(${criticalFailsCount} críticas)` : ''}
             </strong>
           </div>
           <div className="col-span-2 sm:col-span-1">
@@ -124,12 +129,23 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
           </div>
         </div>
 
-        {criticalFailsCount > 0 && isCompleted && (
+        {isCompleted && (nonConformingCount > 0 || pendingCount > 0) && (
           <div className="p-3 bg-red-950/40 border border-red-800/80 rounded-xl text-red-300 text-xs flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
             <div>
-              <strong>Atenção:</strong> Existem itens com reprovação crítica identificados.
-              Certifique-se de que medidas mitigatórias foram adotadas antes de liberar a operação.
+              <strong>Atenção:</strong> Para liberar e concluir a operação, todos os itens devem
+              estar respondidos como &quot;Conforme&quot; ou &quot;Não Aplicável&quot;. Existem{' '}
+              {pendingCount} itens pendentes e {nonConformingCount} não conformidades registradas.
+            </div>
+          </div>
+        )}
+
+        {criticalFailsCount > 0 && !isCompleted && (
+          <div className="p-3 bg-red-950/40 border border-red-800/80 rounded-xl text-red-300 text-xs flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <div>
+              <strong>Atenção:</strong> Existem itens com reprovação crítica identificados (
+              {criticalFailsCount}).
             </div>
           </div>
         )}
