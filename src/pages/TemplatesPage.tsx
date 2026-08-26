@@ -69,6 +69,7 @@ export const TemplatesPage: React.FC = () => {
 
   // Modal create/edit Template
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>(company?.id || '')
   const [editTitle, setEditTitle] = useState('')
   const [editDesc, setEditDesc] = useState('')
@@ -183,6 +184,7 @@ export const TemplatesPage: React.FC = () => {
   }
 
   const openNewTemplateModal = () => {
+    setIsEditing(false)
     setSelectedCompanyId(company?.id || companies[0]?.id || '')
     setEditTitle('')
     setEditDesc('')
@@ -223,6 +225,7 @@ export const TemplatesPage: React.FC = () => {
   }
 
   const openEditModal = async (tpl: ChecklistTemplate) => {
+    setIsEditing(true)
     setSelectedCompanyId(tpl.company_id || company?.id || companies[0]?.id || '')
     setEditTitle(tpl.title)
     setEditDesc(tpl.description || '')
@@ -316,10 +319,7 @@ export const TemplatesPage: React.FC = () => {
 
     try {
       const payload: Partial<ChecklistTemplate> = {
-        id:
-          selectedTemplate?.id && isModalOpen && editTitle === selectedTemplate.title
-            ? selectedTemplate.id
-            : undefined,
+        id: isEditing && selectedTemplate?.id ? selectedTemplate.id : undefined,
         company_id: selectedCompanyId,
         title: editTitle,
         description: editDesc,
@@ -1105,7 +1105,7 @@ export const TemplatesPage: React.FC = () => {
         <DialogContent className="max-w-3xl bg-slate-900 border-slate-800 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white text-base">
-              Configurar Modelo de Checklist
+              {isEditing ? 'Editar Modelo de Checklist' : 'Configurar Modelo de Checklist'}
             </DialogTitle>
           </DialogHeader>
 
