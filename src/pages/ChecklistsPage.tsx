@@ -46,7 +46,12 @@ import {
   FileText,
   Loader2,
   Eye,
+  Cloud,
+  CloudOff,
+  AlertTriangle,
+  HelpCircle,
 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { generateChecklistPdf } from '@/lib/checklistPdfGenerator'
 import { generateChecklistReportPdf } from '@/lib/checklistReportPdfGenerator'
@@ -318,6 +323,87 @@ export const ChecklistsPage: React.FC = () => {
       return matchesSearch && matchesStatus
     })
 
+  const getSyncStatusIndicator = (syncStatus?: string) => {
+    switch (syncStatus) {
+      case 'synced':
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <span
+                className="inline-flex items-center justify-center cursor-help text-[#10b981]"
+                aria-label="Sincronizado com o servidor"
+              >
+                <Cloud className="w-3.5 h-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="text-xs bg-slate-900 border-slate-800 text-slate-200"
+            >
+              Sincronizado com o servidor
+            </TooltipContent>
+          </Tooltip>
+        )
+      case 'pending_sync':
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <span
+                className="inline-flex items-center justify-center cursor-help text-[#f59e0b]"
+                aria-label="Salvo localmente — pendente de sincronização"
+              >
+                <CloudOff className="w-3.5 h-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="text-xs bg-slate-900 border-slate-800 text-slate-200"
+            >
+              Salvo localmente — pendente de sincronização
+            </TooltipContent>
+          </Tooltip>
+        )
+      case 'conflict':
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <span
+                className="inline-flex items-center justify-center cursor-help text-[#ef4444]"
+                aria-label="Conflito de sincronização"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="text-xs bg-slate-900 border-slate-800 text-slate-200"
+            >
+              Conflito de sincronização
+            </TooltipContent>
+          </Tooltip>
+        )
+      default:
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <span
+                className="inline-flex items-center justify-center cursor-help text-[#64748b]"
+                aria-label="Status de sincronização desconhecido"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="text-xs bg-slate-900 border-slate-800 text-slate-200"
+            >
+              Status de sincronização desconhecido
+            </TooltipContent>
+          </Tooltip>
+        )
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Concluído':
@@ -448,14 +534,7 @@ export const ChecklistsPage: React.FC = () => {
                       'Empresa Padrão'}
                   </Badge>
                   {getStatusBadge(chk.status)}
-                  {chk.sync_status === 'pending_sync' && (
-                    <Badge
-                      variant="outline"
-                      className="text-amber-400 border-amber-500/40 text-[10px]"
-                    >
-                      Salvo Localmente (Pendente Sincronia)
-                    </Badge>
-                  )}
+                  {getSyncStatusIndicator(chk.sync_status)}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-400">
