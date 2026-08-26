@@ -98,11 +98,9 @@ export const ChecklistDetailPage: React.FC = () => {
 
   const isFinalized = status === 'Concluído' || status === 'Reprovado'
 
-  // Regra de Negócio: Operador, Rigger, Sinaleiro ou Supervisor NÃO podem editar checklist após finalizado/assinado.
-  // Apenas Gestor e Admin podem editar checklists finalizados.
-  const isRestrictedRole =
-    role === 'operador' || role === 'rigger' || role === 'sinaleiro' || role === 'supervisor'
-  const isFinalizedLocked = isFinalized && isRestrictedRole && !(isAdmin || isGestor)
+  // Regra de Negócio: Apenas o perfil Administrador (Admin) pode editar checklist após finalizado/assinado.
+  // Usuários com perfil Operador, Rigger, Sinaleiro, Supervisor e Gestor NÃO podem editar após conclusão.
+  const isFinalizedLocked = isFinalized && !isAdmin
 
   const canEdit = hasModulePermission('checklists', 'edit') && !isCliente && !isFinalizedLocked
 
@@ -581,7 +579,7 @@ export const ChecklistDetailPage: React.FC = () => {
               Checklist Finalizado e Assinado (Modo Somente Leitura)
             </strong>
             Este checklist foi concluído/assinado e não pode ser editado por seu perfil de usuário (
-            {role}). Apenas Gestores e Administradores possuem permissão de edição após a conclusão.
+            {role}). Apenas Administradores possuem permissão de edição após a conclusão.
           </div>
         </div>
       )}

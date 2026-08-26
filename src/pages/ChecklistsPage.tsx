@@ -62,8 +62,12 @@ export const ChecklistsPage: React.FC = () => {
   const navigate = useNavigate()
 
   const isRestrictedRole =
-    role === 'operador' || role === 'rigger' || role === 'sinaleiro' || role === 'supervisor'
-  const canManageFinalized = isAdmin || isGestor
+    role === 'operador' ||
+    role === 'rigger' ||
+    role === 'sinaleiro' ||
+    role === 'supervisor' ||
+    role === 'gestor'
+  const canManageFinalized = isAdmin
 
   const canEdit = hasModulePermission('checklists', 'edit') && !isCliente
   const canDelete = hasModulePermission('checklists', 'delete')

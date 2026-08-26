@@ -5,17 +5,17 @@
  *
  * Regra de Negócio:
  * A edição de checklist NÃO pode ser permitida para usuários com perfil
- * Operador, Rigger, Sinaleiro ou Supervisor após o checklist ter sido concluído e assinado
+ * Operador, Rigger, Sinaleiro, Supervisor ou Gestor após o checklist ter sido concluído e assinado
  * (status 'Concluído' ou 'Reprovado').
  *
- * Apenas usuários com perfil Gestor, Admin ou Superadmin podem editar um checklist já finalizado/assinado.
+ * Apenas usuários com perfil Administrador (Admin/Superadmin) podem editar um checklist já finalizado/assinado.
  */
 
 // 1. Intercept Record Update on 'checklists'
 onRecordUpdateRequest((e) => {
   if (e.auth) {
     const userRole = (e.auth.get('role') || 'operador').toLowerCase().trim()
-    const restrictedRoles = ['operador', 'rigger', 'sinaleiro', 'supervisor']
+    const restrictedRoles = ['operador', 'rigger', 'sinaleiro', 'supervisor', 'gestor']
 
     if (restrictedRoles.includes(userRole)) {
       const originalRec = e.record.original()
@@ -33,7 +33,7 @@ onRecordUpdateRequest((e) => {
 
       if (isFinalized) {
         throw new ForbiddenError(
-          'Checklists finalizados e assinados não podem ser alterados por Operador, Rigger, Sinaleiro ou Supervisor. Apenas Gestores ou Administradores possuem permissão de edição.',
+          'Checklists finalizados e assinados não podem ser alterados por Operador, Rigger, Sinaleiro, Supervisor ou Gestor. Apenas Administradores possuem permissão de edição.',
         )
       }
     }
@@ -46,7 +46,7 @@ onRecordUpdateRequest((e) => {
 onRecordCreateRequest((e) => {
   if (e.auth) {
     const userRole = (e.auth.get('role') || 'operador').toLowerCase().trim()
-    const restrictedRoles = ['operador', 'rigger', 'sinaleiro', 'supervisor']
+    const restrictedRoles = ['operador', 'rigger', 'sinaleiro', 'supervisor', 'gestor']
 
     if (restrictedRoles.includes(userRole)) {
       const checklistId = e.record.get('checklist_id')
@@ -86,7 +86,7 @@ onRecordCreateRequest((e) => {
 onRecordUpdateRequest((e) => {
   if (e.auth) {
     const userRole = (e.auth.get('role') || 'operador').toLowerCase().trim()
-    const restrictedRoles = ['operador', 'rigger', 'sinaleiro', 'supervisor']
+    const restrictedRoles = ['operador', 'rigger', 'sinaleiro', 'supervisor', 'gestor']
 
     if (restrictedRoles.includes(userRole)) {
       const checklistId = e.record.get('checklist_id')
@@ -126,7 +126,7 @@ onRecordUpdateRequest((e) => {
 onRecordDeleteRequest((e) => {
   if (e.auth) {
     const userRole = (e.auth.get('role') || 'operador').toLowerCase().trim()
-    const restrictedRoles = ['operador', 'rigger', 'sinaleiro', 'supervisor']
+    const restrictedRoles = ['operador', 'rigger', 'sinaleiro', 'supervisor', 'gestor']
 
     if (restrictedRoles.includes(userRole)) {
       const checklistId = e.record.get('checklist_id')
