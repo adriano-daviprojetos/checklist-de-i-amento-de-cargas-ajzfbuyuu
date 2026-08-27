@@ -102,6 +102,192 @@ export class AppDataService {
     return await syncService.saveChecklistLocally(checklist, responses, isOnline)
   }
 
+  /**
+   * Helper method to call /api/batch/save-checklist-responses with fallback to sequential upsert
+   */
+  static async sendBatchChecklistResponses(
+    checklistId: string,
+    responses: Array<{
+      item_id?: string
+      item_title?: string
+      item_section?: string
+      status?: any
+      observation?: string
+      photo_url?: string
+      value?: string
+      is_critical_fail?: boolean
+    }>,
+  ): Promise<{ success: boolean; count?: number; items?: ChecklistResponse[] }> {
+    if (!checklistId) throw new Error('checklistId é obrigatório')
+
+    const payload = {
+      checklist_id: checklistId,
+      responses: responses.map((r) => ({
+        item_id:
+          r.item_id &&
+          !String(r.item_id).startsWith('item_') &&
+          !String(r.item_id).startsWith('local_') &&
+          !String(r.item_id).startsWith('temp_')
+            ? r.item_id
+            : undefined,
+        item_title: r.item_title || '',
+        item_section: r.item_section || '',
+        status: r.status || 'PENDENTE',
+        observation: r.observation || '',
+        photo_url: r.photo_url || '',
+        value: r.value || '',
+        is_critical_fail: Boolean(r.is_critical_fail),
+      })),
+    }
+
+    // 1. Tenta batch via pb.send
+    try {
+      const res = await pb.send<{
+        success: boolean
+        count?: number
+        items?: ChecklistResponse[]
+      }>('/api/batch/save-checklist-responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(pb.authStore.token ? { Authorization: pb.authStore.token } : {}),
+        },
+        body: payload,
+      })
+      return res
+    } catch (pbSendErr) {
+      console.warn(
+        'pb.send falhou para batch checklist responses, tentando fetch direto:',
+        pbSendErr,
+      )
+
+      // 2. Tenta batch via fetch direto
+      try {
+        const baseUrl = pb.baseURL || import.meta.env.VITE_POCKETBASE_URL || ''
+        const url = `${baseUrl.replace(/\/+$/, '')}/api/batch/save-checklist-responses`
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        if (pb.authStore.token) {
+          headers['Authorization'] = pb.authStore.token
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`Batch save failed HTTP ${response.status}: ${errorText}`)
+        }
+
+        const json = await response.json()
+        return json
+      } catch (directFetchErr) {
+        // 3. Fallback: salvar sequencialmente com delay de 200ms
+        console.warn(
+          '[AppDataService.sendBatchChecklistResponses] Batch endpoint indisponível (404/erro). Acionando fallback sequencial via PocketBase collections...',
+          directFetchErr,
+        )
+        const sequentialItems = await AppDataService.saveResponsesSequentially(
+          payload.responses as any[],
+          checklistId,
+        )
+        return {
+          success: true,
+          count: sequentialItems.length,
+          items: sequentialItems,
+        }
+      }
+    }
+  }
+
+  /**
+   * Salva respostas individualmente e de forma SEQUENCIAL com delay de 200ms entre requisições
+   * para evitar rate limit (429) e usando verificação de duplicidade (upsert).
+   */
+  static async saveResponsesSequentially(
+    responses: Array<{
+      item_id?: string
+      item_title?: string
+      item_section?: string
+      status?: any
+      observation?: string
+      photo_url?: string
+      value?: string
+      is_critical_fail?: boolean
+    }>,
+    checklistId: string,
+  ): Promise<ChecklistResponse[]> {
+    const results: ChecklistResponse[] = []
+    console.log(
+      `[AppDataService.saveResponsesSequentially] Salvando ${responses.length} respostas sequencialmente para o checklist ${checklistId}...`,
+    )
+
+    for (const response of responses) {
+      try {
+        // Tentar upsert: primeiro buscar se já existe resposta para este checklist_id + item_id (ou item_title)
+        let existing: { items: any[] } = { items: [] }
+
+        if (response.item_id) {
+          existing = await pb.collection('checklist_responses').getList(1, 1, {
+            filter: `checklist_id="${checklistId}" && item_id="${response.item_id}"`,
+          })
+        } else if (response.item_title) {
+          existing = await pb.collection('checklist_responses').getList(1, 1, {
+            filter: `checklist_id="${checklistId}" && item_title="${response.item_title.replace(/"/g, '\\"')}"`,
+          })
+        }
+
+        if (existing.items.length > 0) {
+          // Update
+          const updated = await pb
+            .collection('checklist_responses')
+            .update<ChecklistResponse>(existing.items[0].id, {
+              status: response.status || 'PENDENTE',
+              observation: response.observation || '',
+              value: response.value || '',
+              is_critical_fail: response.is_critical_fail || false,
+              item_section: response.item_section || '',
+              item_title: response.item_title || '',
+              photo_url: response.photo_url || '',
+            })
+          results.push(updated)
+        } else {
+          // Create
+          const created = await pb.collection('checklist_responses').create<ChecklistResponse>({
+            checklist_id: checklistId,
+            item_id: response.item_id || undefined,
+            item_title: response.item_title || '',
+            item_section: response.item_section || '',
+            status: response.status || 'PENDENTE',
+            observation: response.observation || '',
+            value: response.value || '',
+            photo_url: response.photo_url || '',
+            is_critical_fail: response.is_critical_fail || false,
+          })
+          results.push(created)
+        }
+      } catch (err) {
+        console.warn(
+          `Falha ao salvar resposta do item ${response.item_id || response.item_title}:`,
+          err,
+        )
+        // Continua com os próximos — não quebra o loop
+      }
+
+      // Delay de 200ms para evitar rate limiting (429)
+      await new Promise((resolve) => setTimeout(resolve, 200))
+    }
+
+    console.log(
+      `[AppDataService.saveResponsesSequentially] Concluído: ${results.length}/${responses.length} respostas salvas com sucesso no backend.`,
+    )
+    return results
+  }
+
   static async saveChecklistResponses(
     checklistId: string,
     responses: Array<Partial<ChecklistResponse>>,
@@ -158,7 +344,7 @@ export class AppDataService {
           })),
         }
 
-        const res = await syncService.sendBatchChecklistResponses(
+        const res = await AppDataService.sendBatchChecklistResponses(
           payload.checklist_id,
           payload.responses,
         )

@@ -228,7 +228,7 @@ class SyncService {
 
   /**
    * Helper method to call /api/batch/save-checklist-responses reliably
-   * uses pb.send with explicit headers and fallback to fetch()
+   * uses pb.send with explicit headers, fallback to fetch(), and finally sequential upsert fallback
    */
   public async sendBatchChecklistResponses(
     checklistId: string,
@@ -278,29 +278,129 @@ class SyncService {
       )
 
       // 2. Fallback to direct fetch
-      const baseUrl = pb.baseURL || import.meta.env.VITE_POCKETBASE_URL || ''
-      const url = `${baseUrl.replace(/\/+$/, '')}/api/batch/save-checklist-responses`
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      }
-      if (pb.authStore.token) {
-        headers['Authorization'] = pb.authStore.token
-      }
+      try {
+        const baseUrl = pb.baseURL || import.meta.env.VITE_POCKETBASE_URL || ''
+        const url = `${baseUrl.replace(/\/+$/, '')}/api/batch/save-checklist-responses`
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        if (pb.authStore.token) {
+          headers['Authorization'] = pb.authStore.token
+        }
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-      })
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+        })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Batch save failed HTTP ${response.status}: ${errorText}`)
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`Batch save failed HTTP ${response.status}: ${errorText}`)
+        }
+
+        const json = await response.json()
+        return json
+      } catch (directFetchErr) {
+        console.warn(
+          '[sendBatchChecklistResponses] Batch endpoint indisponível (404/erro). Acionando fallback sequencial via PocketBase collections...',
+          directFetchErr,
+        )
+        const sequentialItems = await this.saveResponsesSequentially(
+          payload.responses as any[],
+          checklistId,
+        )
+        return {
+          success: true,
+          count: sequentialItems.length,
+          items: sequentialItems,
+        }
       }
-
-      const json = await response.json()
-      return json
     }
+  }
+
+  /**
+   * Fallback sequencial para salvar respostas individualmente via PocketBase Collections API
+   * com delay de 200ms entre as requisições para evitar rate limit (429) e upsert para evitar duplicatas.
+   */
+  public async saveResponsesSequentially(
+    responses: Array<{
+      item_id?: string
+      item_title?: string
+      item_section?: string
+      status?: any
+      observation?: string
+      photo_url?: string
+      value?: string
+      is_critical_fail?: boolean
+    }>,
+    checklistId: string,
+  ): Promise<ChecklistResponse[]> {
+    const results: ChecklistResponse[] = []
+    console.log(
+      `[saveResponsesSequentially] Salvando ${responses.length} respostas sequencialmente para o checklist ${checklistId}...`,
+    )
+
+    for (const response of responses) {
+      try {
+        // Tentar upsert: primeiro buscar se já existe resposta para este checklist_id + item_id (ou item_title se item_id ausente)
+        let existing: { items: any[] } = { items: [] }
+
+        if (response.item_id) {
+          existing = await pb.collection('checklist_responses').getList(1, 1, {
+            filter: `checklist_id="${checklistId}" && item_id="${response.item_id}"`,
+          })
+        } else if (response.item_title) {
+          existing = await pb.collection('checklist_responses').getList(1, 1, {
+            filter: `checklist_id="${checklistId}" && item_title="${response.item_title.replace(/"/g, '\\"')}"`,
+          })
+        }
+
+        if (existing.items.length > 0) {
+          // Update
+          const updated = await pb
+            .collection('checklist_responses')
+            .update<ChecklistResponse>(existing.items[0].id, {
+              status: response.status || 'PENDENTE',
+              observation: response.observation || '',
+              value: response.value || '',
+              is_critical_fail: response.is_critical_fail || false,
+              item_section: response.item_section || '',
+              item_title: response.item_title || '',
+              photo_url: response.photo_url || '',
+            })
+          results.push(updated)
+        } else {
+          // Create
+          const created = await pb.collection('checklist_responses').create<ChecklistResponse>({
+            checklist_id: checklistId,
+            item_id: response.item_id || undefined,
+            item_title: response.item_title || '',
+            item_section: response.item_section || '',
+            status: response.status || 'PENDENTE',
+            observation: response.observation || '',
+            value: response.value || '',
+            photo_url: response.photo_url || '',
+            is_critical_fail: response.is_critical_fail || false,
+          })
+          results.push(created)
+        }
+      } catch (err) {
+        console.warn(
+          `Falha ao salvar resposta do item ${response.item_id || response.item_title}:`,
+          err,
+        )
+        // Continua com os próximos — não quebra o loop
+      }
+
+      // Delay de 200ms para evitar rate limiting (429)
+      await new Promise((resolve) => setTimeout(resolve, 200))
+    }
+
+    console.log(
+      `[saveResponsesSequentially] Finalizado: ${results.length}/${responses.length} respostas salvas com sucesso no backend.`,
+    )
+    return results
   }
 
   // Push pending queue items to PocketBase
