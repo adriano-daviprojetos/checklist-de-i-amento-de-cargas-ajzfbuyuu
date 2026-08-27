@@ -382,6 +382,7 @@ export const ChecklistDetailPage: React.FC = () => {
         completed_at: data.completedAt,
       }
 
+      // Prepare complete responses list for saving
       const responsesList = Object.entries(responsesMap).map(([itemId, r]) => ({
         ...r,
         item_id: r.item_id || itemId,
@@ -389,6 +390,15 @@ export const ChecklistDetailPage: React.FC = () => {
       }))
 
       const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
+
+      // If existing checklist and online, ensure responses are saved through the batch endpoint
+      if (!isNew && id && isOnline) {
+        try {
+          await AppDataService.saveChecklistResponses(id, responsesList, isOnline)
+        } catch (batchErr) {
+          console.warn('Batch save responses error (non-fatal):', batchErr)
+        }
+      }
 
       setStatus(data.status)
       setCompletedAt(data.completedAt)
@@ -543,6 +553,16 @@ export const ChecklistDetailPage: React.FC = () => {
       }))
 
       const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
+
+      // If existing checklist and online, ensure responses are saved through the batch endpoint
+      if (!isNew && id && isOnline) {
+        try {
+          await AppDataService.saveChecklistResponses(id, responsesList, isOnline)
+        } catch (batchErr) {
+          console.warn('Batch save responses error (non-fatal):', batchErr)
+        }
+      }
+
       toast.success(
         isOnline
           ? 'Rascunho do checklist salvo e sincronizado!'

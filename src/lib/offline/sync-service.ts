@@ -515,12 +515,9 @@ class SyncService {
           await pb.collection('checklists').update(checklistId, updatePayload)
         }
 
-        // Save responses online
-        for (let i = 0; i < savedResponses.length; i++) {
-          const resp = savedResponses[i]
-          const isRespNew = !resp.id || resp.id.startsWith('local_')
-          const respPayload: Record<string, any> = {
-            checklist_id: serverChkId,
+        // Save responses online using batch endpoint to avoid 429 Too Many Requests
+        const batchResponsesPayload = savedResponses.map((resp) => {
+          const rObj: Record<string, any> = {
             item_title: resp.item_title,
             item_section: resp.item_section,
             status: resp.status,
@@ -529,22 +526,37 @@ class SyncService {
             value: resp.value,
             is_critical_fail: resp.is_critical_fail,
           }
-          // PocketBase relation item_id: only send if it's a valid remote ID, not a local one
           if (
             resp.item_id &&
             !resp.item_id.startsWith('item_') &&
-            !resp.item_id.startsWith('local_')
+            !resp.item_id.startsWith('local_') &&
+            !resp.item_id.startsWith('temp_')
           ) {
-            respPayload.item_id = resp.item_id
+            rObj.item_id = resp.item_id
           }
+          return rObj
+        })
 
-          if (isRespNew) {
-            const createdResp = await pb.collection('checklist_responses').create(respPayload)
-            await dbDelete('checklist_responses', resp.id)
-            savedResponses[i] = { ...resp, id: createdResp.id, checklist_id: serverChkId }
-            await dbPut('checklist_responses', savedResponses[i])
-          } else {
-            await pb.collection('checklist_responses').update(resp.id, respPayload)
+        const batchRes = await pb.send<{ success: boolean; items?: ChecklistResponse[] }>(
+          '/api/batch/save-checklist-responses',
+          {
+            method: 'POST',
+            body: {
+              checklist_id: serverChkId,
+              responses: batchResponsesPayload,
+            },
+          },
+        )
+
+        // Delete old local temporary responses and persist returned batch items
+        for (const resp of savedResponses) {
+          await dbDelete('checklist_responses', resp.id)
+        }
+
+        if (batchRes && Array.isArray(batchRes.items) && batchRes.items.length > 0) {
+          await dbPutMany('checklist_responses', batchRes.items)
+          for (let i = 0; i < batchRes.items.length; i++) {
+            savedResponses[i] = batchRes.items[i]
           }
         }
       } catch (uploadErr) {

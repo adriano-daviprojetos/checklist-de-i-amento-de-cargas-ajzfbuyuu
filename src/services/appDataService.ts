@@ -102,6 +102,87 @@ export class AppDataService {
     return await syncService.saveChecklistLocally(checklist, responses, isOnline)
   }
 
+  static async saveChecklistResponses(
+    checklistId: string,
+    responses: Array<Partial<ChecklistResponse>>,
+    isOnline = true,
+  ): Promise<ChecklistResponse[]> {
+    if (!checklistId) throw new Error('checklistId é obrigatório')
+
+    // Always update/put in IndexedDB for offline support
+    const localResponses: ChecklistResponse[] = responses.map((r, idx) => ({
+      id: `resp_${checklistId}_${idx}_${Date.now()}`,
+      checklist_id: checklistId,
+      item_id: r.item_id,
+      item_title: r.item_title || '',
+      item_section: r.item_section || '',
+      status: (r.status as any) || 'PENDENTE',
+      observation: r.observation || '',
+      photo_url: r.photo_url || '',
+      value: r.value || '',
+      is_critical_fail: Boolean(r.is_critical_fail),
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
+    }))
+
+    // Clean old local responses for this checklist in IndexedDB
+    const existing = await dbGetByIndex<ChecklistResponse>(
+      'checklist_responses',
+      'checklist_id',
+      checklistId,
+    )
+    for (const item of existing) {
+      await dbDelete('checklist_responses', item.id)
+    }
+    await dbPutMany('checklist_responses', localResponses)
+
+    if (isOnline && pb.authStore.isValid && !checklistId.startsWith('local_')) {
+      try {
+        const payload = {
+          checklist_id: checklistId,
+          responses: responses.map((r) => ({
+            item_id:
+              r.item_id &&
+              !r.item_id.startsWith('item_') &&
+              !r.item_id.startsWith('local_') &&
+              !r.item_id.startsWith('temp_')
+                ? r.item_id
+                : undefined,
+            item_title: r.item_title || '',
+            item_section: r.item_section || '',
+            status: r.status || 'PENDENTE',
+            observation: r.observation || '',
+            photo_url: r.photo_url || '',
+            value: r.value || '',
+            is_critical_fail: Boolean(r.is_critical_fail),
+          })),
+        }
+
+        const res = await pb.send<{
+          success: boolean
+          count?: number
+          items?: ChecklistResponse[]
+        }>('/api/batch/save-checklist-responses', {
+          method: 'POST',
+          body: payload,
+        })
+
+        if (res && Array.isArray(res.items)) {
+          // Replace local cache with authoritative server records
+          for (const lr of localResponses) {
+            await dbDelete('checklist_responses', lr.id)
+          }
+          await dbPutMany('checklist_responses', res.items)
+          return res.items
+        }
+      } catch (err) {
+        console.warn('Online batch save checklist responses failed, offline copy saved:', err)
+      }
+    }
+
+    return localResponses
+  }
+
   static async deleteChecklist(id: string, isOnline: boolean): Promise<void> {
     await dbDelete('checklists', id)
     if (isOnline && !id.startsWith('local_')) {
