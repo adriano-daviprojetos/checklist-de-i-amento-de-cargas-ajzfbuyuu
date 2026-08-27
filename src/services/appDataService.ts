@@ -111,7 +111,7 @@ export class AppDataService {
 
     // Always update/put in IndexedDB for offline support
     const localResponses: ChecklistResponse[] = responses.map((r, idx) => ({
-      id: `resp_${checklistId}_${idx}_${Date.now()}`,
+      id: r.id && !r.id.startsWith('temp_') ? r.id : `resp_${checklistId}_${idx}_${Date.now()}`,
       checklist_id: checklistId,
       item_id: r.item_id,
       item_title: r.item_title || '',
@@ -121,7 +121,7 @@ export class AppDataService {
       photo_url: r.photo_url || '',
       value: r.value || '',
       is_critical_fail: Boolean(r.is_critical_fail),
-      created: new Date().toISOString(),
+      created: r.created || new Date().toISOString(),
       updated: new Date().toISOString(),
     }))
 
@@ -158,14 +158,10 @@ export class AppDataService {
           })),
         }
 
-        const res = await pb.send<{
-          success: boolean
-          count?: number
-          items?: ChecklistResponse[]
-        }>('/api/batch/save-checklist-responses', {
-          method: 'POST',
-          body: payload,
-        })
+        const res = await syncService.sendBatchChecklistResponses(
+          payload.checklist_id,
+          payload.responses,
+        )
 
         if (res && Array.isArray(res.items)) {
           // Replace local cache with authoritative server records

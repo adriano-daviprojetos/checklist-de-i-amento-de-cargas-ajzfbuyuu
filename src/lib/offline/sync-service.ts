@@ -15,6 +15,48 @@ import {
 class SyncService {
   private isSyncing = false
   private listeners: Set<() => void> = new Set()
+  private syncIntervalId: any = null
+  private isOnlineListenerAttached = false
+
+  constructor() {
+    this.setupAutoSync()
+  }
+
+  public setupAutoSync() {
+    if (typeof window === 'undefined') return
+
+    // 1. Online / Network reconnection listener
+    if (!this.isOnlineListenerAttached) {
+      this.isOnlineListenerAttached = true
+      window.addEventListener('online', async () => {
+        console.log('[SyncService] Device is now ONLINE — triggering immediate sync and pull')
+        try {
+          if (pb.authStore.isValid) {
+            await this.processSyncQueue()
+            await this.pullAllData()
+          }
+        } catch (err) {
+          console.warn('[SyncService] Auto online sync error:', err)
+        }
+      })
+    }
+
+    // 2. Periodic sync interval (runs every 30s)
+    if (!this.syncIntervalId) {
+      this.syncIntervalId = setInterval(async () => {
+        try {
+          if (pb.authStore.isValid && (typeof navigator === 'undefined' || navigator.onLine)) {
+            const count = await this.getPendingQueueCount()
+            if (count > 0) {
+              await this.processSyncQueue()
+            }
+          }
+        } catch (err) {
+          console.warn('[SyncService] Periodic sync error:', err)
+        }
+      }, 30000)
+    }
+  }
 
   public subscribe(callback: () => void) {
     this.listeners.add(callback)
@@ -184,6 +226,83 @@ class SyncService {
     )
   }
 
+  /**
+   * Helper method to call /api/batch/save-checklist-responses reliably
+   * uses pb.send with explicit headers and fallback to fetch()
+   */
+  public async sendBatchChecklistResponses(
+    checklistId: string,
+    responses: Array<Record<string, any>>,
+  ): Promise<{ success: boolean; count?: number; items?: ChecklistResponse[] }> {
+    if (!checklistId) throw new Error('checklist_id é obrigatório para batch')
+
+    const payload = {
+      checklist_id: checklistId,
+      responses: responses.map((r) => ({
+        item_id:
+          r.item_id &&
+          !String(r.item_id).startsWith('item_') &&
+          !String(r.item_id).startsWith('local_') &&
+          !String(r.item_id).startsWith('temp_')
+            ? r.item_id
+            : undefined,
+        item_title: r.item_title || '',
+        item_section: r.item_section || '',
+        status: r.status || 'PENDENTE',
+        observation: r.observation || '',
+        photo_url: r.photo_url || '',
+        value: r.value || '',
+        is_critical_fail: Boolean(r.is_critical_fail),
+      })),
+    }
+
+    // 1. Try with pb.send
+    try {
+      const res = await pb.send<{
+        success: boolean
+        count?: number
+        items?: ChecklistResponse[]
+      }>('/api/batch/save-checklist-responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(pb.authStore.token ? { Authorization: pb.authStore.token } : {}),
+        },
+        body: payload,
+      })
+      return res
+    } catch (pbSendErr) {
+      console.warn(
+        'pb.send failed for batch responses, attempting direct fetch fallback:',
+        pbSendErr,
+      )
+
+      // 2. Fallback to direct fetch
+      const baseUrl = pb.baseURL || import.meta.env.VITE_POCKETBASE_URL || ''
+      const url = `${baseUrl.replace(/\/+$/, '')}/api/batch/save-checklist-responses`
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (pb.authStore.token) {
+        headers['Authorization'] = pb.authStore.token
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Batch save failed HTTP ${response.status}: ${errorText}`)
+      }
+
+      const json = await response.json()
+      return json
+    }
+  }
+
   // Push pending queue items to PocketBase
   public async processSyncQueue(): Promise<{ total: number; processed: number; errors: number }> {
     if (this.isSyncing) return { total: 0, processed: 0, errors: 0 }
@@ -198,7 +317,49 @@ class SyncService {
     const idMap = new Map<string, string>()
 
     try {
+      const rawQueue = await dbGetAll<OfflineSyncQueueItem>('sync_queue')
+
+      // Pre-process & group individual checklist_responses into batch_responses by checklist_id
+      const individualResponses = rawQueue.filter(
+        (item) => item.entity === 'checklist_responses' && item.action === 'create',
+      )
+
+      if (individualResponses.length > 0) {
+        const responsesByChecklist = new Map<string, Array<OfflineSyncQueueItem>>()
+        for (const item of individualResponses) {
+          const chkId = item.payload?.checklist_id || 'unknown'
+          const list = responsesByChecklist.get(chkId) || []
+          list.push(item)
+          responsesByChecklist.set(chkId, list)
+        }
+
+        // For each group, replace with or convert to a batch_responses action
+        for (const [chkId, items] of responsesByChecklist.entries()) {
+          const combinedResponses = items.map((it) => it.payload)
+          // Add a consolidated batch_responses queue item
+          const batchQueueItem: OfflineSyncQueueItem = {
+            id: `queue_batch_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+            entity: 'checklists',
+            action: 'batch_responses',
+            payload: {
+              checklist_id: chkId,
+              responses: combinedResponses,
+            },
+            timestamp: Math.min(...items.map((it) => it.timestamp)),
+            attempts: 0,
+          }
+          await dbPut('sync_queue', batchQueueItem)
+
+          // Remove individual response items from queue
+          for (const it of items) {
+            await dbDelete('sync_queue', it.id)
+          }
+        }
+      }
+
+      // Re-read queue after consolidation
       const queue = await dbGetAll<OfflineSyncQueueItem>('sync_queue')
+
       const entityPriority: Record<OfflineSyncQueueItem['entity'], number> = {
         clients: 1,
         equipment: 1,
@@ -386,15 +547,30 @@ class SyncService {
               batchPayload.checklist_id &&
               Array.isArray(batchPayload.responses)
             ) {
-              const targetChecklistId =
+              let targetChecklistId =
                 idMap.get(batchPayload.checklist_id) || batchPayload.checklist_id
-              await pb.send('/api/batch/save-checklist-responses', {
-                method: 'POST',
-                body: {
-                  checklist_id: targetChecklistId,
-                  responses: batchPayload.responses,
-                },
-              })
+
+              if (this.isLocalId(targetChecklistId)) {
+                // Try resolving from local IndexedDB if already synced
+                const localChk = await dbGetById<Checklist>('checklists', targetChecklistId)
+                if (localChk && localChk.sync_status === 'synced' && !this.isLocalId(localChk.id)) {
+                  targetChecklistId = localChk.id
+                  idMap.set(batchPayload.checklist_id, localChk.id)
+                } else {
+                  console.warn(
+                    `Skipping batch_responses for local checklist '${targetChecklistId}' — waiting for checklist creation to complete`,
+                  )
+                  continue
+                }
+              }
+
+              const res = await this.sendBatchChecklistResponses(
+                targetChecklistId,
+                batchPayload.responses,
+              )
+              if (res && Array.isArray(res.items)) {
+                await dbPutMany('checklist_responses', res.items)
+              }
             }
           }
 
@@ -554,16 +730,7 @@ class SyncService {
           return rObj
         })
 
-        const batchRes = await pb.send<{ success: boolean; items?: ChecklistResponse[] }>(
-          '/api/batch/save-checklist-responses',
-          {
-            method: 'POST',
-            body: {
-              checklist_id: serverChkId,
-              responses: batchResponsesPayload,
-            },
-          },
-        )
+        const batchRes = await this.sendBatchChecklistResponses(serverChkId, batchResponsesPayload)
 
         // Delete old local temporary responses and persist returned batch items
         for (const resp of savedResponses) {
@@ -605,19 +772,25 @@ class SyncService {
           fullChecklist.sync_status = 'pending_sync'
           await dbPut('checklists', fullChecklist)
           await this.enqueueSync('checklists', isNew ? 'create' : 'update', fullChecklist)
-          for (const r of savedResponses) {
-            await this.enqueueSync('checklist_responses', 'create', sanitizeResponse(r))
-          }
+          // Enqueue a single batch_responses action instead of individual items
+          await this.enqueueSync('checklists', 'batch_responses', {
+            checklist_id: checklistId,
+            responses: savedResponses.map((r) => sanitizeResponse(r)),
+          })
         }
       }
     } else {
-      // Offline mode: Enqueue all actions
+      // Offline mode: Enqueue checklist and single batch_responses action
       fullChecklist.sync_status = 'pending_sync'
       await dbPut('checklists', fullChecklist)
       await this.enqueueSync('checklists', isNew ? 'create' : 'update', fullChecklist)
-      for (const r of savedResponses) {
-        await this.enqueueSync('checklist_responses', 'create', r)
-      }
+      await this.enqueueSync('checklists', 'batch_responses', {
+        checklist_id: checklistId,
+        responses: savedResponses.map((r) => ({
+          ...r,
+          item_id: r.item_id && this.isLocalId(r.item_id) ? undefined : r.item_id,
+        })),
+      })
     }
 
     this.notify()
