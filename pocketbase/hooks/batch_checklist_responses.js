@@ -23,7 +23,8 @@ routerAdd(
   (e) => {
     let body = {}
     try {
-      body = e.requestInfo().body || {}
+      const rawData = $apis.requestInfo(e).data
+      body = typeof rawData === 'object' && rawData !== null ? rawData : {}
     } catch (_) {
       body = {}
     }

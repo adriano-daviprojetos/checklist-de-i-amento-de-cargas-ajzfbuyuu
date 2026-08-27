@@ -264,7 +264,7 @@ export interface OfflineSyncQueueItem {
     | 'clients'
     | 'templates'
     | 'checklist_item_groups'
-  action: 'create' | 'update' | 'delete'
+  action: 'create' | 'update' | 'delete' | 'batch_responses'
   payload: any
   timestamp: number
   attempts: number

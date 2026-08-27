@@ -379,6 +379,23 @@ class SyncService {
             if (!this.isLocalId(targetId)) {
               await pb.collection(item.entity).delete(targetId)
             }
+          } else if (item.action === 'batch_responses') {
+            const batchPayload = item.payload
+            if (
+              batchPayload &&
+              batchPayload.checklist_id &&
+              Array.isArray(batchPayload.responses)
+            ) {
+              const targetChecklistId =
+                idMap.get(batchPayload.checklist_id) || batchPayload.checklist_id
+              await pb.send('/api/batch/save-checklist-responses', {
+                method: 'POST',
+                body: {
+                  checklist_id: targetChecklistId,
+                  responses: batchPayload.responses,
+                },
+              })
+            }
           }
 
           // Remove successfully processed item from queue
@@ -577,13 +594,11 @@ class SyncService {
 
         if (serverChkId) {
           // Checklist was already created/updated on the server.
-          // Do NOT re-enqueue the checklist. Only enqueue the responses (those not yet synced).
-          for (const r of savedResponses) {
-            const isSynced = r.id && !this.isLocalId(r.id)
-            if (!isSynced) {
-              await this.enqueueSync('checklist_responses', 'create', sanitizeResponse(r))
-            }
-          }
+          // Do NOT re-enqueue the checklist. Only enqueue the responses in a single batch operation.
+          await this.enqueueSync('checklists', 'batch_responses', {
+            checklist_id: serverChkId,
+            responses: savedResponses.map((r) => sanitizeResponse(r)),
+          })
         } else {
           // Checklist failed to create/update online: enqueue checklist with original local ID
           fullChecklist.id = checklistId

@@ -499,6 +499,82 @@ export const ChecklistDetailPage: React.FC = () => {
     }
   }
 
+  const handleSaveResponses = async () => {
+    const effectiveCompId = selectedCompanyId || company?.id
+    if (!effectiveCompId) {
+      toast.warning('A seleção da empresa é obrigatória.')
+      return
+    }
+    if (!selectedTemplateId) {
+      toast.warning('Selecione um modelo de checklist.')
+      return
+    }
+    if (!title.trim()) {
+      toast.warning('Informe um título para o checklist.')
+      return
+    }
+
+    let currentSignature = filledBySignature
+    if (!currentSignature && filledByPadRef.current) {
+      const drawnDataUrl = filledByPadRef.current.getSignatureDataUrl()
+      if (drawnDataUrl) {
+        currentSignature = drawnDataUrl
+        setFilledBySignature(drawnDataUrl)
+      }
+    }
+
+    setSaving(true)
+    try {
+      const checklistData: Partial<Checklist> = {
+        id: isNew ? undefined : id,
+        company_id: effectiveCompId,
+        template_id: selectedTemplateId,
+        client_id: clientId === 'none' ? undefined : clientId,
+        equipment_id: equipmentId === 'none' ? undefined : equipmentId,
+        material_id: materialId === 'none' ? undefined : materialId,
+        user_id: user?.id || '',
+        code,
+        title,
+        location,
+        operation_type: operationType,
+        status: status, // Preserva status atual sem alterar
+        risk_level: riskLevel,
+        filled_by_name: filledByName,
+        filled_by_signature: currentSignature,
+        notes,
+        completed_at: completedAt,
+      }
+
+      const responsesList = Object.entries(responsesMap).map(([itemId, r]) => ({
+        ...r,
+        item_id: r.item_id || itemId,
+        checklist_id: isNew ? undefined : id,
+      }))
+
+      const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
+      const targetChecklistId = res.checklist.id || id
+
+      // Salva as respostas via AppDataService.saveChecklistResponses (batch)
+      if (targetChecklistId) {
+        try {
+          await AppDataService.saveChecklistResponses(targetChecklistId, responsesList, isOnline)
+        } catch (batchErr) {
+          console.warn('Batch save responses error:', batchErr)
+        }
+      }
+
+      toast.success('Respostas do checklist salvas com sucesso!')
+
+      if (isNew && res.checklist.id) {
+        navigate(`/checklists/${res.checklist.id}`, { replace: true })
+      }
+    } catch (err: any) {
+      toast.error('Erro ao salvar respostas: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleSaveDraft = async () => {
     const effectiveCompId = selectedCompanyId || company?.id
     if (!effectiveCompId) {
@@ -748,6 +824,17 @@ export const ChecklistDetailPage: React.FC = () => {
 
           {canEdit && (
             <>
+              {!isFinalized && (
+                <Button
+                  variant="outline"
+                  onClick={handleSaveResponses}
+                  disabled={saving || exportingPdf}
+                  className="border-blue-700 bg-blue-950/40 text-blue-300 hover:bg-blue-900/60 hover:text-blue-200 text-xs font-semibold"
+                >
+                  <Save className="w-3.5 h-3.5 mr-1.5 text-blue-400" /> Salvar Respostas
+                </Button>
+              )}
+
               <Button
                 variant="outline"
                 onClick={handleSaveDraft}
@@ -1475,6 +1562,18 @@ export const ChecklistDetailPage: React.FC = () => {
 
           {canEdit && (
             <>
+              {!isFinalized && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveResponses}
+                  disabled={saving || exportingPdf}
+                  className="border-blue-700 bg-blue-950/40 text-blue-300 hover:bg-blue-900/60 text-xs font-semibold"
+                >
+                  <Save className="w-3.5 h-3.5 mr-1 text-blue-400" /> Salvar Respostas
+                </Button>
+              )}
+
               <Button
                 variant="outline"
                 size="sm"
