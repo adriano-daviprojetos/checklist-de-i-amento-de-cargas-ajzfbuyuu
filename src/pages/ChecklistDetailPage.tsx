@@ -407,15 +407,6 @@ export const ChecklistDetailPage: React.FC = () => {
 
       const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
 
-      // If existing checklist and online, ensure responses are saved through the batch endpoint
-      if (!isNew && id && isOnline) {
-        try {
-          await AppDataService.saveChecklistResponses(id, responsesList, isOnline)
-        } catch (batchErr) {
-          console.warn('Batch save responses error (non-fatal):', batchErr)
-        }
-      }
-
       setStatus(data.status)
       setCompletedAt(data.completedAt)
       setIsFinalizeModalOpen(false)
@@ -568,16 +559,6 @@ export const ChecklistDetailPage: React.FC = () => {
       }))
 
       const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
-      const targetChecklistId = res.checklist.id || id
-
-      // Salva as respostas via AppDataService.saveChecklistResponses (batch)
-      if (targetChecklistId) {
-        try {
-          await AppDataService.saveChecklistResponses(targetChecklistId, responsesList, isOnline)
-        } catch (batchErr) {
-          console.warn('Batch save responses error:', batchErr)
-        }
-      }
 
       toast.success('Respostas do checklist salvas com sucesso!')
 
@@ -645,15 +626,6 @@ export const ChecklistDetailPage: React.FC = () => {
       }))
 
       const res = await AppDataService.saveChecklist(checklistData, responsesList, isOnline)
-
-      // If existing checklist and online, ensure responses are saved through the batch endpoint
-      if (!isNew && id && isOnline) {
-        try {
-          await AppDataService.saveChecklistResponses(id, responsesList, isOnline)
-        } catch (batchErr) {
-          console.warn('Batch save responses error (non-fatal):', batchErr)
-        }
-      }
 
       toast.success(
         isOnline
