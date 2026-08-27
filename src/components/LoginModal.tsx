@@ -50,7 +50,7 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
         <div className="text-center space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
             <img
-              src="/logo.svg"
+              src="/logo.png"
               alt="DAVI PROJETOS DE RIGGING"
               className="w-full max-w-[260px] sm:max-w-[280px] h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
             />
