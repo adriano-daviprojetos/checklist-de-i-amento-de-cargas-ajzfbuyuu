@@ -56,8 +56,7 @@ function applyAutoTable(doc: jsPDF, options: any): void {
   }
 }
 
-const LOGO_URL =
-  'https://dagtlwojkqyivnjgveda.supabase.co/storage/v1/object/public/message-attachments/6e8232c6-c506-4bdf-99a5-77593c500309/logonovosite-2abaf.png'
+const LOGO_URL = '/logo.png'
 
 interface LoadedImage {
   data: string
