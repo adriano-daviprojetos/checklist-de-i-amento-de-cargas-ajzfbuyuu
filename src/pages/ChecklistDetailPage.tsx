@@ -184,12 +184,18 @@ export const ChecklistDetailPage: React.FC = () => {
           // Populate responses
           const rMap: Record<string, Partial<ChecklistResponse>> = {}
           responses.forEach((r) => {
-            if (r.item_id) {
+            if (r.item_id && items.some((it) => it.id === r.item_id)) {
               rMap[r.item_id] = r
             } else {
-              // match by title
-              const matchedItem = items.find((it) => it.title === r.item_title)
-              if (matchedItem) rMap[matchedItem.id] = r
+              // match by title or normalized title
+              const matchedItem = items.find(
+                (it) =>
+                  it.title === r.item_title ||
+                  it.title.trim().toLowerCase() === (r.item_title || '').trim().toLowerCase(),
+              )
+              if (matchedItem) {
+                rMap[matchedItem.id] = { ...r, item_id: matchedItem.id }
+              }
             }
           })
           setResponsesMap(rMap)
@@ -285,10 +291,27 @@ export const ChecklistDetailPage: React.FC = () => {
       return
     }
 
+    // Auto-capture signature from canvas if drawn but not explicitly finalized
+    let currentSignature = filledBySignature
+    if (!currentSignature && filledByPadRef.current) {
+      const drawnDataUrl = filledByPadRef.current.getSignatureDataUrl()
+      if (drawnDataUrl) {
+        currentSignature = drawnDataUrl
+        setFilledBySignature(drawnDataUrl)
+      }
+    }
+
     if (target === 'Concluído') {
       if (nonConformingCount > 0 || pendingCount > 0) {
         toast.warning(
           `Não é possível finalizar como 'Concluído/Liberado'. Todos os itens devem estar respondidos como 'Conforme' ou 'Não Aplicável'. Itens pendentes: ${pendingCount}. Não conformidades: ${nonConformingCount}.`,
+        )
+        return
+      }
+
+      if (!currentSignature) {
+        toast.warning(
+          'É necessário finalizar a assinatura do responsável pelo preenchimento antes de concluir o checklist.',
         )
         return
       }
@@ -309,11 +332,30 @@ export const ChecklistDetailPage: React.FC = () => {
       return
     }
 
-    if (data.status === 'Concluído' && (nonConformingCount > 0 || pendingCount > 0)) {
-      toast.warning(
-        `Não é possível finalizar como 'Concluído/Liberado'. Todos os itens devem estar respondidos como 'Conforme' ou 'Não Aplicável'. Itens pendentes: ${pendingCount}. Não conformidades: ${nonConformingCount}.`,
-      )
-      return
+    // Auto-capture signature from canvas if drawn but not finalized yet
+    let currentSignature = filledBySignature
+    if (!currentSignature && filledByPadRef.current) {
+      const drawnDataUrl = filledByPadRef.current.getSignatureDataUrl()
+      if (drawnDataUrl) {
+        currentSignature = drawnDataUrl
+        setFilledBySignature(drawnDataUrl)
+      }
+    }
+
+    if (data.status === 'Concluído') {
+      if (nonConformingCount > 0 || pendingCount > 0) {
+        toast.warning(
+          `Não é possível finalizar como 'Concluído/Liberado'. Todos os itens devem estar respondidos como 'Conforme' ou 'Não Aplicável'. Itens pendentes: ${pendingCount}. Não conformidades: ${nonConformingCount}.`,
+        )
+        return
+      }
+
+      if (!currentSignature) {
+        toast.warning(
+          'É necessário finalizar a assinatura do responsável pelo preenchimento antes de concluir o checklist.',
+        )
+        return
+      }
     }
 
     setSaving(true)
@@ -335,13 +377,14 @@ export const ChecklistDetailPage: React.FC = () => {
         status: data.status,
         risk_level: riskLevel,
         filled_by_name: filledByName,
-        filled_by_signature: filledBySignature,
+        filled_by_signature: currentSignature,
         notes,
         completed_at: data.completedAt,
       }
 
-      const responsesList = Object.values(responsesMap).map((r) => ({
+      const responsesList = Object.entries(responsesMap).map(([itemId, r]) => ({
         ...r,
+        item_id: r.item_id || itemId,
         checklist_id: isNew ? undefined : id,
       }))
 
@@ -409,12 +452,12 @@ export const ChecklistDetailPage: React.FC = () => {
         created: createdAt,
       }
 
-      const responsesList = Object.values(responsesMap).map(
-        (r) =>
+      const responsesList = Object.entries(responsesMap).map(
+        ([itemId, r]) =>
           ({
             id: r.id || `resp_${Date.now()}`,
             checklist_id: id || '',
-            item_id: r.item_id,
+            item_id: r.item_id || itemId,
             item_title: r.item_title || '',
             item_section: r.item_section,
             status: r.status || 'PENDENTE',
@@ -461,6 +504,16 @@ export const ChecklistDetailPage: React.FC = () => {
       return
     }
 
+    // Auto-capture signature from canvas if drawn but not finalized yet
+    let currentSignature = filledBySignature
+    if (!currentSignature && filledByPadRef.current) {
+      const drawnDataUrl = filledByPadRef.current.getSignatureDataUrl()
+      if (drawnDataUrl) {
+        currentSignature = drawnDataUrl
+        setFilledBySignature(drawnDataUrl)
+      }
+    }
+
     setSaving(true)
     try {
       const checklistData: Partial<Checklist> = {
@@ -478,13 +531,14 @@ export const ChecklistDetailPage: React.FC = () => {
         status: status === 'Concluído' || status === 'Reprovado' ? status : 'Em Andamento',
         risk_level: riskLevel,
         filled_by_name: filledByName,
-        filled_by_signature: filledBySignature,
+        filled_by_signature: currentSignature,
         notes,
         completed_at: completedAt,
       }
 
-      const responsesList = Object.values(responsesMap).map((r) => ({
+      const responsesList = Object.entries(responsesMap).map(([itemId, r]) => ({
         ...r,
+        item_id: r.item_id || itemId,
         checklist_id: isNew ? undefined : id,
       }))
 
