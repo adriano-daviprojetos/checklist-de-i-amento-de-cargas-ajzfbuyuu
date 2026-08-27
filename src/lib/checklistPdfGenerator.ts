@@ -21,6 +21,7 @@ export interface GenerateChecklistPdfOptions {
   client?: Client | null
   equipment?: Equipment | null
   material?: Material | null
+  templateName?: string | null
 }
 
 interface ProcessedGroup {
@@ -252,6 +253,7 @@ export async function generateChecklistPdf({
   client,
   equipment,
   material,
+  templateName,
 }: GenerateChecklistPdfOptions): Promise<void> {
   const safeResponses = Array.isArray(responses) ? responses : []
   const safeItems = Array.isArray(items) ? items : []
@@ -476,27 +478,51 @@ export async function generateChecklistPdf({
     doc.text(stBadgeText, badgeX + badgeW / 2, badgeY + 2.9, { align: 'center' })
 
     // ----------------------------------------------------
-    // Row 1: Company Name & Main Title
+    // Row 1: Template Name / Main Title & Subtitle
     // ----------------------------------------------------
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.8)
-    doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
-    const compText = companyName.toUpperCase()
-    const truncatedCompany = compText.length > 32 ? compText.substring(0, 30) + '...' : compText
-    doc.text(truncatedCompany, textStartX, margin + 4.8)
+    const resolvedTemplateName = templateName?.trim() || checklist?.expand?.template_id?.title
 
-    // Title next to company or stacked if narrow
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.2)
-    doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
-    const docTitle = isFirstPage
-      ? 'RELATÓRIO DE CHECKLIST DE IÇAMENTO'
-      : `RELATÓRIO DE CHECKLIST - ${safeChecklistCode}`
+    if (resolvedTemplateName) {
+      // Show template name in bold uppercase on top, and subtitle below
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8)
+      doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
+      const mainTitleText = isFirstPage
+        ? resolvedTemplateName.toUpperCase()
+        : `${resolvedTemplateName.toUpperCase()} — ${safeChecklistCode}`
+      const maxMainTitleLen = 48
+      const truncatedTitle =
+        mainTitleText.length > maxMainTitleLen
+          ? mainTitleText.substring(0, maxMainTitleLen - 3) + '...'
+          : mainTitleText
+      doc.text(truncatedTitle, textStartX, margin + 4.2)
 
-    const titleX = Math.max(textStartX + 58, margin + 88)
-    // Only print title on same row if there's enough room before badge
-    if (titleX < badgeX - 4) {
-      doc.text(docTitle, titleX, margin + 4.8)
+      // Subtitle below template name
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(6.2)
+      doc.setTextColor(lightMutedText[0], lightMutedText[1], lightMutedText[2])
+      doc.text('Relatório de Checklist de Içamento', textStartX, margin + 7.2)
+    } else {
+      // Fallback: Company name on left and generic title
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7.8)
+      doc.setTextColor(secondaryBlue[0], secondaryBlue[1], secondaryBlue[2])
+      const compText = companyName.toUpperCase()
+      const truncatedCompany = compText.length > 32 ? compText.substring(0, 30) + '...' : compText
+      doc.text(truncatedCompany, textStartX, margin + 4.8)
+
+      // Title next to company or stacked if narrow
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8.2)
+      doc.setTextColor(primaryNavy[0], primaryNavy[1], primaryNavy[2])
+      const docTitle = isFirstPage
+        ? 'RELATÓRIO DE CHECKLIST DE IÇAMENTO'
+        : `RELATÓRIO DE CHECKLIST - ${safeChecklistCode}`
+
+      const titleX = Math.max(textStartX + 58, margin + 88)
+      if (titleX < badgeX - 4) {
+        doc.text(docTitle, titleX, margin + 4.8)
+      }
     }
 
     // Horizontal thin divider in header

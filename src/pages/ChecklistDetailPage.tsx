@@ -385,6 +385,7 @@ export const ChecklistDetailPage: React.FC = () => {
           : null
       const selectedMat =
         materialId && materialId !== 'none' ? materialsList.find((m) => m.id === materialId) : null
+      const selectedTpl = templates.find((t) => t.id === selectedTemplateId)
 
       const checklistObj: Checklist = {
         id: id || 'local',
@@ -433,6 +434,7 @@ export const ChecklistDetailPage: React.FC = () => {
         client: selectedCli,
         equipment: selectedEq,
         material: selectedMat,
+        templateName: selectedTpl?.title || null,
       })
 
       toast.success('Relatório PDF gerado e baixado com sucesso!')

@@ -138,24 +138,35 @@ export const ChecklistsPage: React.FC = () => {
       )
       const targetChecklist = fullChecklist || chk
 
-      const [items, groups, companiesList, clientsList, equipmentList, materialsList] =
-        await Promise.all([
-          targetChecklist.template_id
-            ? AppDataService.getTemplateItems(targetChecklist.template_id, isOnline)
-            : Promise.resolve([]),
-          targetChecklist.template_id
-            ? AppDataService.getItemGroups(targetChecklist.template_id, isOnline)
-            : Promise.resolve([]),
-          AppDataService.getCompanies(isOnline),
-          AppDataService.getClients(targetChecklist.company_id, isOnline),
-          AppDataService.getEquipment(targetChecklist.company_id, isOnline),
-          AppDataService.getMaterials(targetChecklist.company_id, isOnline),
-        ])
+      const [
+        items,
+        groups,
+        templatesList,
+        companiesList,
+        clientsList,
+        equipmentList,
+        materialsList,
+      ] = await Promise.all([
+        targetChecklist.template_id
+          ? AppDataService.getTemplateItems(targetChecklist.template_id, isOnline)
+          : Promise.resolve([]),
+        targetChecklist.template_id
+          ? AppDataService.getItemGroups(targetChecklist.template_id, isOnline)
+          : Promise.resolve([]),
+        AppDataService.getTemplates(targetChecklist.company_id, isOnline),
+        AppDataService.getCompanies(isOnline),
+        AppDataService.getClients(targetChecklist.company_id, isOnline),
+        AppDataService.getEquipment(targetChecklist.company_id, isOnline),
+        AppDataService.getMaterials(targetChecklist.company_id, isOnline),
+      ])
 
       const foundComp = companiesList.find((c) => c.id === targetChecklist.company_id) || company
       const foundClient = clientsList.find((c) => c.id === targetChecklist.client_id)
       const foundEquipment = equipmentList.find((e) => e.id === targetChecklist.equipment_id)
       const foundMaterial = materialsList.find((m) => m.id === targetChecklist.material_id)
+      const foundTemplate = templatesList.find((t) => t.id === targetChecklist.template_id)
+      const templateName =
+        foundTemplate?.title || targetChecklist.expand?.template_id?.title || null
 
       await generateChecklistPdf({
         checklist: targetChecklist,
@@ -166,6 +177,7 @@ export const ChecklistsPage: React.FC = () => {
         client: foundClient,
         equipment: foundEquipment,
         material: foundMaterial,
+        templateName,
       })
 
       toast.success('Relatório PDF exportado com sucesso!')
