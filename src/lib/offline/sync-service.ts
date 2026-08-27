@@ -5,13 +5,13 @@ import {
   ChecklistResponse,
   ChecklistTemplate,
   ChecklistTemplateItem,
-  Equipment,
-  Material,
   Client,
   Company,
+  Equipment,
+  Material,
   OfflineSyncQueueItem,
+  SyncLogEntry,
 } from '@/types'
-
 class SyncService {
   private isSyncing = false
   private listeners: Set<() => void> = new Set()
