@@ -24,6 +24,7 @@ const COLLECTION_TO_STORE: Record<string, MonitoredStoreName> = {
   materials: 'materials',
   clients: 'clients',
   companies: 'companies',
+  users: 'users',
 }
 
 const MONITORED_COLLECTIONS = Object.keys(COLLECTION_TO_STORE)

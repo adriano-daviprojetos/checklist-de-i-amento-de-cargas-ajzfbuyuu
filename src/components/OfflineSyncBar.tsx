@@ -11,6 +11,9 @@ export const OfflineSyncBar: React.FC = () => {
   const { isOnline, simulatedOffline, toggleSimulateOffline } = useOnlineStatus()
   const [pendingCount, setPendingCount] = useState<number>(0)
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
+  const [syncProgress, setSyncProgress] = useState<{ processed: number; total: number } | null>(
+    null,
+  )
 
   const updateStatus = async () => {
     const count = await syncService.getPendingQueueCount()
@@ -41,6 +44,7 @@ export const OfflineSyncBar: React.FC = () => {
     }
 
     setIsSyncing(true)
+    setSyncProgress({ processed: 0, total: pendingCount })
     toast.info('Sincronizando dados com o servidor PocketBase...')
     try {
       const res = await syncService.processSyncQueue()
@@ -49,13 +53,16 @@ export const OfflineSyncBar: React.FC = () => {
       if (res.errors > 0) {
         toast.error(`Sincronização concluída com ${res.errors} erros de validação.`)
       } else {
-        toast.success(`Tudo atualizado! ${res.processed} alterações sincronizadas com sucesso.`)
+        toast.success(
+          `Tudo atualizado! ${res.processed > 0 ? res.processed : 'Todos os'} registros sincronizados com sucesso.`,
+        )
       }
     } catch (err: any) {
       console.warn('Erro na sincronização:', err)
       toast.error('Erro na sincronização: ' + err.message)
     } finally {
       setIsSyncing(false)
+      setSyncProgress(null)
     }
   }
 
@@ -68,22 +75,24 @@ export const OfflineSyncBar: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={toggleSimulateOffline}
-            className={`h-8 text-xs font-normal border transition-colors ${
-              simulatedOffline
+            className={`h-8 text-xs font-normal border transition-all active:scale-95 ${
+              simulatedOffline || !isOnline
                 ? 'bg-amber-950/40 text-amber-400 border-amber-800/80 hover:bg-amber-900/50'
                 : 'bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-slate-800'
             }`}
           >
-            {simulatedOffline ? (
+            {simulatedOffline || !isOnline ? (
               <>
-                <WifiOff className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
-                <span className="hidden sm:inline">Modo Campo (Offline Forçado)</span>
+                <WifiOff className="w-3.5 h-3.5 mr-1.5 text-amber-400 shrink-0" />
+                <span className="hidden sm:inline">
+                  {simulatedOffline ? 'Modo Campo (Offline Forçado)' : 'Offline (Sem Sinal)'}
+                </span>
                 <span className="sm:hidden">Offline</span>
               </>
             ) : (
               <>
-                <Wifi className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
-                <span className="hidden sm:inline">Online</span>
+                <Wifi className="w-3.5 h-3.5 mr-1.5 text-emerald-400 shrink-0" />
+                <span className="hidden sm:inline">Online (Conectado)</span>
                 <span className="sm:hidden">Online</span>
               </>
             )}
@@ -107,7 +116,9 @@ export const OfflineSyncBar: React.FC = () => {
         >
           <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
           <span>
-            {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+            {isSyncing
+              ? 'Sincronizando...'
+              : `${pendingCount} pendente${pendingCount > 1 ? 's' : ''}`}
           </span>
         </Button>
       ) : (

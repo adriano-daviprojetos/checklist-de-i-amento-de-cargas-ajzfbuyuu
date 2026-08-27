@@ -12,6 +12,8 @@ export interface DBStoreSchema {
   checklist_template_items: string
   checklists: string
   checklist_responses: string
+  users: string
+  sync_logs: string
   sync_queue: string // key: id
 }
 
@@ -21,7 +23,7 @@ export async function getDB(): Promise<IDBDatabase> {
   if (dbInstance) return dbInstance
 
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
+    const request = indexedDB.open(DB_NAME, 3)
 
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
       const db = (event.target as IDBOpenDBRequest).result
@@ -58,6 +60,8 @@ export async function getDB(): Promise<IDBDatabase> {
         { name: 'sync_status', keyPath: 'sync_status' },
       ])
       createStore('checklist_responses', 'id', [{ name: 'checklist_id', keyPath: 'checklist_id' }])
+      createStore('users', 'id', [{ name: 'company_id', keyPath: 'company_id' }])
+      createStore('sync_logs', 'id', [{ name: 'timestamp', keyPath: 'timestamp' }])
       createStore('sync_queue', 'id', [{ name: 'timestamp', keyPath: 'timestamp' }])
     }
 

@@ -339,85 +339,70 @@ export const ChecklistsPage: React.FC = () => {
       return matchesSearch && matchesStatus
     })
 
-  const getSyncStatusIndicator = (syncStatus?: string) => {
-    switch (syncStatus) {
-      case 'synced':
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <span
-                className="inline-flex items-center justify-center cursor-help text-[#10b981]"
-                aria-label="Sincronizado com o servidor"
-              >
-                <Cloud className="w-3.5 h-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className="text-xs bg-slate-900 border-slate-800 text-slate-200"
+  const getSyncStatusIndicator = (syncStatus?: string, chkId?: string) => {
+    const isLocalOnly = syncStatus === 'pending_sync' || (chkId && chkId.startsWith('local_'))
+
+    if (isLocalOnly) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-400 border border-amber-800/80 cursor-help"
+              aria-label="💾 Salvo no Dispositivo (Pendente de Sincronização)"
             >
-              Sincronizado com o servidor
-            </TooltipContent>
-          </Tooltip>
-        )
-      case 'pending_sync':
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <span
-                className="inline-flex items-center justify-center cursor-help text-[#f59e0b]"
-                aria-label="Salvo localmente — pendente de sincronização"
-              >
-                <CloudOff className="w-3.5 h-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className="text-xs bg-slate-900 border-slate-800 text-slate-200"
-            >
-              Salvo localmente — pendente de sincronização
-            </TooltipContent>
-          </Tooltip>
-        )
-      case 'conflict':
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <span
-                className="inline-flex items-center justify-center cursor-help text-[#ef4444]"
-                aria-label="Conflito de sincronização"
-              >
-                <AlertTriangle className="w-3.5 h-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className="text-xs bg-slate-900 border-slate-800 text-slate-200"
-            >
-              Conflito de sincronização
-            </TooltipContent>
-          </Tooltip>
-        )
-      default:
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <span
-                className="inline-flex items-center justify-center cursor-help text-[#64748b]"
-                aria-label="Status de sincronização desconhecido"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className="text-xs bg-slate-900 border-slate-800 text-slate-200"
-            >
-              Status de sincronização desconhecido
-            </TooltipContent>
-          </Tooltip>
-        )
+              <CloudOff className="w-3 h-3 text-amber-400" />
+              <span>💾 Local</span>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            className="text-xs bg-slate-900 border-slate-800 text-slate-200 max-w-xs"
+          >
+            Salvo com segurança no dispositivo. Será sincronizado com a nuvem assim que houver
+            conexão com a internet.
+          </TooltipContent>
+        </Tooltip>
+      )
     }
+
+    if (syncStatus === 'conflict') {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-950/60 text-red-400 border border-red-800 cursor-help"
+              aria-label="Conflito de sincronização"
+            >
+              <AlertTriangle className="w-3 h-3" />
+              <span>Conflito</span>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            className="text-xs bg-slate-900 border-slate-800 text-slate-200"
+          >
+            Conflito de sincronização resolvido localmente.
+          </TooltipContent>
+        </Tooltip>
+      )
+    }
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <span
+            className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-950/50 text-emerald-400 border border-emerald-800/60 cursor-help"
+            aria-label="☁️ Sincronizado no Servidor"
+          >
+            <Cloud className="w-3 h-3 text-emerald-400" />
+            <span>☁️ Servidor</span>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs bg-slate-900 border-slate-800 text-slate-200">
+          Sincronizado e salvo na nuvem com sucesso.
+        </TooltipContent>
+      </Tooltip>
+    )
   }
 
   const getStatusBadge = (status: string) => {
@@ -550,7 +535,7 @@ export const ChecklistsPage: React.FC = () => {
                       'Empresa Padrão'}
                   </Badge>
                   {getStatusBadge(chk.status)}
-                  {getSyncStatusIndicator(chk.sync_status)}
+                  {getSyncStatusIndicator(chk.sync_status, chk.id)}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-400">

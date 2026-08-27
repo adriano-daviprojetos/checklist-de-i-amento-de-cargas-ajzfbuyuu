@@ -116,6 +116,22 @@ export const ChecklistDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [hasPendingChanges, setHasPendingChanges] = useState(false)
+
+  // Warn on page unload/close if checklist has pending unsaved actions
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasPendingChanges || saving) {
+        e.preventDefault()
+        e.returnValue =
+          'Existem alterações no checklist sendo salvas ou sincronizadas. Deseja sair?'
+        return e.returnValue
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasPendingChanges, saving])
+
   useEffect(() => {
     const targetCompId = selectedCompanyId || company?.id
     loadPrerequisites(targetCompId)

@@ -68,6 +68,28 @@ class SyncService {
   }
 
   // Fetch all base operational data from PocketBase and store into IndexedDB
+  public async logSyncEvent(
+    type: SyncLogEntry['type'],
+    message: string,
+    success: boolean,
+    details?: any,
+  ) {
+    try {
+      const logItem: SyncLogEntry = {
+        id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        timestamp: Date.now(),
+        type,
+        message,
+        success,
+        details,
+      }
+      await dbPut('sync_logs', logItem)
+    } catch (e) {
+      console.warn('[SyncService] Could not save sync log:', e)
+    }
+  }
+
+  // Fetch all base operational data from PocketBase and store into IndexedDB
   public async pullAllData(companyId?: string): Promise<{ success: boolean; error?: string }> {
     if (!pb.authStore.isValid) {
       return { success: false, error: 'Usuário não autenticado' }
@@ -163,6 +185,17 @@ class SyncService {
         console.warn('Sync template items failed', err)
       }
 
+      // 6.1 Users (cache users for inspector assignments and offline profile lookup)
+      try {
+        const users = await pb.collection('users').getFullList<any>({
+          filter: compFilter || undefined,
+          sort: 'name',
+        })
+        await dbPutMany('users', users)
+      } catch (err) {
+        console.warn('Sync users failed', err)
+      }
+
       // 7. Checklists
       try {
         const chkFilterParts: string[] = []
@@ -175,18 +208,29 @@ class SyncService {
           sort: '-created',
           expand: 'template_id,client_id,equipment_id,material_id,user_id',
         })
-        // Preserve local sync_status if pending
+        // Preserve local sync_status if pending or local changes
         const localChecklists = await dbGetAll<Checklist>('checklists')
-        const pendingIds = new Set(
-          localChecklists.filter((c) => c.sync_status === 'pending_sync').map((c) => c.id),
-        )
+        const pendingMap = new Map<string, Checklist>()
+        localChecklists.forEach((c) => {
+          if (c.sync_status === 'pending_sync' || c.id.startsWith('local_')) {
+            pendingMap.set(c.id, c)
+          }
+        })
 
         const checklistsToStore = checklists.map((c) => {
-          if (pendingIds.has(c.id)) {
-            return { ...c, sync_status: 'pending_sync' as const }
+          // If locally pending, keep local version (Last Write Wins)
+          if (pendingMap.has(c.id)) {
+            return pendingMap.get(c.id)!
           }
           return { ...c, sync_status: 'synced' as const }
         })
+
+        // Also ensure any purely local checklists (not on server yet) are preserved
+        for (const localPending of pendingMap.values()) {
+          if (localPending.id.startsWith('local_')) {
+            checklistsToStore.push(localPending)
+          }
+        }
 
         await dbPutMany('checklists', checklistsToStore)
       } catch (err) {
@@ -205,12 +249,126 @@ class SyncService {
         console.warn('Sync responses failed', err)
       }
 
+      // 9. Backup critical offline state to localStorage as secondary fallback
+      this.backupToLocalStorage()
+
+      await this.logSyncEvent('pull', 'Dados de referência atualizados com sucesso.', true)
       this.notify()
       return { success: true }
     } catch (err: any) {
       console.error('pullAllData error:', err)
+      await this.logSyncEvent('pull', `Erro ao puxar dados: ${err.message}`, false, err)
       return { success: false, error: err.message || 'Erro ao sincronizar dados' }
     }
+  }
+
+  // Backup key offline datasets to localStorage for resilience
+  private async backupToLocalStorage() {
+    try {
+      const [tpls, clients, eqs, mats, pendingChk] = await Promise.all([
+        dbGetAll('checklist_templates'),
+        dbGetAll('clients'),
+        dbGetAll('equipment'),
+        dbGetAll('materials'),
+        dbGetAll<Checklist>('checklists').then((list) =>
+          list.filter((c) => c.sync_status === 'pending_sync' || c.id.startsWith('local_')),
+        ),
+      ])
+
+      localStorage.setItem('offline_backup_templates', JSON.stringify(tpls.slice(0, 50)))
+      localStorage.setItem('offline_backup_clients', JSON.stringify(clients.slice(0, 50)))
+      localStorage.setItem('offline_backup_equipment', JSON.stringify(eqs.slice(0, 50)))
+      localStorage.setItem('offline_backup_materials', JSON.stringify(mats.slice(0, 50)))
+      if (pendingChk.length > 0) {
+        localStorage.setItem('offline_backup_pending_checklists', JSON.stringify(pendingChk))
+      }
+    } catch (e) {
+      console.warn('[SyncService] LocalStorage backup warning:', e)
+    }
+  }
+
+  // Fetch all sync logs for auditing and debugging
+  public async getSyncLogs(): Promise<SyncLogEntry[]> {
+    try {
+      const logs = await dbGetAll<SyncLogEntry>('sync_logs')
+      return logs.sort((a, b) => b.timestamp - a.timestamp)
+    } catch {
+      return []
+    }
+  }
+
+  // Instant response update in IndexedDB without UI latency
+  public async updateResponseInstant(
+    checklistId: string,
+    response: Partial<ChecklistResponse>,
+  ): Promise<ChecklistResponse> {
+    const respId = response.id || `local_resp_${checklistId}_${response.item_id || Date.now()}`
+    const fullResp: ChecklistResponse = {
+      id: respId,
+      checklist_id: checklistId,
+      item_id: response.item_id,
+      item_title: response.item_title || '',
+      item_section: response.item_section || '',
+      status: response.status || 'PENDENTE',
+      observation: response.observation || '',
+      photo_url: response.photo_url || '',
+      value: response.value || '',
+      is_critical_fail: response.is_critical_fail || false,
+      created: response.created || new Date().toISOString(),
+      updated: new Date().toISOString(),
+    }
+
+    await dbPut('checklist_responses', fullResp)
+
+    // Mark parent checklist as pending_sync in IndexedDB
+    const localChk = await dbGetById<Checklist>('checklists', checklistId)
+    if (localChk) {
+      await dbPut('checklists', {
+        ...localChk,
+        sync_status: 'pending_sync',
+        updated: new Date().toISOString(),
+      })
+    }
+
+    // Auto enqueue batch_responses debounce
+    this.enqueueSyncDebounced(checklistId)
+    return fullResp
+  }
+
+  private debounceTimers = new Map<string, any>()
+  private enqueueSyncDebounced(checklistId: string) {
+    if (this.debounceTimers.has(checklistId)) {
+      clearTimeout(this.debounceTimers.get(checklistId))
+    }
+
+    const timer = setTimeout(async () => {
+      this.debounceTimers.delete(checklistId)
+      try {
+        const responses = await dbGetByIndex<ChecklistResponse>(
+          'checklist_responses',
+          'checklist_id',
+          checklistId,
+        )
+        const localChk = await dbGetById<Checklist>('checklists', checklistId)
+
+        if (localChk) {
+          await this.enqueueSync('checklists', 'update', localChk)
+        }
+
+        await this.enqueueSync('checklists', 'batch_responses', {
+          checklist_id: checklistId,
+          responses: responses.map((r) => ({
+            ...r,
+            item_id: r.item_id && this.isLocalId(r.item_id) ? undefined : r.item_id,
+          })),
+        })
+        this.notify()
+      } catch (err) {
+        console.warn('[SyncService] Debounced sync enqueue warning:', err)
+      }
+    }, 1500)
+
+    this.debounceTimers.set(checklistId, timer)
   }
 
   private isLocalId(id?: string): boolean {
@@ -406,7 +564,10 @@ class SyncService {
   // Push pending queue items to PocketBase
   public async processSyncQueue(): Promise<{ total: number; processed: number; errors: number }> {
     if (this.isSyncing) return { total: 0, processed: 0, errors: 0 }
-    if (!pb.authStore.isValid) return { total: 0, processed: 0, errors: 0 }
+    if (!pb.authStore.isValid) {
+      await this.logSyncEvent('info', 'Sincronização adiada: usuário não autenticado', false)
+      return { total: 0, processed: 0, errors: 0 }
+    }
 
     this.isSyncing = true
     this.notify()
@@ -686,6 +847,21 @@ class SyncService {
           await dbPut('sync_queue', item)
         }
       }
+      if (processed > 0 || errors > 0) {
+        await this.logSyncEvent(
+          errors > 0 ? 'error' : 'push',
+          `Sincronização da fila: ${processed} processados, ${errors} erros`,
+          errors === 0,
+          { processed, errors },
+        )
+      }
+    } catch (globalSyncErr: any) {
+      console.error('[SyncService] Global sync queue process error:', globalSyncErr)
+      await this.logSyncEvent(
+        'error',
+        `Falha global na sincronização: ${globalSyncErr.message}`,
+        false,
+      )
     } finally {
       this.isSyncing = false
       this.notify()

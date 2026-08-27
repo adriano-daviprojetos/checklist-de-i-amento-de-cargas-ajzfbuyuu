@@ -254,6 +254,15 @@ export interface ChecklistResponse {
   local_id?: string
 }
 
+export interface SyncLogEntry {
+  id: string
+  timestamp: number
+  type: 'pull' | 'push' | 'error' | 'conflict' | 'info'
+  message: string
+  details?: any
+  success: boolean
+}
+
 export interface OfflineSyncQueueItem {
   id: string
   entity:

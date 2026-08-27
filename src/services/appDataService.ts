@@ -949,6 +949,9 @@ export class AppDataService {
 
   // --- Users ---
   static async getUsers(companyId?: string, isOnline = true): Promise<AppUser[]> {
+    const local = await dbGetAll<AppUser>('users')
+    const filtered = companyId ? local.filter((u) => u.company_id === companyId) : local
+
     if (isOnline && pb.authStore.isValid) {
       try {
         const list = await pb.collection('users').getFullList<AppUser>({
@@ -956,12 +959,13 @@ export class AppDataService {
           sort: 'name',
           expand: 'company_id,client_id',
         })
+        await dbPutMany('users', list)
         return list
       } catch (err) {
         console.warn('Online users fetch failed:', err)
       }
     }
-    return []
+    return filtered
   }
 
   static async saveUser(
