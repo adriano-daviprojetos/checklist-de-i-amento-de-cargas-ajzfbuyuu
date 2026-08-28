@@ -401,7 +401,7 @@ export const DashboardPage: React.FC = () => {
                   return (
                     <tr key={chk.id} className="hover:bg-slate-850 transition-colors">
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-white">{chk.code || 'CHK-NOVO'}</div>
+                        <div className="font-semibold text-white">{chk.code || 'chk-pendente'}</div>
                         <div className="text-slate-400 truncate max-w-xs">{chk.title}</div>
                       </td>
                       <td className="px-4 py-3">

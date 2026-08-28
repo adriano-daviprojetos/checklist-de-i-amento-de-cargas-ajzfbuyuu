@@ -274,7 +274,7 @@ export const ChecklistsPage: React.FC = () => {
 
         return {
           id: chk.id,
-          code: chk.code || 'CHK-N/A',
+          code: chk.code || 'chk-pendente',
           title: chk.title || 'Checklist',
           status: chk.status || 'Pendente',
           completed_at: chk.completed_at,
@@ -520,7 +520,7 @@ export const ChecklistsPage: React.FC = () => {
               <div className="space-y-2 flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-blue-950/60 text-blue-400 border border-blue-900/40">
-                    {chk.code || 'CHK-TEMP'}
+                    {chk.code || 'chk-pendente'}
                   </span>
                   <h3 className="font-semibold text-white text-base group-hover:text-blue-400 transition-colors">
                     {chk.title}

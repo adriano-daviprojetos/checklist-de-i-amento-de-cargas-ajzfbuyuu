@@ -560,11 +560,15 @@ class SyncService {
   /**
    * Substitui todas as referências de um ID local pelo ID real do servidor no IndexedDB e na fila de sync.
    */
-  public async replaceLocalChecklistIdEverywhere(localId: string, serverId: string): Promise<void> {
+  public async replaceLocalChecklistIdEverywhere(
+    localId: string,
+    serverId: string,
+    serverCode?: string,
+  ): Promise<void> {
     if (!localId || !serverId || localId === serverId) return
 
     console.log(
-      `[SyncService] Substituindo ID local '${localId}' por '${serverId}' em todo o banco local...`,
+      `[SyncService] Substituindo ID local '${localId}' por '${serverId}' (código: ${serverCode || 'mantido'}) em todo o banco local...`,
     )
 
     // 1. Atualizar registro do checklist em 'checklists'
@@ -574,6 +578,7 @@ class SyncService {
       await dbPut('checklists', {
         ...localChk,
         id: serverId,
+        code: serverCode || localChk.code,
         sync_status: 'synced',
         updated: new Date().toISOString(),
       })
@@ -803,11 +808,12 @@ class SyncService {
               idMap.set(item.id, res.id)
             }
 
-            // Se for checklist, substituir imediatamente o ID em todos os lugares
+            // Se for checklist, substituir imediatamente o ID e código oficial em todos os lugares
             if (item.entity === 'checklists') {
-              await this.replaceLocalChecklistIdEverywhere(targetLocalId, res.id)
+              const serverCode = (res as any)?.code
+              await this.replaceLocalChecklistIdEverywhere(targetLocalId, res.id, serverCode)
               if (item.id && item.id !== targetLocalId) {
-                await this.replaceLocalChecklistIdEverywhere(item.id, res.id)
+                await this.replaceLocalChecklistIdEverywhere(item.id, res.id, serverCode)
               }
 
               // Se o status original era finalizado ("Concluído"/"Reprovado"), agendar/garantir a atualização de status para depois das respostas
@@ -889,7 +895,8 @@ class SyncService {
               if (item.id) idMap.set(item.id, res.id)
 
               if (item.entity === 'checklists') {
-                await this.replaceLocalChecklistIdEverywhere(targetLocalId, res.id)
+                const serverCode = (res as any)?.code
+                await this.replaceLocalChecklistIdEverywhere(targetLocalId, res.id, serverCode)
               }
             } else {
               // Real server ID is known, perform update (PATCH)
@@ -1007,9 +1014,7 @@ class SyncService {
       equipment_id: checklist.equipment_id,
       material_id: checklist.material_id,
       user_id: checklist.user_id || pb.authStore.record?.id || '',
-      code:
-        checklist.code ||
-        `CHK-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      code: checklist.code || `chk-${new Date().getFullYear()}-temp`,
       title: checklist.title || 'Checklist de Içamento',
       location: checklist.location || '',
       operation_type: checklist.operation_type || '',
@@ -1082,9 +1087,10 @@ class SyncService {
           const createdChk = await pb.collection('checklists').create(createPayload)
           serverChkId = createdChk.id
 
-          // Atualizar o ID local para o ID do servidor em todo o IndexedDB e no objeto em memória
-          await this.replaceLocalChecklistIdEverywhere(checklistId, createdChk.id)
+          // Atualizar o ID local para o ID do servidor e o código oficial gerado no backend
+          await this.replaceLocalChecklistIdEverywhere(checklistId, createdChk.id, createdChk.code)
           fullChecklist.id = createdChk.id
+          fullChecklist.code = createdChk.code || fullChecklist.code
           fullChecklist.sync_status = 'synced'
         } else {
           serverChkId = checklistId

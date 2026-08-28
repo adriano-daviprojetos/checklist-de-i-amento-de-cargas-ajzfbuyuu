@@ -386,7 +386,7 @@ export async function generateChecklistPdf({
     }
   }
 
-  const safeChecklistCode = checklist?.code || 'CHK-N/A'
+  const safeChecklistCode = checklist?.code || 'chk-novo'
 
   // Header height (16.5mm to comfortably accommodate the logo, title, and metadata)
   const headerHeight = 16.5
@@ -522,7 +522,6 @@ export async function generateChecklistPdf({
       const docTitle = isFirstPage
         ? 'RELATÓRIO DE CHECKLIST DE IÇAMENTO'
         : `RELATÓRIO DE CHECKLIST - ${safeChecklistCode}`
-
       const titleX = Math.max(textStartX + 58, margin + 88)
       if (titleX < badgeX - 4) {
         doc.text(docTitle, titleX, margin + 4.8)
@@ -997,7 +996,7 @@ export async function generateChecklistPdf({
   }
 
   // Download filename: checklist-{codigo}-{data}.pdf
-  const rawCode = checklist?.code || 'CHK'
+  const rawCode = checklist?.code || 'chk'
   const safeCode = rawCode.replace(/[^a-zA-Z0-9-_]/g, '_').toLowerCase()
   const todayStr = new Date().toISOString().split('T')[0]
   const filename = `checklist-${safeCode}-${todayStr}.pdf`

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-27T21:33:29.055Z",
+  "generatedAt": "2026-08-28T11:58:03.152Z",
   "collections": [
     {
       "name": "users",
@@ -869,7 +869,8 @@
       "indexes": [
         "CREATE INDEX idx_checklists_company ON checklists (company_id)",
         "CREATE INDEX idx_checklists_status ON checklists (status)",
-        "CREATE INDEX idx_checklists_user ON checklists (user_id)"
+        "CREATE INDEX idx_checklists_user ON checklists (user_id)",
+        "CREATE INDEX `idx_checklists_code` ON `checklists` (code)"
       ]
     },
     {

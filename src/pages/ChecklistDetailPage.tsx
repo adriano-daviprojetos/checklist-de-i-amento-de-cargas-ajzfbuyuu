@@ -162,7 +162,7 @@ export const ChecklistDetailPage: React.FC = () => {
         if (tpls.length > 0) {
           handleSelectTemplate(tpls[0].id)
         }
-        setCode(`CHK-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`)
+        setCode('')
         setTitle('Checklist Operacional de Içamento')
         setFilledByName(user?.name || '')
         setFilledBySignature(undefined)
@@ -417,6 +417,10 @@ export const ChecklistDetailPage: React.FC = () => {
           : 'Checklist reprovado e registrado com sucesso.',
       )
 
+      if (res.checklist.code) {
+        setCode(res.checklist.code)
+      }
+
       if (isNew && res.checklist.id) {
         navigate(`/checklists/${res.checklist.id}`, { replace: true })
       }
@@ -562,6 +566,10 @@ export const ChecklistDetailPage: React.FC = () => {
 
       toast.success('Respostas do checklist salvas com sucesso!')
 
+      if (res.checklist.code) {
+        setCode(res.checklist.code)
+      }
+
       if (isNew && res.checklist.id) {
         navigate(`/checklists/${res.checklist.id}`, { replace: true })
       }
@@ -632,6 +640,10 @@ export const ChecklistDetailPage: React.FC = () => {
           ? 'Rascunho do checklist salvo e sincronizado!'
           : 'Rascunho salvo no dispositivo (Offline).',
       )
+
+      if (res.checklist.code) {
+        setCode(res.checklist.code)
+      }
 
       if (isNew && res.checklist.id) {
         navigate(`/checklists/${res.checklist.id}`, { replace: true })
@@ -738,7 +750,7 @@ export const ChecklistDetailPage: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-bold text-blue-400">
-                {code || 'CHK-NOVO'}
+                {code || (isNew ? 'chk-novo' : 'chk-pendente')}
               </span>
               <Badge
                 variant="outline"
