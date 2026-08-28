@@ -164,3 +164,51 @@ export async function dbGetByIndex<T>(
     req.onerror = () => reject(req.error)
   })
 }
+
+/**
+ * Helper to generate the next unique sequential checklist code partitioned by year
+ * in the standard format: chk-YYYY-NNNNNN (e.g. chk-2026-000001)
+ * inspecting all local checklists and pending sync items in IndexedDB.
+ */
+export async function generateNextLocalChecklistCode(customYear?: number): Promise<string> {
+  const year = customYear || new Date().getFullYear()
+  const yearPrefix = `chk-${year}-`
+  const codeRegex = new RegExp(`^chk-${year}-(\\d{6})$`, 'i')
+
+  let maxSequence = 0
+  const existingChecklists = await dbGetAll<{ code?: string; created?: string }>('checklists')
+
+  for (const chk of existingChecklists) {
+    const rawCode = (chk.code || '').trim().toLowerCase()
+    const match = rawCode.match(codeRegex)
+    if (match && match[1]) {
+      const seqNum = parseInt(match[1], 10)
+      if (!isNaN(seqNum) && seqNum > maxSequence) {
+        maxSequence = seqNum
+      }
+    }
+  }
+
+  // Also inspect pending queue items if any
+  try {
+    const queue = await dbGetAll<{ entity?: string; payload?: { code?: string } }>('sync_queue')
+    for (const q of queue) {
+      if (q.entity === 'checklists' && q.payload?.code) {
+        const rawCode = (q.payload.code || '').trim().toLowerCase()
+        const match = rawCode.match(codeRegex)
+        if (match && match[1]) {
+          const seqNum = parseInt(match[1], 10)
+          if (!isNaN(seqNum) && seqNum > maxSequence) {
+            maxSequence = seqNum
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[generateNextLocalChecklistCode] Error scanning sync_queue:', err)
+  }
+
+  const nextSeq = maxSequence + 1
+  const paddedSeq = String(nextSeq).padStart(6, '0')
+  return `${yearPrefix}${paddedSeq}`
+}

@@ -1,5 +1,13 @@
 import pb from '@/lib/pocketbase/client'
-import { dbGetAll, dbGetById, dbPut, dbPutMany, dbDelete, dbGetByIndex } from '@/lib/offline/db'
+import {
+  dbGetAll,
+  dbGetById,
+  dbPut,
+  dbPutMany,
+  dbDelete,
+  dbGetByIndex,
+  generateNextLocalChecklistCode,
+} from '@/lib/offline/db'
 import { syncService } from '@/lib/offline/sync-service'
 import {
   Checklist,
@@ -100,6 +108,10 @@ export class AppDataService {
     isOnline: boolean,
   ) {
     return await syncService.saveChecklistLocally(checklist, responses, isOnline)
+  }
+
+  static async generateLocalChecklistCode(customYear?: number): Promise<string> {
+    return await generateNextLocalChecklistCode(customYear)
   }
 
   /**

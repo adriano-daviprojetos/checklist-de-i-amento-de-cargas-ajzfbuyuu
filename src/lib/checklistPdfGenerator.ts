@@ -386,7 +386,7 @@ export async function generateChecklistPdf({
     }
   }
 
-  const safeChecklistCode = checklist?.code || 'chk-novo'
+  const safeChecklistCode = checklist?.code || 'chk-pendente'
 
   // Header height (16.5mm to comfortably accommodate the logo, title, and metadata)
   const headerHeight = 16.5

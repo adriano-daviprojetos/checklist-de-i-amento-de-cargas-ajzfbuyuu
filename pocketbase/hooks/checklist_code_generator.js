@@ -12,21 +12,26 @@
  */
 
 onRecordCreate((e) => {
-  const currentYear = new Date().getFullYear()
-  const yearPrefix = 'chk-' + currentYear + '-'
-
   const existingCode = (e.record.get('code') || '').toString().trim()
 
-  // Se já for um código oficial no padrão chk-YYYY-NNNNNN para o ano atual
-  const officialPattern = /^chk-\d{4}-\d{6}$/i
-  let needsNewCode = true
+  // Reconhece o formato oficial "chk-YYYY-NNNNNN"
+  const officialPattern = /^chk-(\d{4})-(\d{6})$/i
+  const match = existingCode.match(officialPattern)
 
-  if (officialPattern.test(existingCode)) {
+  let needsNewCode = true
+  let targetYear = new Date().getFullYear()
+
+  if (match) {
+    const codeYear = parseInt(match[1], 10)
+    if (!isNaN(codeYear)) {
+      targetYear = codeYear
+    }
+
     // Verificar se já não existe outro registro com este mesmo código
     try {
       const checkRow = $app
         .db()
-        .newQuery('SELECT id FROM checklists WHERE code = {:code} AND id != {:id} LIMIT 1')
+        .newQuery('SELECT id FROM checklists WHERE LOWER(code) = {:code} AND id != {:id} LIMIT 1')
         .bind({
           code: existingCode.toLowerCase(),
           id: e.record.id || '',
@@ -34,29 +39,30 @@ onRecordCreate((e) => {
         .one()
 
       if (!checkRow) {
-        // Código válido e sem colisão
+        // Código válido e sem colisão -> HONRAR código enviado pelo mobile/cliente
         e.record.set('code', existingCode.toLowerCase())
         needsNewCode = false
       }
     } catch (_) {
-      // Nenhum registro com esse código -> é único
+      // Nenhum registro encontrado com esse código -> é único no servidor
       e.record.set('code', existingCode.toLowerCase())
       needsNewCode = false
     }
   }
 
   if (needsNewCode) {
+    const yearPrefix = 'chk-' + targetYear + '-'
     let nextSeq = 1
 
     try {
-      // Buscar o maior sequencial existente para o ano corrente usando raw SQL
+      // Buscar os códigos existentes para o ano alvo para determinar o maior sequencial
       const rows = $app
         .db()
         .newQuery(
-          'SELECT code FROM checklists WHERE code LIKE {:prefix} ORDER BY code DESC LIMIT 50',
+          'SELECT code FROM checklists WHERE LOWER(code) LIKE {:prefix} ORDER BY code DESC LIMIT 100',
         )
         .bind({
-          prefix: yearPrefix + '%',
+          prefix: yearPrefix.toLowerCase() + '%',
         })
         .all()
 
@@ -64,7 +70,7 @@ onRecordCreate((e) => {
         let maxNum = 0
         for (let i = 0; i < rows.length; i++) {
           const c = String(rows[i].code || '').toLowerCase()
-          if (c.startsWith(yearPrefix)) {
+          if (c.startsWith(yearPrefix.toLowerCase())) {
             const numPart = parseInt(c.slice(yearPrefix.length), 10)
             if (!isNaN(numPart) && numPart > maxNum) {
               maxNum = numPart
@@ -78,7 +84,7 @@ onRecordCreate((e) => {
       nextSeq = 1
     }
 
-    // Garantir que o código gerado seja livre de colisão
+    // Garantir que o código gerado seja rigorosamente único
     let generatedCode = ''
     let isUnique = false
     let attempts = 0
@@ -90,9 +96,9 @@ onRecordCreate((e) => {
       try {
         const collision = $app
           .db()
-          .newQuery('SELECT id FROM checklists WHERE code = {:code} LIMIT 1')
+          .newQuery('SELECT id FROM checklists WHERE LOWER(code) = {:code} LIMIT 1')
           .bind({
-            code: generatedCode,
+            code: generatedCode.toLowerCase(),
           })
           .one()
 
@@ -108,7 +114,7 @@ onRecordCreate((e) => {
       }
     }
 
-    e.record.set('code', generatedCode)
+    e.record.set('code', generatedCode.toLowerCase())
   }
 
   e.next()

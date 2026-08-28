@@ -162,7 +162,9 @@ export const ChecklistDetailPage: React.FC = () => {
         if (tpls.length > 0) {
           handleSelectTemplate(tpls[0].id)
         }
-        setCode('')
+        // Gera o código sequencial chk-YYYY-NNNNNN imediatamente no carregamento da tela
+        const nextGeneratedCode = await AppDataService.generateLocalChecklistCode()
+        setCode(nextGeneratedCode)
         setTitle('Checklist Operacional de Içamento')
         setFilledByName(user?.name || '')
         setFilledBySignature(undefined)
@@ -750,7 +752,7 @@ export const ChecklistDetailPage: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-bold text-blue-400">
-                {code || (isNew ? 'chk-novo' : 'chk-pendente')}
+                {code || 'chk-novo'}
               </span>
               <Badge
                 variant="outline"

@@ -1,5 +1,13 @@
 import pb from '@/lib/pocketbase/client'
-import { dbGetAll, dbGetById, dbPut, dbPutMany, dbDelete, dbGetByIndex } from './db'
+import {
+  dbGetAll,
+  dbGetById,
+  dbPut,
+  dbPutMany,
+  dbDelete,
+  dbGetByIndex,
+  generateNextLocalChecklistCode,
+} from './db'
 import {
   Checklist,
   ChecklistResponse,
@@ -1006,6 +1014,13 @@ class SyncService {
     const targetFinalStatus = checklist.status || 'Em Andamento'
     const isFinalizing = targetFinalStatus === 'Concluído' || targetFinalStatus === 'Reprovado'
 
+    // Garantir que o código no padrão chk-YYYY-NNNNNN seja gerado localmente se ainda não existir ou for temporário
+    const officialPattern = /^chk-\d{4}-\d{6}$/i
+    let effectiveCode = (checklist.code || '').trim().toLowerCase()
+    if (!officialPattern.test(effectiveCode)) {
+      effectiveCode = await generateNextLocalChecklistCode()
+    }
+
     const fullChecklist: Checklist = {
       id: checklistId,
       company_id: userCompanyId,
@@ -1014,7 +1029,7 @@ class SyncService {
       equipment_id: checklist.equipment_id,
       material_id: checklist.material_id,
       user_id: checklist.user_id || pb.authStore.record?.id || '',
-      code: checklist.code || `chk-${new Date().getFullYear()}-temp`,
+      code: effectiveCode,
       title: checklist.title || 'Checklist de Içamento',
       location: checklist.location || '',
       operation_type: checklist.operation_type || '',
