@@ -1125,92 +1125,6 @@ export const ChecklistDetailPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Card: Responsável pelo Preenchimento */}
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader className="pb-3 border-b border-slate-800">
-          <CardTitle className="text-base text-white flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-blue-500" />
-            Responsável pelo Preenchimento
-          </CardTitle>
-          <CardDescription className="text-slate-400 text-xs">
-            Identificação do operador, rigger ou profissional que realizou a inspeção item por item
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-5 space-y-4">
-          <div className="space-y-1.5 max-w-md">
-            <Label className="text-xs text-slate-300">Nome do Responsável</Label>
-            <Input
-              value={filledByName}
-              onChange={(e) => setFilledByName(e.target.value)}
-              disabled={!canEdit}
-              placeholder="Nome completo do responsável pelo preenchimento"
-              className="bg-slate-950 border-slate-800 text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
-            />
-          </div>
-
-          <div className="space-y-2 pt-1">
-            <Label className="text-xs text-slate-300 flex items-center justify-between">
-              <span>Assinatura do Responsável pelo Preenchimento</span>
-              <span className="text-[11px] text-slate-500">(Opcional)</span>
-            </Label>
-
-            {filledBySignature ? (
-              <div className="space-y-3 p-4 bg-slate-950 rounded-xl border border-slate-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-blue-950/80 text-blue-400 border border-blue-800 text-xs px-2.5 py-1">
-                      <PenLine className="w-3.5 h-3.5 mr-1" /> Assinatura Registrada
-                    </Badge>
-                    <span className="text-xs text-slate-400">
-                      Responsável:{' '}
-                      <strong className="text-slate-200">{filledByName || 'Não informado'}</strong>
-                    </span>
-                  </div>
-                  {canEdit && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setFilledBySignature(undefined)
-                        if (filledByPadRef.current) {
-                          filledByPadRef.current.clear()
-                        }
-                      }}
-                      className="h-7 text-[11px] border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
-                    >
-                      <RotateCcw className="w-3 h-3 mr-1" /> Refazer Assinatura
-                    </Button>
-                  )}
-                </div>
-                <div className="bg-white p-3 rounded-lg flex items-center justify-center border border-slate-300 shadow-inner max-w-md">
-                  <img
-                    src={filledBySignature}
-                    alt="Assinatura do Responsável pelo Preenchimento"
-                    className="max-h-24 object-contain"
-                  />
-                </div>
-              </div>
-            ) : canEdit ? (
-              <DigitalSignaturePad
-                ref={filledByPadRef}
-                height={150}
-                strokeColor="#1e3a5f"
-                title="Área de Assinatura do Responsável pelo Preenchimento"
-                signerName={filledByName || user?.name || ''}
-                onSignatureChange={(_isEmpty, dataUrl) => {
-                  setFilledBySignature(dataUrl || undefined)
-                }}
-              />
-            ) : (
-              <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-500">
-                Sem assinatura registrada.
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Verification Items Checklist Sections */}
       <div className="space-y-4">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -1466,7 +1380,7 @@ export const ChecklistDetailPage: React.FC = () => {
       {/* General Observations & Sign-off */}
       <Card className="bg-slate-900 border-slate-800">
         <CardHeader className="pb-3 border-b border-slate-800">
-          <CardTitle className="text-base text-white">Parecer Final & Liberação</CardTitle>
+          <CardTitle className="text-base text-white">Observações e Parecer Técnico</CardTitle>
           <CardDescription className="text-slate-400 text-xs">
             Observações finais do rigger / operador e parecer técnico da operação
           </CardDescription>
@@ -1525,6 +1439,95 @@ export const ChecklistDetailPage: React.FC = () => {
                 >
                   <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reprovar
                 </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Card: Responsável pelo Preenchimento e Assinatura Digital (Final do Formulário) */}
+      <Card className="bg-slate-900 border-slate-800">
+        <CardHeader className="pb-3 border-b border-slate-800">
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <UserCheck className="w-5 h-5 text-blue-500" />
+            Responsável pelo Preenchimento e Assinatura
+          </CardTitle>
+          <CardDescription className="text-slate-400 text-xs">
+            Identificação e assinatura digital do profissional responsável após o preenchimento dos
+            itens e observações
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-5 space-y-4">
+          <div className="space-y-1.5 max-w-md">
+            <Label className="text-xs text-slate-300">Nome do Responsável</Label>
+            <Input
+              value={filledByName}
+              onChange={(e) => setFilledByName(e.target.value)}
+              disabled={!canEdit}
+              placeholder="Nome completo do responsável pelo preenchimento"
+              className="bg-slate-950 border-slate-800 text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
+            />
+          </div>
+
+          <div className="space-y-2 pt-1">
+            <Label className="text-xs text-slate-300 flex items-center justify-between">
+              <span>Assinatura do Responsável pelo Preenchimento</span>
+              <span className="text-[11px] text-blue-400 font-medium">
+                Obrigatória para liberação
+              </span>
+            </Label>
+
+            {filledBySignature ? (
+              <div className="space-y-3 p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-blue-950/80 text-blue-400 border border-blue-800 text-xs px-2.5 py-1">
+                      <PenLine className="w-3.5 h-3.5 mr-1" /> Assinatura Registrada
+                    </Badge>
+                    <span className="text-xs text-slate-400">
+                      Responsável:{' '}
+                      <strong className="text-slate-200">{filledByName || 'Não informado'}</strong>
+                    </span>
+                  </div>
+                  {canEdit && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFilledBySignature(undefined)
+                        if (filledByPadRef.current) {
+                          filledByPadRef.current.clear()
+                        }
+                      }}
+                      className="h-7 text-[11px] border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
+                    >
+                      <RotateCcw className="w-3 h-3 mr-1" /> Refazer Assinatura
+                    </Button>
+                  )}
+                </div>
+                <div className="bg-white p-3 rounded-lg flex items-center justify-center border border-slate-300 shadow-inner max-w-md">
+                  <img
+                    src={filledBySignature}
+                    alt="Assinatura do Responsável pelo Preenchimento"
+                    className="max-h-24 object-contain"
+                  />
+                </div>
+              </div>
+            ) : canEdit ? (
+              <DigitalSignaturePad
+                ref={filledByPadRef}
+                height={150}
+                strokeColor="#1e3a5f"
+                title="Área de Assinatura do Responsável pelo Preenchimento"
+                signerName={filledByName || user?.name || ''}
+                onSignatureChange={(_isEmpty, dataUrl) => {
+                  setFilledBySignature(dataUrl || undefined)
+                }}
+              />
+            ) : (
+              <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-500">
+                Sem assinatura registrada.
               </div>
             )}
           </div>
