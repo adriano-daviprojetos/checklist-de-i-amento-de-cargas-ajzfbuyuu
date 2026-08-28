@@ -440,10 +440,11 @@ export async function generateChecklistReportPdf({
   currentY += summaryHeight + 2.5
 
   // Table of Checklists
-  // Columns: Data/Hora, Status, Cliente, Equipamento, Local
+  // Columns: Código, Data/Hora, Status, Cliente, Equipamento, Local
   const tableBody =
     checklists.length > 0
       ? checklists.map((chk) => {
+          const code = chk.code || '-'
           const dateToFormat = chk.completed_at || chk.created
           const dateStr = formatDateTime(dateToFormat)
           const statusText = getStatusLabel(chk.status)
@@ -451,13 +452,13 @@ export async function generateChecklistReportPdf({
           const equipment = chk.equipmentInfo || '-'
           const location = chk.location || '-'
 
-          return [dateStr, statusText, client, equipment, location]
+          return [code, dateStr, statusText, client, equipment, location]
         })
-      : [['-', '-', 'Nenhum checklist encontrado para os filtros selecionados', '-', '-']]
+      : [['-', '-', '-', 'Nenhum checklist encontrado para os filtros selecionados', '-', '-']]
 
   applyAutoTable(doc, {
     startY: currentY,
-    head: [['DATA E HORA', 'STATUS', 'CLIENTE', 'EQUIPAMENTO', 'LOCAL / OBRA']],
+    head: [['CÓDIGO', 'DATA E HORA', 'STATUS', 'CLIENTE', 'EQUIPAMENTO', 'LOCAL / OBRA']],
     body: tableBody,
     theme: 'grid',
     margin: { left: margin, right: margin, bottom: bottomFooterReserve + 2 },
@@ -471,11 +472,12 @@ export async function generateChecklistReportPdf({
       cellPadding: 1.5,
     },
     columnStyles: {
-      0: { cellWidth: 32, fontSize: 6.8, halign: 'left' },
-      1: { cellWidth: 26, halign: 'center', fontStyle: 'bold', fontSize: 6.8 },
-      2: { cellWidth: 42, fontSize: 6.8 },
-      3: { cellWidth: 48, fontSize: 6.8 },
-      4: { cellWidth: 'auto', fontSize: 6.8 },
+      0: { cellWidth: 30, fontStyle: 'bold', fontSize: 6.8, halign: 'center' },
+      1: { cellWidth: 28, fontSize: 6.8, halign: 'left' },
+      2: { cellWidth: 24, halign: 'center', fontStyle: 'bold', fontSize: 6.8 },
+      3: { cellWidth: 38, fontSize: 6.8 },
+      4: { cellWidth: 44, fontSize: 6.8 },
+      5: { cellWidth: 'auto', fontSize: 6.8 },
     },
     styles: {
       cellPadding: 1.3,
@@ -485,8 +487,8 @@ export async function generateChecklistReportPdf({
       overflow: 'linebreak',
     },
     didParseCell: (data: any) => {
-      // Style evaluation column badge cells (column index 1: STATUS)
-      if (data.section === 'body' && data.column.index === 1) {
+      // Style evaluation column badge cells (column index 2: STATUS)
+      if (data.section === 'body' && data.column.index === 2) {
         const rawText = data.cell.raw as string
         if (rawText === 'CONCLUÍDO') {
           data.cell.styles.fillColor = [209, 250, 229] // Emerald 100
