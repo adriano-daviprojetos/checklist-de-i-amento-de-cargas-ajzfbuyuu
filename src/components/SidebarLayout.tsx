@@ -170,8 +170,14 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       <header className="md:hidden flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <img
-            src="/logo.svg"
+            src="/logo.png"
             alt="DAVI PROJETOS DE RIGGING"
+            onError={(e) => {
+              const target = e.currentTarget
+              if (!target.src.endsWith('/logo.svg')) {
+                target.src = '/logo.svg'
+              }
+            }}
             className="h-8 w-auto object-contain rounded-md"
           />
           <img
@@ -205,8 +211,14 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
             <Link to="/" className="block w-full focus:outline-none group">
               <div className="flex flex-col items-center gap-2">
                 <img
-                  src="/logo.svg"
+                  src="/logo.png"
                   alt="DAVI PROJETOS DE RIGGING"
+                  onError={(e) => {
+                    const target = e.currentTarget
+                    if (!target.src.endsWith('/logo.svg')) {
+                      target.src = '/logo.svg'
+                    }
+                  }}
                   className="w-full h-auto max-h-16 object-contain rounded-lg shadow-sm transition group-hover:scale-[1.02]"
                 />
                 <div className="flex items-center justify-center gap-1.5 w-full bg-slate-950/70 border border-amber-500/20 rounded-md py-1 px-2">

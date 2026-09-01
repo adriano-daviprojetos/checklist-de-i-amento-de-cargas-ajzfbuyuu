@@ -4,6 +4,7 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/logo.png',
   '/logo.svg',
   '/seal-10-years.svg',
   '/favicon.svg',

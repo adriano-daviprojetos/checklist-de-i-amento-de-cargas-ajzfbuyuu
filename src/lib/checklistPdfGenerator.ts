@@ -56,9 +56,10 @@ function applyAutoTable(doc: jsPDF, options: any): void {
   }
 }
 
-const LOGO_URL =
+const LOGO_PNG_URL = '/logo.png'
+const LOGO_SVG_URL = '/logo.svg'
+const LOGO_REMOTE_URL =
   'https://dagtlwojkqyivnjgveda.supabase.co/storage/v1/object/public/message-attachments/6e8232c6-c506-4bdf-99a5-77593c500309/logonovosite-816c7.png'
-const LOGO_FALLBACK_URL = '/logo.svg'
 
 interface LoadedImage {
   data: string
@@ -367,9 +368,12 @@ export async function generateChecklistPdf({
   }
 
   // Pre-load logo and signatures asynchronously before building pages
-  let logoImage = await loadLogoImage(LOGO_URL)
+  let logoImage = await loadLogoImage(LOGO_PNG_URL)
   if (!logoImage) {
-    logoImage = await loadLogoImage(LOGO_FALLBACK_URL)
+    logoImage = await loadLogoImage(LOGO_SVG_URL)
+  }
+  if (!logoImage) {
+    logoImage = await loadLogoImage(LOGO_REMOTE_URL)
   }
 
   let filledBySigDimensions: { width: number; height: number; format: string } | null = null

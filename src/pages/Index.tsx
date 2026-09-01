@@ -14,8 +14,14 @@ export default function Index() {
         <div className="flex flex-col items-center gap-5 max-w-sm text-center">
           <div className="flex items-center justify-center gap-3">
             <img
-              src="/logo.svg"
+              src="/logo.png"
               alt="DAVI PROJETOS DE RIGGING"
+              onError={(e) => {
+                const target = e.currentTarget
+                if (!target.src.endsWith('/logo.svg')) {
+                  target.src = '/logo.svg'
+                }
+              }}
               className="w-52 h-auto object-contain animate-pulse drop-shadow-xl"
             />
             <img
