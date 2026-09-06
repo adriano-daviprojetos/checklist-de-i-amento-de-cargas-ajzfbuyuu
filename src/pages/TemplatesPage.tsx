@@ -725,7 +725,7 @@ export const TemplatesPage: React.FC = () => {
                 <div className="mb-1">
                   <Badge
                     variant="outline"
-                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                    className="text-[10px] bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-normal"
                   >
                     {companies.find((comp) => comp.id === tpl.company_id)?.trade_name ||
                       companies.find((comp) => comp.id === tpl.company_id)?.name ||
@@ -733,15 +733,19 @@ export const TemplatesPage: React.FC = () => {
                       'Empresa Padrão'}
                   </Badge>
                 </div>
-                <h4 className="font-semibold text-white text-sm">{tpl.title}</h4>
+                <h4 className="font-semibold text-slate-900 dark:text-white text-sm">
+                  {tpl.title}
+                </h4>
                 {tpl.description && (
-                  <p className="text-xs text-slate-400 line-clamp-2 mt-1">{tpl.description}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
+                    {tpl.description}
+                  </p>
                 )}
               </div>
             ))}
 
             {filtered.length === 0 && (
-              <div className="p-6 text-center text-xs text-slate-500 bg-slate-900 border border-slate-800 rounded-xl">
+              <div className="p-6 text-center text-xs text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
                 Nenhum modelo encontrado.
               </div>
             )}
@@ -793,13 +797,13 @@ export const TemplatesPage: React.FC = () => {
                         variant="outline"
                         onClick={(e) => handleDuplicateTemplate(e, selectedTemplate)}
                         disabled={duplicatingId === selectedTemplate.id}
-                        className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
+                        className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
                         title="Criar cópia deste modelo"
                       >
                         {duplicatingId === selectedTemplate.id ? (
-                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-blue-400" />
+                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-blue-600 dark:text-blue-400" />
                         ) : (
-                          <Copy className="w-3.5 h-3.5 mr-1 text-blue-400" />
+                          <Copy className="w-3.5 h-3.5 mr-1 text-blue-600 dark:text-blue-400" />
                         )}
                         Duplicar
                       </Button>
@@ -807,7 +811,7 @@ export const TemplatesPage: React.FC = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => openEditModal(selectedTemplate)}
-                        className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
+                        className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
                       >
                         <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar Modelo
                       </Button>
@@ -1012,10 +1016,10 @@ export const TemplatesPage: React.FC = () => {
                                     value={item.group || 'none'}
                                     onValueChange={(val) => handleQuickMoveGroup(item, val)}
                                   >
-                                    <SelectTrigger className="h-6 text-[10px] bg-slate-950 border-slate-800 text-slate-400 w-28 px-2 py-0">
+                                    <SelectTrigger className="h-6 text-[10px] bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 w-28 px-2 py-0">
                                       <SelectValue placeholder="Mover grupo" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                                    <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                                       <SelectItem value="none">Geral</SelectItem>
                                       {templateGroups.map((g, grpIdx) => (
                                         <SelectItem key={g.id} value={g.id}>
@@ -1031,7 +1035,7 @@ export const TemplatesPage: React.FC = () => {
                                     size="icon"
                                     onClick={() => handleMoveItemOrder(item, 'up')}
                                     disabled={itemIdx === 0}
-                                    className="h-6 w-6 text-slate-500 hover:text-white disabled:opacity-20"
+                                    className="h-6 w-6 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20"
                                     title="Subir Item"
                                   >
                                     <ArrowUp className="w-3 h-3" />
@@ -1041,7 +1045,7 @@ export const TemplatesPage: React.FC = () => {
                                     size="icon"
                                     onClick={() => handleMoveItemOrder(item, 'down')}
                                     disabled={itemIdx === displayGrp.items.length - 1}
-                                    className="h-6 w-6 text-slate-500 hover:text-white disabled:opacity-20"
+                                    className="h-6 w-6 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20"
                                     title="Descer Item"
                                   >
                                     <ArrowDown className="w-3 h-3" />
@@ -1089,7 +1093,7 @@ export const TemplatesPage: React.FC = () => {
                   ))}
 
                   {templateItems.length === 0 && (
-                    <div className="p-8 text-center text-xs text-slate-500 border border-slate-800 rounded-xl bg-slate-950/40">
+                    <div className="p-8 text-center text-xs text-slate-500 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950/40">
                       Nenhum item cadastrado neste modelo. Clique em "Adicionar Item" ou "Novo
                       Grupo" para começar.
                     </div>
@@ -1098,7 +1102,7 @@ export const TemplatesPage: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="h-full flex items-center justify-center p-12 bg-slate-900 border border-slate-800 rounded-2xl text-slate-500 text-xs">
+            <div className="h-full flex items-center justify-center p-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-500 text-xs shadow-sm">
               Selecione um modelo à esquerda para ver seus itens e grupos.
             </div>
           )}
@@ -1107,9 +1111,9 @@ export const TemplatesPage: React.FC = () => {
 
       {/* Modal: Create / Full Edit Template */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl bg-slate-900 border-slate-800 text-white max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white text-base">
+            <DialogTitle className="text-slate-900 dark:text-white text-base">
               {isEditing ? 'Editar Modelo de Checklist' : 'Configurar Modelo de Checklist'}
             </DialogTitle>
           </DialogHeader>
@@ -1124,23 +1128,25 @@ export const TemplatesPage: React.FC = () => {
             />
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Título do Modelo *</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Título do Modelo *
+              </Label>
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 placeholder="Ex: Checklist Pré-Operacional de Guindaste Telescópico"
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Categoria *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Categoria *</Label>
                 <Select value={editCategory} onValueChange={(val: any) => setEditCategory(val)}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                  <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                     <SelectItem value="Guindaste">Guindaste</SelectItem>
                     <SelectItem value="Munck">Munck</SelectItem>
                     <SelectItem value="Acessórios e Materiais">Acessórios e Materiais</SelectItem>
@@ -1152,12 +1158,14 @@ export const TemplatesPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Perfil Responsável *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Perfil Responsável *
+                </Label>
                 <Select value={editTargetRole} onValueChange={(val: any) => setEditTargetRole(val)}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                  <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                     <SelectItem value="Todos">Todos os Perfis</SelectItem>
                     <SelectItem value="Operador">Operador</SelectItem>
                     <SelectItem value="Rigger">Rigger</SelectItem>
@@ -1169,19 +1177,21 @@ export const TemplatesPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Descrição / Instruções</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Descrição / Instruções
+              </Label>
               <Textarea
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
                 rows={2}
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
 
             {/* Grupos de Itens Builder */}
-            <div className="space-y-3 pt-2 border-t border-slate-800">
+            <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Label className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Folder className="w-3.5 h-3.5" /> Grupos de Itens ({editGroups.length})
                 </Label>
                 <Button
@@ -1189,7 +1199,7 @@ export const TemplatesPage: React.FC = () => {
                   size="sm"
                   variant="outline"
                   onClick={addGroupInModal}
-                  className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs h-7"
+                  className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs h-7"
                 >
                   <FolderPlus className="w-3.5 h-3.5 mr-1" /> Adicionar Grupo
                 </Button>
@@ -1199,10 +1209,10 @@ export const TemplatesPage: React.FC = () => {
                 {editGroups.map((grp, gIdx) => (
                   <div
                     key={grp.id || gIdx}
-                    className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between gap-2"
+                    className="p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-between gap-2"
                   >
                     <div className="flex items-center gap-2 flex-1">
-                      <span className="text-xs font-semibold text-blue-400 font-mono shrink-0">
+                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 font-mono shrink-0">
                         {gIdx + 1}.
                       </span>
                       <Input
@@ -1213,7 +1223,7 @@ export const TemplatesPage: React.FC = () => {
                           updated[gIdx].name = e.target.value
                           setEditGroups(updated)
                         }}
-                        className="bg-slate-900 border-slate-800 text-white text-xs h-7"
+                        className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs h-7"
                       />
                     </div>
 
@@ -1224,7 +1234,7 @@ export const TemplatesPage: React.FC = () => {
                         size="icon"
                         onClick={() => moveGroupOrderInModal(gIdx, 'up')}
                         disabled={gIdx === 0}
-                        className="h-7 w-7 text-slate-500 hover:text-white disabled:opacity-20"
+                        className="h-7 w-7 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20"
                       >
                         <ArrowUp className="w-3 h-3" />
                       </Button>
@@ -1234,7 +1244,7 @@ export const TemplatesPage: React.FC = () => {
                         size="icon"
                         onClick={() => moveGroupOrderInModal(gIdx, 'down')}
                         disabled={gIdx === editGroups.length - 1}
-                        className="h-7 w-7 text-slate-500 hover:text-white disabled:opacity-20"
+                        className="h-7 w-7 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20"
                       >
                         <ArrowDown className="w-3 h-3" />
                       </Button>
@@ -1243,7 +1253,7 @@ export const TemplatesPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => removeGroupInModal(gIdx)}
-                        className="h-7 w-7 text-slate-500 hover:text-red-400"
+                        className="h-7 w-7 text-slate-400 hover:text-red-500"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
@@ -1252,7 +1262,7 @@ export const TemplatesPage: React.FC = () => {
                 ))}
 
                 {editGroups.length === 0 && (
-                  <div className="text-center p-3 text-[11px] text-slate-500 bg-slate-950/60 rounded-lg border border-dashed border-slate-800">
+                  <div className="text-center p-3 text-[11px] text-slate-500 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-dashed border-slate-300 dark:border-slate-800">
                     Nenhum grupo criado. Os itens ficarão agrupados sob a seção "Geral".
                   </div>
                 )}
@@ -1260,9 +1270,9 @@ export const TemplatesPage: React.FC = () => {
             </div>
 
             {/* Template Items builder */}
-            <div className="space-y-3 pt-2 border-t border-slate-800">
+            <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Label className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5" /> Itens de Verificação ({editItems.length})
                 </Label>
                 <Button
@@ -1270,7 +1280,7 @@ export const TemplatesPage: React.FC = () => {
                   size="sm"
                   variant="outline"
                   onClick={addItemInModal}
-                  className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs h-7"
+                  className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs h-7"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar Item
                 </Button>
@@ -1313,11 +1323,11 @@ export const TemplatesPage: React.FC = () => {
                   return (
                     <div
                       key={item.id || idx}
-                      className="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-2"
+                      className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg space-y-2"
                     >
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                          <span className="text-xs font-semibold text-blue-400 font-mono shrink-0 min-w-[28px]">
+                          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 font-mono shrink-0 min-w-[28px]">
                             {itemNumberLabel}
                           </span>
                           {/* Group Selection for this item */}
@@ -1335,10 +1345,10 @@ export const TemplatesPage: React.FC = () => {
                               setEditItems(updated)
                             }}
                           >
-                            <SelectTrigger className="h-7 text-xs bg-slate-900 border-slate-800 text-slate-300 w-48">
+                            <SelectTrigger className="h-7 text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-300 w-48">
                               <SelectValue placeholder="Selecionar Grupo" />
                             </SelectTrigger>
-                            <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                               <SelectItem value="none">Geral (Sem grupo)</SelectItem>
                               {editGroups.map((g, grpIdx) => (
                                 <SelectItem key={g.id || grpIdx} value={g.id || ''}>
@@ -1356,10 +1366,10 @@ export const TemplatesPage: React.FC = () => {
                               setEditItems(updated)
                             }}
                           >
-                            <SelectTrigger className="h-7 text-xs bg-slate-900 border-slate-800 text-slate-300 w-36">
+                            <SelectTrigger className="h-7 text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-300 w-36">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                               <SelectItem value="conforme_nao_conforme">C / NC / NA</SelectItem>
                               <SelectItem value="sim_nao_na">Sim / Não / NA</SelectItem>
                               <SelectItem value="numero">Numérico</SelectItem>
@@ -1370,7 +1380,7 @@ export const TemplatesPage: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-1 text-[11px] text-red-400 cursor-pointer">
+                          <label className="flex items-center gap-1 text-[11px] text-red-500 dark:text-red-400 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={item.is_critical || false}
@@ -1379,7 +1389,7 @@ export const TemplatesPage: React.FC = () => {
                                 updated[idx].is_critical = e.target.checked
                                 setEditItems(updated)
                               }}
-                              className="rounded bg-slate-900 border-slate-800"
+                              className="rounded bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800"
                             />
                             Crítico
                           </label>
@@ -1389,7 +1399,7 @@ export const TemplatesPage: React.FC = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => removeItemInModal(idx)}
-                            className="h-7 w-7 text-slate-500 hover:text-red-400"
+                            className="h-7 w-7 text-slate-400 hover:text-red-500"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -1404,7 +1414,7 @@ export const TemplatesPage: React.FC = () => {
                           updated[idx].title = e.target.value
                           setEditItems(updated)
                         }}
-                        className="bg-slate-900 border-slate-800 text-white text-xs h-8"
+                        className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs h-8"
                       />
                     </div>
                   )
@@ -1417,7 +1427,7 @@ export const TemplatesPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="border-slate-800 bg-slate-950 text-slate-300 text-xs"
+              className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-xs"
             >
               Cancelar
             </Button>
@@ -1433,25 +1443,25 @@ export const TemplatesPage: React.FC = () => {
 
       {/* Modal: Create/Edit Single Group on Details View */}
       <Dialog open={isGroupModalOpen} onOpenChange={setIsGroupModalOpen}>
-        <DialogContent className="max-w-md bg-slate-900 border-slate-800 text-white">
+        <DialogContent className="max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <DialogHeader>
-            <DialogTitle className="text-white text-base">
+            <DialogTitle className="text-slate-900 dark:text-white text-base">
               {editingGroup ? 'Editar Grupo de Itens' : 'Novo Grupo de Itens'}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Nome do Grupo *</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">Nome do Grupo *</Label>
               <Input
                 value={groupNameInput}
                 onChange={(e) => setGroupNameInput(e.target.value)}
                 placeholder="Ex: Cabos de Aço, Acessórios de Içamento, Inspeção Visual"
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 autoFocus
               />
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
               O grupo organiza visualmente os itens do modelo em seções com cabeçalhos dedicados.
             </p>
           </div>
@@ -1460,7 +1470,7 @@ export const TemplatesPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setIsGroupModalOpen(false)}
-              className="border-slate-800 bg-slate-950 text-slate-300 text-xs"
+              className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-xs"
             >
               Cancelar
             </Button>
@@ -1476,21 +1486,21 @@ export const TemplatesPage: React.FC = () => {
 
       {/* Modal: Create/Edit Single Item on Details View */}
       <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-        <DialogContent className="max-w-lg bg-slate-900 border-slate-800 text-white">
+        <DialogContent className="max-w-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <DialogHeader>
-            <DialogTitle className="text-white text-base">
+            <DialogTitle className="text-slate-900 dark:text-white text-base">
               {editingItem ? 'Editar Item de Verificação' : 'Novo Item de Verificação'}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Grupo de Itens</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">Grupo de Itens</Label>
               <Select value={itemGroupInput} onValueChange={setItemGroupInput}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                   <SelectValue placeholder="Selecione o grupo" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                   <SelectItem value="none">Geral (Sem grupo específico)</SelectItem>
                   {templateGroups.map((grp, grpIdx) => (
                     <SelectItem key={grp.id} value={grp.id}>
@@ -1502,24 +1512,26 @@ export const TemplatesPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Título do Item *</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">Título do Item *</Label>
               <Input
                 value={itemTitleInput}
                 onChange={(e) => setItemTitleInput(e.target.value)}
                 placeholder="Ex: Inspeção visual de patolas e estabilização de solo"
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 autoFocus
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Tipo de Resposta *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Tipo de Resposta *
+                </Label>
                 <Select value={itemTypeInput} onValueChange={(val: any) => setItemTypeInput(val)}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                  <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                     <SelectItem value="conforme_nao_conforme">
                       Conforme / Não Conforme / NA
                     </SelectItem>
@@ -1532,22 +1544,22 @@ export const TemplatesPage: React.FC = () => {
               </div>
 
               <div className="space-y-2 pt-5">
-                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={itemMandatoryInput}
                     onChange={(e) => setItemMandatoryInput(e.target.checked)}
-                    className="rounded bg-slate-950 border-slate-800 text-blue-600"
+                    className="rounded bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-blue-600"
                   />
                   Preenchimento Obrigatório
                 </label>
 
-                <label className="flex items-center gap-2 text-xs text-red-400 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs text-red-500 dark:text-red-400 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={itemCriticalInput}
                     onChange={(e) => setItemCriticalInput(e.target.checked)}
-                    className="rounded bg-slate-950 border-slate-800 text-red-600"
+                    className="rounded bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-red-600"
                   />
                   Item Crítico (Reprova Operação)
                 </label>
@@ -1555,7 +1567,7 @@ export const TemplatesPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
                 Descrição / Instrução Adicional (Opcional)
               </Label>
               <Textarea
@@ -1563,7 +1575,7 @@ export const TemplatesPage: React.FC = () => {
                 onChange={(e) => setItemDescInput(e.target.value)}
                 rows={2}
                 placeholder="Ex: Verificar vazamento hidráulico nas mangueiras e cilindros..."
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
           </div>
@@ -1572,7 +1584,7 @@ export const TemplatesPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setIsItemModalOpen(false)}
-              className="border-slate-800 bg-slate-950 text-slate-300 text-xs"
+              className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-xs"
             >
               Cancelar
             </Button>

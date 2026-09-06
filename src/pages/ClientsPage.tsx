@@ -163,11 +163,11 @@ export const ClientsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Building2 className="w-6 h-6 text-blue-500" />
             Clientes e Canteiros de Obra
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Empresas contratantes para onde os guindastes e materiais são mobilizados.
           </p>
         </div>
@@ -183,14 +183,14 @@ export const ClientsPage: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
             placeholder="Buscar por Razão Social, Nome Fantasia, CNPJ ou Cidade..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-slate-950 border-slate-800 text-white text-xs"
+            className="pl-9 bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
           />
         </div>
       </div>
@@ -200,30 +200,30 @@ export const ClientsPage: React.FC = () => {
         {filtered.map((c) => (
           <Card
             key={c.id}
-            className="bg-slate-900 border-slate-800 hover:border-slate-700 transition"
+            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm"
           >
             <CardContent className="p-5 space-y-3">
               <div className="space-y-0.5">
                 <Badge
                   variant="outline"
-                  className="border-blue-500/40 text-blue-400 text-[10px] px-1.5 py-0"
+                  className="border-blue-500/40 text-blue-600 dark:text-blue-400 text-[10px] px-1.5 py-0"
                 >
                   {c.document ? `DOC: ${c.document}` : 'Cliente'}
                 </Badge>
-                <h3 className="font-bold text-white text-base leading-tight mt-1">
+                <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight mt-1">
                   {c.trade_name || c.name}
                 </h3>
                 {c.trade_name && c.trade_name !== c.name && (
-                  <p className="text-xs text-slate-400">{c.name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{c.name}</p>
                 )}
               </div>
 
-              <div className="space-y-1.5 text-xs text-slate-300 pt-1">
+              <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 pt-1">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500">Empresa:</span>
                   <Badge
                     variant="outline"
-                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                    className="text-[10px] bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-normal"
                   >
                     {companies.find((comp) => comp.id === c.company_id)?.trade_name ||
                       companies.find((comp) => comp.id === c.company_id)?.name ||
@@ -234,24 +234,26 @@ export const ClientsPage: React.FC = () => {
                 {c.contact_name && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Contato:</span>
-                    <span className="text-slate-200">{c.contact_name}</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-medium">
+                      {c.contact_name}
+                    </span>
                   </div>
                 )}
                 {c.phone && (
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <Phone className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <Phone className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                     <span>{c.phone}</span>
                   </div>
                 )}
                 {c.email && (
-                  <div className="flex items-center gap-1.5 text-slate-300 truncate">
-                    <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 truncate">
+                    <Mail className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                     <span className="truncate">{c.email}</span>
                   </div>
                 )}
                 {(c.city || c.address) && (
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                     <span className="truncate">
                       {c.address ? `${c.address}, ` : ''}
                       {c.city ? `${c.city}/${c.state}` : ''}
@@ -261,19 +263,19 @@ export const ClientsPage: React.FC = () => {
               </div>
 
               {c.notes && (
-                <p className="text-[11px] text-slate-400 bg-slate-950 p-2 rounded border border-slate-800 line-clamp-2">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800 line-clamp-2">
                   {c.notes}
                 </p>
               )}
 
               {(canEdit || canDelete) && (
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   {canEdit && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => openEditModal(c)}
-                      className="h-7 text-xs text-slate-300 hover:text-white"
+                      className="h-7 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     >
                       <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
                     </Button>
@@ -283,7 +285,7 @@ export const ClientsPage: React.FC = () => {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleDelete(c.id)}
-                      className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                      className="h-7 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -295,7 +297,7 @@ export const ClientsPage: React.FC = () => {
         ))}
 
         {filtered.length === 0 && (
-          <div className="col-span-full p-12 text-center text-slate-500 bg-slate-900 border border-slate-800 rounded-xl text-xs">
+          <div className="col-span-full p-12 text-center text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs">
             Nenhum cliente cadastrado.
           </div>
         )}
@@ -303,9 +305,9 @@ export const ClientsPage: React.FC = () => {
 
       {/* Modal: Add / Edit Client */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-lg">
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-white text-base">
+            <DialogTitle className="text-slate-900 dark:text-white text-base">
               {editingId ? 'Editar Cliente' : 'Cadastrar Cliente / Obra'}
             </DialogTitle>
           </DialogHeader>
@@ -320,98 +322,108 @@ export const ClientsPage: React.FC = () => {
             />
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Razão Social / Nome Completo *</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Razão Social / Nome Completo *
+              </Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Petrobras S/A - Refinaria RPBC"
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Nome Fantasia / Unidade</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Nome Fantasia / Unidade
+                </Label>
                 <Input
                   value={tradeName}
                   onChange={(e) => setTradeName(e.target.value)}
                   placeholder="Ex: Refinaria Cubatão"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">CPF ou CNPJ</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">CPF ou CNPJ</Label>
                 <Input
                   value={document}
                   onChange={(e) => setDocument(e.target.value)}
                   placeholder="Ex: 33.000.167/0001-01"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Contato Responsável</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Contato Responsável
+                </Label>
                 <Input
                   value={contactName}
                   onChange={(e) => setContactName(e.target.value)}
                   placeholder="Ex: Eng. Rafael"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Telefone</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Telefone</Label>
                 <Input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="(13) 3362-8000"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">E-mail</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">E-mail</Label>
                 <Input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="obras@empresa.com"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs text-slate-300">Endereço / Canteiro de Obras</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Endereço / Canteiro de Obras
+                </Label>
                 <Input
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Av. 9 de Abril, 777"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Cidade/UF</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Cidade/UF</Label>
                 <Input
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Cubatão/SP"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Requisitos Especiais de Rigging</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Requisitos Especiais de Rigging
+              </Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ex: Exige teste de carga e ART assinada."
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
           </div>
@@ -420,7 +432,7 @@ export const ClientsPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="border-slate-800 bg-slate-950 text-slate-300 text-xs"
+              className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
             >
               Cancelar
             </Button>

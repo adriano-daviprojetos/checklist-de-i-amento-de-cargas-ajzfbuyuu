@@ -174,11 +174,11 @@ export const MaterialsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Anchor className="w-6 h-6 text-blue-500" />
             Materiais & Acessórios de Rigging
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Controle de TAGs de cintas sintéticas, cabos de aço, manilhas, estropos, balancins e
             olhais.
           </p>
@@ -195,23 +195,23 @@ export const MaterialsPage: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 bg-slate-900 p-4 rounded-xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
             placeholder="Buscar por TAG, tipo ou fabricante..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-slate-950 border-slate-800 text-white text-xs"
+            className="pl-9 bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
           />
         </div>
 
         <div className="w-full sm:w-56">
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+            <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
               <SelectValue placeholder="Tipo de Material" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
               <SelectItem value="todos">Todos os Tipos</SelectItem>
               <SelectItem value="Cinta">Cinta Tubular / Plana</SelectItem>
               <SelectItem value="Cabos de Aço">Cabos de Aço / Lingadas</SelectItem>
@@ -231,15 +231,15 @@ export const MaterialsPage: React.FC = () => {
         {filtered.map((mat) => (
           <Card
             key={mat.id}
-            className="bg-slate-900 border-slate-800 hover:border-slate-700 transition"
+            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm"
           >
             <CardContent className="p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-0.5">
-                  <div className="font-mono text-xs font-bold text-blue-400 px-2 py-0.5 rounded bg-blue-950/60 border border-blue-900/40 inline-block">
+                  <div className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/40 inline-block">
                     TAG: {mat.tag}
                   </div>
-                  <h3 className="font-bold text-white text-base leading-tight mt-1">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight mt-1">
                     {mat.type} {mat.manufacturer ? `- ${mat.manufacturer}` : ''}
                   </h3>
                 </div>
@@ -247,20 +247,20 @@ export const MaterialsPage: React.FC = () => {
                   variant="outline"
                   className={`text-xs ${
                     mat.status === 'Disponível'
-                      ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/30'
-                      : 'border-amber-500/50 text-amber-400 bg-amber-950/30'
+                      ? 'border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30'
+                      : 'border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30'
                   }`}
                 >
                   {mat.status || 'Disponível'}
                 </Badge>
               </div>
 
-              <div className="space-y-1.5 text-xs text-slate-300 pt-1">
+              <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 pt-1">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500">Empresa:</span>
                   <Badge
                     variant="outline"
-                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                    className="text-[10px] bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-normal"
                   >
                     {companies.find((c) => c.id === mat.company_id)?.trade_name ||
                       companies.find((c) => c.id === mat.company_id)?.name ||
@@ -270,36 +270,42 @@ export const MaterialsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Capacidade (WLL):</span>
-                  <span className="font-semibold text-emerald-400">{mat.capacity}</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    {mat.capacity}
+                  </span>
                 </div>
                 {mat.diameter_or_length && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Dimensão / Comprimento:</span>
-                    <span>{mat.diameter_or_length}</span>
+                    <span className="text-slate-800 dark:text-slate-200">
+                      {mat.diameter_or_length}
+                    </span>
                   </div>
                 )}
                 {mat.model && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Especificação:</span>
-                    <span className="text-slate-300 truncate max-w-[150px]">{mat.model}</span>
+                    <span className="text-slate-700 dark:text-slate-300 truncate max-w-[150px]">
+                      {mat.model}
+                    </span>
                   </div>
                 )}
               </div>
 
               {mat.notes && (
-                <p className="text-[11px] text-slate-400 bg-slate-950 p-2 rounded border border-slate-800 line-clamp-2">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800 line-clamp-2">
                   {mat.notes}
                 </p>
               )}
 
               {(canEdit || canDelete) && (
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   {canEdit && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => openEditModal(mat)}
-                      className="h-7 text-xs text-slate-300 hover:text-white"
+                      className="h-7 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     >
                       <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
                     </Button>
@@ -309,7 +315,7 @@ export const MaterialsPage: React.FC = () => {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleDelete(mat.id)}
-                      className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                      className="h-7 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -321,7 +327,7 @@ export const MaterialsPage: React.FC = () => {
         ))}
 
         {filtered.length === 0 && (
-          <div className="col-span-full p-12 text-center text-slate-500 bg-slate-900 border border-slate-800 rounded-xl text-xs">
+          <div className="col-span-full p-12 text-center text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs">
             Nenhum material de rigging cadastrado.
           </div>
         )}
@@ -329,9 +335,9 @@ export const MaterialsPage: React.FC = () => {
 
       {/* Modal: Add / Edit Material */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-lg">
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-white text-base">
+            <DialogTitle className="text-slate-900 dark:text-white text-base">
               {editingId ? 'Editar Material de Içamento' : 'Cadastrar Acessório / TAG de Rigging'}
             </DialogTitle>
           </DialogHeader>
@@ -347,12 +353,14 @@ export const MaterialsPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Tipo de Acessório *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Tipo de Acessório *
+                </Label>
                 <Select value={type} onValueChange={(val: any) => setType(val)}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                  <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                     <SelectItem value="Cinta">Cinta</SelectItem>
                     <SelectItem value="Cabos de Aço">Cabos de Aço</SelectItem>
                     <SelectItem value="Manilhas">Manilhas</SelectItem>
@@ -367,34 +375,38 @@ export const MaterialsPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">TAG / Identificador Físico *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  TAG / Identificador Físico *
+                </Label>
                 <Input
                   value={tag}
                   onChange={(e) => setTag(e.target.value)}
                   placeholder="Ex: CIN-014-10T"
-                  className="bg-slate-950 border-slate-800 text-white text-xs font-mono"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Capacidade Limite (WLL) *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Capacidade Limite (WLL) *
+                </Label>
                 <Input
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
                   placeholder="Ex: 10 Toneladas (Fator 7:1)"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Status *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Status *</Label>
                 <Select value={status} onValueChange={(val: any) => setStatus(val)}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                  <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                     <SelectItem value="Disponível">Disponível</SelectItem>
                     <SelectItem value="Em Uso">Em Uso</SelectItem>
                     <SelectItem value="Em Inspeção">Em Inspeção</SelectItem>
@@ -407,43 +419,49 @@ export const MaterialsPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Fabricante</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Fabricante</Label>
                 <Input
                   value={manufacturer}
                   onChange={(e) => setManufacturer(e.target.value)}
                   placeholder="Ex: Crosby, Gunnebo, Tecnotextil"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Dimensão / Comprimento</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Dimensão / Comprimento
+                </Label>
                 <Input
                   value={diameterOrLength}
                   onChange={(e) => setDiameterOrLength(e.target.value)}
                   placeholder="Ex: 6.0m ou 1.1/2 pol"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Modelo / Especificação Técnica</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Modelo / Especificação Técnica
+              </Label>
               <Input
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="Ex: Manilha Curva com Porca e Cupilha G-2130"
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Observações / Certificado</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Observações / Certificado
+              </Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ex: Certificado emitido em 02/2025."
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
           </div>
@@ -452,13 +470,13 @@ export const MaterialsPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="border-slate-800 bg-slate-950 text-slate-300 text-xs"
+              className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleSave}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
             >
               Salvar Acessório
             </Button>

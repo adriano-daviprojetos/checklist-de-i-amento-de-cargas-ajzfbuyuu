@@ -210,7 +210,7 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
             type="button"
             variant="outline"
             onClick={onClose}
-            disabled={isSaving}
+            disabled={saving}
             className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
           >
             Voltar à Edição

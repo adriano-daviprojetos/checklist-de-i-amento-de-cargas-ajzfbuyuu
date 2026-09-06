@@ -145,11 +145,11 @@ export const ProfilePage: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
           <User className="w-6 h-6 text-blue-500" />
           Meu Perfil
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Visualize seus dados cadastrais e gerencie suas credenciais de segurança.
         </p>
       </div>
@@ -157,14 +157,14 @@ export const ProfilePage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* User Information Card */}
         <div className="md:col-span-5 space-y-4">
-          <Card className="bg-slate-900 border-slate-800 text-white">
-            <CardHeader className="pb-4 border-b border-slate-800/80">
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white shadow-sm">
+            <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800/80">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg font-bold">
+                <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-lg font-bold">
                   {user?.name ? user.name.charAt(0).toUpperCase() : <User className="w-6 h-6" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <CardTitle className="text-base text-white truncate">
+                  <CardTitle className="text-base text-slate-900 dark:text-white truncate">
                     {user?.name || 'Usuário Autenticado'}
                   </CardTitle>
                   <div className="mt-1">
@@ -181,51 +181,53 @@ export const ProfilePage: React.FC = () => {
             </CardHeader>
             <CardContent className="pt-4 space-y-4 text-xs">
               <div className="space-y-1">
-                <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-                  <Mail className="w-3.5 h-3.5 text-slate-500" />
+                <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                  <Mail className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                   E-mail de Login
                 </span>
-                <p className="text-slate-200 font-medium pl-5 break-all">
+                <p className="text-slate-800 dark:text-slate-200 font-medium pl-5 break-all">
                   {user?.email || 'Não informado'}
                 </p>
               </div>
 
               <div className="space-y-1">
-                <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-                  <Building className="w-3.5 h-3.5 text-slate-500" />
+                <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                  <Building className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                   Empresa Vinculada
                 </span>
-                <p className="text-slate-200 font-medium pl-5">
+                <p className="text-slate-800 dark:text-slate-200 font-medium pl-5">
                   {company?.trade_name || company?.name || 'Empresa Padrão'}
                 </p>
                 {company?.cnpj && (
-                  <p className="text-[11px] text-slate-400 pl-5">CNPJ: {company.cnpj}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 pl-5">
+                    CNPJ: {company.cnpj}
+                  </p>
                 )}
               </div>
 
               {user?.cpf && (
                 <div className="space-y-1">
-                  <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-                    <CreditCard className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                    <CreditCard className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                     CPF (Login Alternativo)
                   </span>
-                  <p className="text-slate-200 font-mono pl-5">{user.cpf}</p>
+                  <p className="text-slate-800 dark:text-slate-200 font-mono pl-5">{user.cpf}</p>
                 </div>
               )}
 
               {user?.phone && (
                 <div className="space-y-1">
-                  <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-                    <Phone className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                    <Phone className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                     Telefone / WhatsApp
                   </span>
-                  <p className="text-slate-200 pl-5">{user.phone}</p>
+                  <p className="text-slate-800 dark:text-slate-200 pl-5">{user.phone}</p>
                 </div>
               )}
 
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                 <span>Status da Conta:</span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> Ativo
                 </span>
               </div>
@@ -233,12 +235,12 @@ export const ProfilePage: React.FC = () => {
           </Card>
 
           {/* Security Notice Card */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 text-xs space-y-2">
-            <div className="flex items-center gap-2 text-slate-300 font-medium">
-              <Lock className="w-4 h-4 text-blue-400" />
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-xs space-y-2">
+            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-300 font-medium">
+              <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
               Recomendações de Segurança
             </div>
-            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-400">
+            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-600 dark:text-slate-400">
               <li>Use uma senha forte com no mínimo 8 caracteres.</li>
               <li>Não compartilhe sua senha com outros operadores ou colegas.</li>
               <li>Altere sua senha periodicamente para manter a conta segura.</li>
@@ -248,13 +250,13 @@ export const ProfilePage: React.FC = () => {
 
         {/* Change Password Form */}
         <div className="md:col-span-7">
-          <Card className="bg-slate-900 border-slate-800 text-white">
-            <CardHeader className="border-b border-slate-800/80">
-              <CardTitle className="text-base text-white flex items-center gap-2">
-                <KeyRound className="w-5 h-5 text-amber-400" />
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white shadow-sm">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800/80">
+              <CardTitle className="text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-amber-500" />
                 Alterar Senha
               </CardTitle>
-              <CardDescription className="text-xs text-slate-400">
+              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
                 Preencha os campos abaixo para redefinir sua senha de acesso ao sistema.
               </CardDescription>
             </CardHeader>
@@ -264,7 +266,7 @@ export const ProfilePage: React.FC = () => {
                 {errorMessage && (
                   <Alert
                     variant="destructive"
-                    className="bg-red-950/40 border-red-800/60 text-red-300 py-2.5"
+                    className="bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 py-2.5"
                   >
                     <AlertCircle className="w-4 h-4" />
                     <AlertTitle className="text-xs font-semibold">
@@ -275,8 +277,8 @@ export const ProfilePage: React.FC = () => {
                 )}
 
                 {successMessage && (
-                  <Alert className="bg-emerald-950/40 border-emerald-800/60 text-emerald-300 py-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <Alert className="bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 py-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <AlertTitle className="text-xs font-semibold">Sucesso</AlertTitle>
                     <AlertDescription className="text-xs">{successMessage}</AlertDescription>
                   </Alert>
@@ -284,7 +286,10 @@ export const ProfilePage: React.FC = () => {
 
                 {/* Senha Atual */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="old-password" className="text-xs text-slate-300">
+                  <Label
+                    htmlFor="old-password"
+                    className="text-xs text-slate-700 dark:text-slate-300"
+                  >
                     Senha Atual *
                   </Label>
                   <div className="relative">
@@ -295,13 +300,13 @@ export const ProfilePage: React.FC = () => {
                       onChange={(e) => setOldPassword(e.target.value)}
                       placeholder="Digite sua senha atual"
                       disabled={isSubmitting}
-                      className="bg-slate-950 border-slate-800 text-white text-xs pr-10 focus:border-blue-500"
+                      className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs pr-10 focus:border-blue-500"
                       autoComplete="current-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowOldPassword(!showOldPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                       tabIndex={-1}
                       title={showOldPassword ? 'Ocultar senha' : 'Exibir senha'}
                     >
@@ -316,7 +321,10 @@ export const ProfilePage: React.FC = () => {
 
                 {/* Nova Senha */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="new-password" className="text-xs text-slate-300">
+                  <Label
+                    htmlFor="new-password"
+                    className="text-xs text-slate-700 dark:text-slate-300"
+                  >
                     Nova Senha *
                   </Label>
                   <div className="relative">
@@ -327,13 +335,13 @@ export const ProfilePage: React.FC = () => {
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Mínimo de 8 caracteres"
                       disabled={isSubmitting}
-                      className="bg-slate-950 border-slate-800 text-white text-xs pr-10 focus:border-blue-500"
+                      className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs pr-10 focus:border-blue-500"
                       autoComplete="new-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                       tabIndex={-1}
                       title={showNewPassword ? 'Ocultar senha' : 'Exibir senha'}
                     >
@@ -344,14 +352,17 @@ export const ProfilePage: React.FC = () => {
                       )}
                     </button>
                   </div>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     A senha deve ter no mínimo 8 caracteres.
                   </p>
                 </div>
 
                 {/* Confirmar Nova Senha */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="confirm-password" className="text-xs text-slate-300">
+                  <Label
+                    htmlFor="confirm-password"
+                    className="text-xs text-slate-700 dark:text-slate-300"
+                  >
                     Confirmar Nova Senha *
                   </Label>
                   <div className="relative">
@@ -362,7 +373,7 @@ export const ProfilePage: React.FC = () => {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Repita a nova senha"
                       disabled={isSubmitting}
-                      className={`bg-slate-950 border-slate-800 text-white text-xs pr-10 focus:border-blue-500 ${
+                      className={`bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs pr-10 focus:border-blue-500 ${
                         confirmPassword && newPassword !== confirmPassword
                           ? 'border-red-500 focus:border-red-500'
                           : ''
@@ -372,7 +383,7 @@ export const ProfilePage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                       tabIndex={-1}
                       title={showConfirmPassword ? 'Ocultar senha' : 'Exibir senha'}
                     >
@@ -384,16 +395,16 @@ export const ProfilePage: React.FC = () => {
                     </button>
                   </div>
                   {confirmPassword && newPassword !== confirmPassword && (
-                    <p className="text-[11px] text-red-400">As senhas não coincidem.</p>
+                    <p className="text-[11px] text-red-500">As senhas não coincidem.</p>
                   )}
                   {confirmPassword && newPassword === confirmPassword && (
-                    <p className="text-[11px] text-emerald-400 flex items-center gap-1">
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" /> As senhas coincidem.
                     </p>
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-slate-800/80 flex items-center justify-end gap-3">
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end gap-3">
                   <Button
                     type="button"
                     variant="ghost"
@@ -405,7 +416,7 @@ export const ProfilePage: React.FC = () => {
                       setSuccessMessage(null)
                     }}
                     disabled={isSubmitting || (!oldPassword && !newPassword && !confirmPassword)}
-                    className="text-xs text-slate-400 hover:text-white"
+                    className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   >
                     Limpar
                   </Button>

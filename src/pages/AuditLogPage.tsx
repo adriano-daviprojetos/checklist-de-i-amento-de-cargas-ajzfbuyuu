@@ -254,15 +254,15 @@ export const AuditLogPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
             <ScrollText className="w-6 h-6 text-blue-500" />
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Log de Auditoria e Segurança
             </h1>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Rastreamento de acessos negados, modificações de permissão e exclusões de recursos.
           </p>
         </div>
@@ -273,10 +273,10 @@ export const AuditLogPage: React.FC = () => {
             size="sm"
             onClick={handleRefresh}
             disabled={loading}
-            className="border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white text-xs h-9"
+            className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white text-xs h-9"
           >
             <RefreshCw
-              className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin text-blue-400' : ''}`}
+              className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin text-blue-500 dark:text-blue-400' : ''}`}
             />
             Atualizar
           </Button>
@@ -284,10 +284,10 @@ export const AuditLogPage: React.FC = () => {
       </div>
 
       {/* Filters Card */}
-      <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-sm">
+      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 shadow-sm">
         <CardHeader className="pb-3 pt-4 px-4">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-200">
-            <Filter className="w-4 h-4 text-blue-400" />
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-800 dark:text-slate-200">
+            <Filter className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             Filtros de Busca
           </CardTitle>
         </CardHeader>
@@ -295,26 +295,30 @@ export const AuditLogPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             {/* Quick search */}
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-400">Buscar por termo</label>
+              <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                Buscar por termo
+              </label>
               <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-500" />
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 dark:text-slate-500" />
                 <Input
                   placeholder="Usuário, detalhes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 bg-slate-950 border-slate-800 text-xs h-8 text-slate-200 placeholder:text-slate-600"
+                  className="pl-8 bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-xs h-8 text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
                 />
               </div>
             </div>
 
             {/* Action Type */}
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-400">Tipo de Ação</label>
+              <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                Tipo de Ação
+              </label>
               <Select value={actionFilter} onValueChange={(val) => setActionFilter(val)}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-xs h-8 text-slate-200">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-xs h-8 text-slate-800 dark:text-slate-200">
                   <SelectValue placeholder="Todas as ações" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                   <SelectItem value="all">Todas as ações</SelectItem>
                   <SelectItem value="access_denied">Acesso Negado</SelectItem>
                   <SelectItem value="permission_changed">Permissão Alterada</SelectItem>
@@ -331,12 +335,14 @@ export const AuditLogPage: React.FC = () => {
 
             {/* Module Filter */}
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-400">Módulo</label>
+              <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                Módulo
+              </label>
               <Select value={moduleFilter} onValueChange={(val) => setModuleFilter(val)}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-xs h-8 text-slate-200">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-xs h-8 text-slate-800 dark:text-slate-200">
                   <SelectValue placeholder="Todos os módulos" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 text-xs">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                   <SelectItem value="all">Todos os módulos</SelectItem>
                   <SelectItem value="checklists">Checklists</SelectItem>
                   <SelectItem value="templates">Modelos de Inspeção</SelectItem>
@@ -352,20 +358,22 @@ export const AuditLogPage: React.FC = () => {
 
             {/* Date Range */}
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-slate-400">Período (De - Até)</label>
+              <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                Período (De - Até)
+              </label>
               <div className="flex items-center gap-1.5">
                 <Input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-[11px] h-8 text-slate-200 px-2"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-[11px] h-8 text-slate-800 dark:text-slate-200 px-2"
                 />
-                <span className="text-slate-500 text-xs">-</span>
+                <span className="text-slate-400 dark:text-slate-500 text-xs">-</span>
                 <Input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-[11px] h-8 text-slate-200 px-2"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-[11px] h-8 text-slate-800 dark:text-slate-200 px-2"
                 />
               </div>
             </div>
@@ -381,7 +389,7 @@ export const AuditLogPage: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleClearFilters}
-                className="text-xs h-7 text-slate-400 hover:text-slate-200"
+                className="text-xs h-7 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               >
                 Limpar filtros
               </Button>
@@ -391,40 +399,46 @@ export const AuditLogPage: React.FC = () => {
       </Card>
 
       {/* Logs Table Card */}
-      <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="text-xs text-slate-400">
-            Exibindo <span className="font-semibold text-slate-200">{displayedLogs.length}</span> de{' '}
-            <span className="font-semibold text-slate-200">{totalItems}</span> registros encontrados
+      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Exibindo{' '}
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
+              {displayedLogs.length}
+            </span>{' '}
+            de{' '}
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{totalItems}</span>{' '}
+            registros encontrados
           </div>
           {totalPages > 1 && (
-            <div className="text-xs text-slate-400">
-              Página <span className="font-semibold text-slate-200">{page}</span> de{' '}
-              <span className="font-semibold text-slate-200">{totalPages}</span>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Página{' '}
+              <span className="font-semibold text-slate-800 dark:text-slate-200">{page}</span> de{' '}
+              <span className="font-semibold text-slate-800 dark:text-slate-200">{totalPages}</span>
             </div>
           )}
         </div>
 
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader className="bg-slate-950/60 border-b border-slate-800">
-              <TableRow className="border-slate-800 hover:bg-transparent">
-                <TableHead className="text-slate-400 text-xs font-semibold py-3 w-[180px]">
+            <TableHeader className="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800">
+              <TableRow className="border-slate-200 dark:border-slate-800 hover:bg-transparent">
+                <TableHead className="text-slate-500 dark:text-slate-400 text-xs font-semibold py-3 w-[180px]">
                   Data / Hora
                 </TableHead>
-                <TableHead className="text-slate-400 text-xs font-semibold py-3 w-[180px]">
+                <TableHead className="text-slate-500 dark:text-slate-400 text-xs font-semibold py-3 w-[180px]">
                   Usuário
                 </TableHead>
-                <TableHead className="text-slate-400 text-xs font-semibold py-3 w-[190px]">
+                <TableHead className="text-slate-500 dark:text-slate-400 text-xs font-semibold py-3 w-[190px]">
                   Ação
                 </TableHead>
-                <TableHead className="text-slate-400 text-xs font-semibold py-3 w-[140px]">
+                <TableHead className="text-slate-500 dark:text-slate-400 text-xs font-semibold py-3 w-[140px]">
                   Módulo
                 </TableHead>
-                <TableHead className="text-slate-400 text-xs font-semibold py-3">
+                <TableHead className="text-slate-500 dark:text-slate-400 text-xs font-semibold py-3">
                   Detalhes do Evento
                 </TableHead>
-                <TableHead className="text-slate-400 text-xs font-semibold py-3 text-right w-[80px]">
+                <TableHead className="text-slate-500 dark:text-slate-400 text-xs font-semibold py-3 text-right w-[80px]">
                   Info
                 </TableHead>
               </TableRow>
@@ -443,11 +457,11 @@ export const AuditLogPage: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12 text-slate-500">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <ScrollText className="w-8 h-8 text-slate-600" />
-                      <span className="text-sm font-medium text-slate-400">
+                      <ScrollText className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
                         Nenhum registro de auditoria encontrado
                       </span>
-                      <span className="text-xs text-slate-600">
+                      <span className="text-xs text-slate-400 dark:text-slate-600">
                         Os eventos operacionais e tentativas de acesso negado aparecerão aqui.
                       </span>
                     </div>
@@ -457,18 +471,18 @@ export const AuditLogPage: React.FC = () => {
                 displayedLogs.map((log) => (
                   <TableRow
                     key={log.id}
-                    className="border-slate-800 hover:bg-slate-800/40 transition-colors cursor-pointer group text-xs"
+                    className="border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group text-xs"
                     onClick={() => setSelectedLog(log)}
                   >
-                    <TableCell className="text-slate-400 py-3 font-mono whitespace-nowrap">
+                    <TableCell className="text-slate-600 dark:text-slate-400 py-3 font-mono whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-slate-500" />
+                        <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                         {formatDate(log.created)}
                       </div>
                     </TableCell>
 
                     <TableCell className="py-3">
-                      <div className="flex items-center gap-1.5 font-medium text-slate-200">
+                      <div className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
                         <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span className="truncate max-w-[150px]">{log.user_name || 'Sistema'}</span>
                       </div>
@@ -479,13 +493,13 @@ export const AuditLogPage: React.FC = () => {
                     <TableCell className="py-3">
                       <Badge
                         variant="outline"
-                        className="bg-slate-950 text-slate-300 border-slate-700 text-[10px]"
+                        className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 text-[10px]"
                       >
                         {getModuleLabel(log.module)}
                       </Badge>
                     </TableCell>
 
-                    <TableCell className="py-3 text-slate-300">
+                    <TableCell className="py-3 text-slate-700 dark:text-slate-300">
                       <span className="line-clamp-2">
                         {log.details || 'Sem detalhes informados'}
                       </span>
@@ -495,7 +509,7 @@ export const AuditLogPage: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-white group-hover:bg-slate-700/50"
+                        className="h-7 w-7 text-slate-400 hover:text-slate-900 dark:hover:text-white group-hover:bg-slate-200/50 dark:group-hover:bg-slate-700/50"
                         onClick={(e) => {
                           e.stopPropagation()
                           setSelectedLog(log)
@@ -513,8 +527,8 @@ export const AuditLogPage: React.FC = () => {
 
         {/* Pagination controls */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-800 flex items-center justify-between bg-slate-950/40">
-            <div className="text-xs text-slate-400">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/40">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               Página {page} de {totalPages} ({totalItems} total)
             </div>
             <div className="flex items-center gap-2">
@@ -523,7 +537,7 @@ export const AuditLogPage: React.FC = () => {
                 size="sm"
                 onClick={() => loadLogs(page - 1)}
                 disabled={page <= 1 || loading}
-                className="h-8 border-slate-800 bg-slate-900 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="h-8 border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Anterior
@@ -533,7 +547,7 @@ export const AuditLogPage: React.FC = () => {
                 size="sm"
                 onClick={() => loadLogs(page + 1)}
                 disabled={page >= totalPages || loading}
-                className="h-8 border-slate-800 bg-slate-900 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="h-8 border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
               >
                 Próximo
                 <ChevronRight className="w-4 h-4 ml-1" />
@@ -545,25 +559,28 @@ export const AuditLogPage: React.FC = () => {
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 sm:max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 sm:max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-white">
-              <ScrollText className="w-5 h-5 text-blue-400" />
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+              <ScrollText className="w-5 h-5 text-blue-500 dark:text-blue-400" />
               Detalhes do Registro de Auditoria
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400">
-              ID do Log: <span className="font-mono text-slate-300">{selectedLog?.id}</span>
+            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
+              ID do Log:{' '}
+              <span className="font-mono text-slate-700 dark:text-slate-300">
+                {selectedLog?.id}
+              </span>
             </DialogDescription>
           </DialogHeader>
 
           {selectedLog && (
             <div className="space-y-4 pt-2 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-950 rounded-lg border border-slate-800/80">
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800/80">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">
                     Data e Hora
                   </span>
-                  <span className="font-mono text-slate-200">
+                  <span className="font-mono text-slate-800 dark:text-slate-200">
                     {formatDate(selectedLog.created)}
                   </span>
                 </div>
@@ -577,7 +594,7 @@ export const AuditLogPage: React.FC = () => {
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">
                     Usuário
                   </span>
-                  <span className="text-slate-200 font-medium">
+                  <span className="text-slate-800 dark:text-slate-200 font-medium">
                     {selectedLog.user_name || 'Sistema'}
                   </span>
                 </div>
@@ -585,27 +602,27 @@ export const AuditLogPage: React.FC = () => {
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">
                     Módulo Afetado
                   </span>
-                  <span className="text-slate-200 font-medium">
+                  <span className="text-slate-800 dark:text-slate-200 font-medium">
                     {getModuleLabel(selectedLog.module)}
                   </span>
                 </div>
               </div>
 
               <div>
-                <span className="text-[11px] font-semibold text-slate-400 block mb-1">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-400 block mb-1">
                   Descrição Completa
                 </span>
-                <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-slate-200 leading-relaxed">
+                <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 leading-relaxed">
                   {selectedLog.details || 'Sem descrição'}
                 </div>
               </div>
 
               {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-400 block mb-1">
+                  <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-400 block mb-1">
                     Metadados Estruturados (JSON)
                   </span>
-                  <pre className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 font-mono text-[11px] overflow-x-auto max-h-60">
+                  <pre className="p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 font-mono text-[11px] overflow-x-auto max-h-60">
                     {JSON.stringify(selectedLog.metadata, null, 2)}
                   </pre>
                 </div>
@@ -616,7 +633,7 @@ export const AuditLogPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setSelectedLog(null)}
-                  className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700 text-xs"
+                  className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 text-xs"
                 >
                   Fechar
                 </Button>

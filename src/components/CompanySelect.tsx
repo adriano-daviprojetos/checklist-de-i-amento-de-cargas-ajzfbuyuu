@@ -65,13 +65,14 @@ export const CompanySelect: React.FC<CompanySelectProps> = ({
   return (
     <div className={`space-y-1.5 ${className}`}>
       <div className="flex items-center justify-between">
-        <Label className="text-xs text-slate-300 flex items-center gap-1.5 font-medium">
-          <Building2 className="w-3.5 h-3.5 text-blue-400" />
-          {label} {required && <span className="text-red-400">*</span>}
+        <Label className="text-xs text-slate-700 dark:text-slate-300 flex items-center gap-1.5 font-medium">
+          <Building2 className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+          {label} {required && <span className="text-red-500 dark:text-red-400">*</span>}
         </Label>
         {!isAdmin && (
-          <span className="text-[10px] text-slate-400 flex items-center gap-1">
-            <Lock className="w-2.5 h-2.5 text-slate-500" /> Vinculado ao seu perfil
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+            <Lock className="w-2.5 h-2.5 text-slate-400 dark:text-slate-500" /> Vinculado ao seu
+            perfil
           </span>
         )}
       </div>
@@ -82,22 +83,26 @@ export const CompanySelect: React.FC<CompanySelectProps> = ({
         disabled={isSelectDisabled || loading}
       >
         <SelectTrigger
-          className={`bg-slate-950 border-slate-800 text-slate-200 text-xs w-full ${
-            isSelectDisabled ? 'opacity-90 bg-slate-900 cursor-not-allowed text-slate-300' : ''
+          className={`bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs w-full ${
+            isSelectDisabled ? 'opacity-80 cursor-not-allowed' : ''
           }`}
         >
-          <SelectValue placeholder={loading ? 'Carregando empresas...' : 'Selecione a empresa'} />
+          <SelectValue placeholder={loading ? 'Carregando empresas...' : 'Selecione uma empresa'} />
         </SelectTrigger>
-        <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-60">
+        <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 max-h-60">
           {companies.map((c) => (
             <SelectItem key={c.id} value={c.id} className="text-xs">
               <div className="flex flex-col text-left py-0.5">
-                <span className="font-semibold text-slate-100">{c.trade_name || c.name}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {c.trade_name || c.name}
+                </span>
                 {c.trade_name && c.trade_name !== c.name && (
-                  <span className="text-[10px] text-slate-400">{c.name}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{c.name}</span>
                 )}
                 {c.cnpj && (
-                  <span className="text-[10px] text-slate-500 font-mono">CNPJ: {c.cnpj}</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                    CNPJ: {c.cnpj}
+                  </span>
                 )}
               </div>
             </SelectItem>
@@ -105,14 +110,16 @@ export const CompanySelect: React.FC<CompanySelectProps> = ({
         </SelectContent>
       </Select>
 
-      {description && <p className="text-[11px] text-slate-400">{description}</p>}
-      {!description && currentSelectedCompany && (
-        <p className="text-[10px] text-slate-500 truncate">
-          Empresa:{' '}
-          <span className="text-slate-400 font-medium">
+      {description && (
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">{description}</p>
+      )}
+      {currentSelectedCompany && (
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+          Ativo para:{' '}
+          <span className="text-slate-700 dark:text-slate-300 font-medium">
             {currentSelectedCompany.trade_name || currentSelectedCompany.name}
           </span>
-          {currentSelectedCompany.cnpj ? ` • CNPJ: ${currentSelectedCompany.cnpj}` : ''}
+          {currentSelectedCompany.cnpj && ` • CNPJ: ${currentSelectedCompany.cnpj}`}
         </p>
       )}
     </div>

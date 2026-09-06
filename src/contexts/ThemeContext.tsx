@@ -32,11 +32,13 @@ export const getInitialTheme = (): Theme => {
   return 'dark'
 }
 
-export const applyThemeToDocument = (theme: Theme) => {
+export const applyThemeToDocument = (theme: Theme, isInitial = false) => {
   const root = document.documentElement
 
-  // Adiciona classe para transição suave de cores
-  root.classList.add('theme-transitioning')
+  // Adiciona classe para transição suave de cores apenas em trocas interativas (evita transição ao carregar)
+  if (!isInitial) {
+    root.classList.add('theme-transitioning')
+  }
 
   if (theme === 'dark') {
     root.classList.add('dark')
@@ -46,18 +48,19 @@ export const applyThemeToDocument = (theme: Theme) => {
     root.style.colorScheme = 'light'
   }
 
-  // Remove a classe de transição após o término
-  window.setTimeout(() => {
-    root.classList.remove('theme-transitioning')
-  }, 350)
+  // Remove a classe de transição após o término (~300ms)
+  if (!isInitial) {
+    window.setTimeout(() => {
+      root.classList.remove('theme-transitioning')
+    }, 300)
+  }
 }
-
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => getInitialTheme())
 
   useEffect(() => {
-    // Sincroniza estado inicial com elemento <html>
-    applyThemeToDocument(theme)
+    // Sincroniza estado inicial com elemento <html> sem disparar transição inicial
+    applyThemeToDocument(theme, true)
   }, [])
 
   const setTheme = (newTheme: Theme) => {

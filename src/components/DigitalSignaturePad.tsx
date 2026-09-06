@@ -316,15 +316,15 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
 
         {/* Info & Action Bar below canvas */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 text-xs">
-          <div className="text-slate-400 space-y-0.5">
+          <div className="text-slate-500 dark:text-slate-400 space-y-0.5">
             {signerName && (
               <div>
                 <span className="text-slate-500">Signatário:</span>{' '}
-                <strong className="text-slate-200">{signerName}</strong>
+                <strong className="text-slate-800 dark:text-slate-200">{signerName}</strong>
               </div>
             )}
             {date && (
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-slate-400 dark:text-slate-500">
                 Data / Hora:{' '}
                 {date instanceof Date
                   ? date.toLocaleString('pt-BR')
@@ -342,7 +342,7 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
                 size="sm"
                 onClick={clearCanvas}
                 disabled={!hasDrawn && !isFinalized}
-                className="h-8 px-2.5 text-xs border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="h-8 px-2.5 text-xs border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1 text-slate-400" />
                 Limpar
@@ -355,9 +355,9 @@ export const DigitalSignaturePad = forwardRef<DigitalSignaturePadRef, DigitalSig
                   variant="outline"
                   size="sm"
                   onClick={handleEditSignature}
-                  className="h-8 px-3 text-xs border-blue-600/60 bg-blue-950/40 text-blue-300 hover:bg-blue-900/60 hover:text-white"
+                  className="h-8 px-3 text-xs border-blue-300 dark:border-blue-600/60 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 hover:text-blue-900 dark:hover:text-white"
                 >
-                  <Edit3 className="w-3.5 h-3.5 mr-1 text-blue-400" />
+                  <Edit3 className="w-3.5 h-3.5 mr-1 text-blue-500 dark:text-blue-400" />
                   Continuar Desenhando
                 </Button>
               ) : (

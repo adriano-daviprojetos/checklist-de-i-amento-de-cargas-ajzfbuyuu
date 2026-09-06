@@ -237,10 +237,10 @@ export const EquipmentPage: React.FC = () => {
             <CardContent className="p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1">
-                  <Badge className="bg-blue-950 text-blue-400 border border-blue-800 text-[10px]">
+                  <Badge className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[10px]">
                     {eq.type}
                   </Badge>
-                  <h3 className="font-bold text-white text-base leading-tight">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight">
                     {eq.manufacturer} {eq.model}
                   </h3>
                 </div>
@@ -248,20 +248,20 @@ export const EquipmentPage: React.FC = () => {
                   variant="outline"
                   className={`text-xs ${
                     eq.status === 'Operacional'
-                      ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/30'
-                      : 'border-amber-500/50 text-amber-400 bg-amber-950/30'
+                      ? 'border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30'
+                      : 'border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30'
                   }`}
                 >
                   {eq.status || 'Operacional'}
                 </Badge>
               </div>
 
-              <div className="space-y-1.5 text-xs text-slate-300 pt-1">
+              <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 pt-1">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500">Empresa:</span>
                   <Badge
                     variant="outline"
-                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                    className="text-[10px] bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-normal"
                   >
                     {companies.find((c) => c.id === eq.company_id)?.trade_name ||
                       companies.find((c) => c.id === eq.company_id)?.name ||
@@ -271,38 +271,44 @@ export const EquipmentPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Capacidade Máxima:</span>
-                  <span className="font-semibold text-blue-400">{eq.capacity}</span>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                    {eq.capacity}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Placa / Prefixo:</span>
-                  <span className="font-mono text-slate-200">{eq.license_plate || 'N/A'}</span>
+                  <span className="font-mono text-slate-800 dark:text-slate-200">
+                    {eq.license_plate || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Ano de Fabricação:</span>
-                  <span>{eq.year || 'N/A'}</span>
+                  <span className="text-slate-800 dark:text-slate-300">{eq.year || 'N/A'}</span>
                 </div>
                 {eq.serial_number && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Nº de Série:</span>
-                    <span className="font-mono text-slate-400">{eq.serial_number}</span>
+                    <span className="font-mono text-slate-600 dark:text-slate-400">
+                      {eq.serial_number}
+                    </span>
                   </div>
                 )}
               </div>
 
               {eq.notes && (
-                <p className="text-[11px] text-slate-400 bg-slate-950 p-2 rounded border border-slate-800 line-clamp-2">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800 line-clamp-2">
                   {eq.notes}
                 </p>
               )}
 
               {(canEdit || canDelete) && (
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   {canEdit && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => openEditModal(eq)}
-                      className="h-7 text-xs text-slate-300 hover:text-white"
+                      className="h-7 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     >
                       <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
                     </Button>
@@ -312,7 +318,7 @@ export const EquipmentPage: React.FC = () => {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleDelete(eq.id)}
-                      className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                      className="h-7 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -324,7 +330,7 @@ export const EquipmentPage: React.FC = () => {
         ))}
 
         {filtered.length === 0 && (
-          <div className="col-span-full p-12 text-center text-slate-500 bg-slate-900 border border-slate-800 rounded-xl text-xs">
+          <div className="col-span-full p-12 text-center text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs">
             Nenhum equipamento cadastrado.
           </div>
         )}
@@ -334,7 +340,7 @@ export const EquipmentPage: React.FC = () => {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-white text-base">
+            <DialogTitle className="text-slate-900 dark:text-white text-base">
               {editingId ? 'Editar Equipamento' : 'Cadastrar Equipamento de Içamento'}
             </DialogTitle>
           </DialogHeader>
@@ -350,12 +356,14 @@ export const EquipmentPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Tipo de Equipamento *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Tipo de Equipamento *
+                </Label>
                 <Select value={type} onValueChange={(val: any) => setType(val)}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                  <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                     <SelectItem value="Guindaste">Guindaste</SelectItem>
                     <SelectItem value="Munck">Munck</SelectItem>
                     <SelectItem value="Caminhão">Caminhão</SelectItem>
@@ -367,12 +375,14 @@ export const EquipmentPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Status Operacional *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Status Operacional *
+                </Label>
                 <Select value={status} onValueChange={(val: any) => setStatus(val)}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                  <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                     <SelectItem value="Operacional">Operacional</SelectItem>
                     <SelectItem value="Em Manutenção">Em Manutenção</SelectItem>
                     <SelectItem value="Inativo">Inativo</SelectItem>
@@ -384,77 +394,79 @@ export const EquipmentPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Fabricante *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Fabricante *</Label>
                 <Input
                   value={manufacturer}
                   onChange={(e) => setManufacturer(e.target.value)}
                   placeholder="Ex: Liebherr, Palfinger, Madal"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Modelo *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Modelo *</Label>
                 <Input
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
                   placeholder="Ex: LTM 1100-5.2"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Capacidade *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Capacidade *</Label>
                 <Input
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
                   placeholder="Ex: 70 Toneladas"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Placa / ID</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Placa / ID</Label>
                 <Input
                   value={licensePlate}
                   onChange={(e) => setLicensePlate(e.target.value)}
                   placeholder="Ex: GEB-1001"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Ano</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">Ano</Label>
                 <Input
                   type="number"
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Número de Série / Chassi</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Número de Série / Chassi
+              </Label>
               <Input
                 value={serialNumber}
                 onChange={(e) => setSerialNumber(e.target.value)}
                 placeholder="Ex: LBH-998821"
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
                 Observações / Especificações da Lança
               </Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ex: Lança de 52m, Jib de 19m, tabela de carga calibrada."
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
               />
             </div>
           </div>
@@ -463,13 +475,13 @@ export const EquipmentPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="border-slate-800 bg-slate-950 text-slate-300 text-xs"
+              className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleSave}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
             >
               Salvar Equipamento
             </Button>

@@ -116,7 +116,7 @@
   }
 }
 
-/* Transição suave ao alternar tema (evita flicker brusco) */
+/* Transição suave global ao alternar tema (evita flicker brusco) */
 html.theme-transitioning,
 html.theme-transitioning *,
 html.theme-transitioning *::before,

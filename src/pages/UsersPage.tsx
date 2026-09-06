@@ -539,33 +539,47 @@ export const UsersPage: React.FC = () => {
 
       {/* Role Explanations Banner */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 text-xs">
-        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="font-semibold text-blue-400">Admin</div>
-          <p className="text-[10px] text-slate-400 mt-0.5">Acesso total e gestão da empresa</p>
+        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="font-semibold text-blue-600 dark:text-blue-400">Admin</div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Acesso total e gestão da empresa
+          </p>
         </div>
-        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="font-semibold text-purple-400">Gestor</div>
-          <p className="text-[10px] text-slate-400 mt-0.5">Gerencia frota, modelos e time</p>
+        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="font-semibold text-purple-600 dark:text-purple-400">Gestor</div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Gerencia frota, modelos e time
+          </p>
         </div>
-        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="font-semibold text-emerald-400">Supervisor</div>
-          <p className="text-[10px] text-slate-400 mt-0.5">Aprova checklists e inspeções</p>
+        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="font-semibold text-emerald-600 dark:text-emerald-400">Supervisor</div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Aprova checklists e inspeções
+          </p>
         </div>
-        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="font-semibold text-amber-400">Rigger</div>
-          <p className="text-[10px] text-slate-400 mt-0.5">Inspeção de lingadas e amarrações</p>
+        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="font-semibold text-amber-600 dark:text-amber-400">Rigger</div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Inspeção de lingadas e amarrações
+          </p>
         </div>
-        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="font-semibold text-cyan-400">Sinaleiro</div>
-          <p className="text-[10px] text-slate-400 mt-0.5">Comunicação e sinalização segura</p>
+        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="font-semibold text-cyan-600 dark:text-cyan-400">Sinaleiro</div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Comunicação e sinalização segura
+          </p>
         </div>
-        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="font-semibold text-slate-300">Operador</div>
-          <p className="text-[10px] text-slate-400 mt-0.5">Checklist pré-uso de guindaste</p>
+        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="font-semibold text-slate-700 dark:text-slate-300">Operador</div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Checklist pré-uso de guindaste
+          </p>
         </div>
-        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="font-semibold text-teal-400">Cliente</div>
-          <p className="text-[10px] text-slate-400 mt-0.5">Consulta checklists da sua obra</p>
+        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="font-semibold text-teal-600 dark:text-teal-400">Cliente</div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Consulta checklists da sua obra
+          </p>
         </div>
       </div>
 
@@ -592,22 +606,26 @@ export const UsersPage: React.FC = () => {
             <CardContent className="p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-bold text-white text-base leading-tight">{u.name}</h3>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base leading-tight">
+                    {u.name}
+                  </h3>
                   {u.email ? (
-                    <p className="text-xs text-slate-400 mt-0.5">{u.email}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{u.email}</p>
                   ) : (
-                    <p className="text-xs text-slate-500 italic mt-0.5">Sem e-mail</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 italic mt-0.5">
+                      Sem e-mail
+                    </p>
                   )}
                 </div>
                 {getRoleBadge(u.role)}
               </div>
 
-              <div className="space-y-1.5 text-xs text-slate-300 pt-1">
+              <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 pt-1">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500">Empresa:</span>
                   <Badge
                     variant="outline"
-                    className="text-[10px] bg-slate-950 border-slate-800 text-slate-300 font-normal"
+                    className="text-[10px] bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-normal"
                   >
                     {companies.find((c) => c.id === u.company_id)?.trade_name ||
                       companies.find((c) => c.id === u.company_id)?.name ||
@@ -618,19 +636,21 @@ export const UsersPage: React.FC = () => {
                 {u.username && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Usuário:</span>
-                    <span className="font-mono text-blue-300">@{u.username}</span>
+                    <span className="font-mono text-blue-600 dark:text-blue-300 font-medium">
+                      @{u.username}
+                    </span>
                   </div>
                 )}
                 {u.cpf && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">CPF:</span>
-                    <span className="font-mono text-slate-300">{u.cpf}</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300">{u.cpf}</span>
                   </div>
                 )}
                 {u.phone && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Telefone:</span>
-                    <span>{u.phone}</span>
+                    <span className="text-slate-800 dark:text-slate-300">{u.phone}</span>
                   </div>
                 )}
                 {u.role === 'cliente' && (
@@ -638,7 +658,7 @@ export const UsersPage: React.FC = () => {
                     <span className="text-slate-500">Cliente / Obra:</span>
                     <Badge
                       variant="outline"
-                      className="text-[10px] bg-teal-950/40 border-teal-800/60 text-teal-300 font-medium max-w-[170px] truncate"
+                      className="text-[10px] bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/60 text-teal-700 dark:text-teal-300 font-medium max-w-[170px] truncate"
                     >
                       <Building2 className="w-3 h-3 mr-1 shrink-0" />
                       <span className="truncate">
@@ -653,18 +673,18 @@ export const UsersPage: React.FC = () => {
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate-500">Status:</span>
-                  <span className="text-emerald-400 font-medium">Ativo</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Ativo</span>
                 </div>
               </div>
 
               {(canEditTargetUser(u) || (canDeleteTargetUser(u) && u.id !== currentUser?.id)) && (
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   {canEditTargetUser(u) && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => openEditModal(u)}
-                      className="h-7 text-xs text-slate-300 hover:text-white"
+                      className="h-7 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     >
                       <Edit2 className="w-3.5 h-3.5 mr-1" /> Editar
                     </Button>
@@ -674,7 +694,7 @@ export const UsersPage: React.FC = () => {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleDeleteUser(u)}
-                      className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                      className="h-7 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                       <Trash2 className="w-3.5 h-3.5 mr-1" /> Excluir
                     </Button>
@@ -686,7 +706,7 @@ export const UsersPage: React.FC = () => {
         ))}
 
         {filtered.length === 0 && (
-          <div className="col-span-full p-12 text-center text-slate-500 bg-slate-900 border border-slate-800 rounded-xl text-xs">
+          <div className="col-span-full p-12 text-center text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs">
             Nenhum usuário cadastrado nesta empresa.
           </div>
         )}
@@ -714,53 +734,61 @@ export const UsersPage: React.FC = () => {
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Nome Completo *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Nome Completo *
+                </Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: Carlos Eduardo Silva"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Nome de Usuário (username) *</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Nome de Usuário (username) *
+                </Label>
                 <Input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="ex: carlos.silva ou carloss"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">E-mail (Opcional)</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  E-mail (Opcional)
+                </Label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="carlos@empresa.com.br (Opcional)"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">CPF (Opcional)</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">CPF (Opcional)</Label>
                 <Input
                   value={cpf}
                   onChange={(e) => setCpf(e.target.value)}
                   placeholder="000.000.000-00 (Opcional)"
-                  className="bg-slate-950 border-slate-800 text-white text-xs font-mono"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">Telefone / WhatsApp</Label>
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
+                  Telefone / WhatsApp
+                </Label>
                 <Input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="(11) 98765-4321"
-                  className="bg-slate-950 border-slate-800 text-white text-xs"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
                 />
               </div>
             </div>
@@ -768,18 +796,18 @@ export const UsersPage: React.FC = () => {
             {/* Perfil / Role */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-slate-300">
+                <Label className="text-xs text-slate-700 dark:text-slate-300">
                   Perfil de Acesso (Função Principal) *
                 </Label>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
                   Define o conjunto base de permissões
                 </span>
               </div>
               <Select value={role} onValueChange={(val: any) => handleRoleChange(val)}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                   <SelectItem value="operador">
                     Operador (Preenche checklists do guindaste/munck)
                   </SelectItem>
@@ -810,20 +838,20 @@ export const UsersPage: React.FC = () => {
 
             {/* Vinculação do Cliente / Obra (Exibido e Obrigatório apenas para role 'cliente') */}
             {role === 'cliente' && (
-              <div className="space-y-1.5 p-3.5 bg-teal-950/30 border border-teal-800/40 rounded-lg animate-in fade-in-50 duration-200">
+              <div className="space-y-1.5 p-3.5 bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/40 rounded-lg animate-in fade-in-50 duration-200">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs text-teal-300 font-semibold flex items-center gap-1.5">
+                  <Label className="text-xs text-teal-800 dark:text-teal-300 font-semibold flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5" /> Cliente & Obra Vinculado *
                   </Label>
-                  <span className="text-[10px] text-teal-400/80 font-normal">
+                  <span className="text-[10px] text-teal-600 dark:text-teal-400/80 font-normal">
                     Obrigatório para o perfil Cliente
                   </span>
                 </div>
                 <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                  <SelectTrigger className="bg-slate-950 border-teal-800/60 text-slate-200 text-xs focus:border-teal-500">
+                  <SelectTrigger className="bg-white dark:bg-slate-950 border-teal-300 dark:border-teal-800/60 text-slate-800 dark:text-slate-200 text-xs focus:border-teal-500">
                     <SelectValue placeholder="Selecione o Cliente & Obra da empresa" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                     {clients.map((c) => (
                       <SelectItem key={c.id} value={c.id} className="text-xs cursor-pointer">
                         {c.trade_name ? `${c.trade_name} (${c.name})` : c.name}
@@ -837,7 +865,7 @@ export const UsersPage: React.FC = () => {
                     )}
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-slate-400 pt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
                   Este usuário visualizará exclusivamente os checklists e relatórios associados a
                   este cliente.
                 </p>
@@ -845,11 +873,11 @@ export const UsersPage: React.FC = () => {
             )}
 
             {/* PASSWORD SECTION */}
-            <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800 space-y-3">
+            <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-semibold text-slate-200">
+                  <KeyRound className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                     {editingId ? 'Segurança & Senha de Acesso' : 'Definir Senha de Acesso *'}
                   </span>
                 </div>
@@ -866,10 +894,10 @@ export const UsersPage: React.FC = () => {
                         setConfirmPassword('')
                       }
                     }}
-                    className={`h-7 text-xs border-slate-800 ${
+                    className={`h-7 text-xs border-slate-300 dark:border-slate-800 ${
                       showPasswordChange
-                        ? 'bg-amber-600/20 text-amber-300 border-amber-500/30'
-                        : 'bg-slate-900 text-slate-300 hover:text-white'
+                        ? 'bg-amber-100 dark:bg-amber-600/20 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/30'
+                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {showPasswordChange ? 'Cancelar Alteração' : 'Alterar Senha'}
@@ -881,7 +909,7 @@ export const UsersPage: React.FC = () => {
               {(!editingId || showPasswordChange) && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-slate-300">
+                    <Label className="text-xs text-slate-700 dark:text-slate-300">
                       {editingId ? 'Nova Senha *' : 'Senha *'}
                     </Label>
                     <div className="relative">
@@ -890,12 +918,12 @@ export const UsersPage: React.FC = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Mínimo 8 caracteres"
-                        className="bg-slate-900 border-slate-800 text-white text-xs pr-9"
+                        className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs pr-9"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPasswordText(!showPasswordText)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                         tabIndex={-1}
                       >
                         {showPasswordText ? (
@@ -908,7 +936,7 @@ export const UsersPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-slate-300">
+                    <Label className="text-xs text-slate-700 dark:text-slate-300">
                       {editingId ? 'Confirmar Nova Senha *' : 'Confirmar Senha *'}
                     </Label>
                     <div className="relative">
@@ -917,7 +945,7 @@ export const UsersPage: React.FC = () => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Repita a senha"
-                        className={`bg-slate-900 border-slate-800 text-white text-xs pr-9 ${
+                        className={`bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs pr-9 ${
                           confirmPassword && password !== confirmPassword
                             ? 'border-red-500 focus:border-red-500'
                             : ''
@@ -926,7 +954,7 @@ export const UsersPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPasswordText(!showConfirmPasswordText)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                         tabIndex={-1}
                       >
                         {showConfirmPasswordText ? (
@@ -937,14 +965,14 @@ export const UsersPage: React.FC = () => {
                       </button>
                     </div>
                     {confirmPassword && password !== confirmPassword && (
-                      <p className="text-[10px] text-red-400">As senhas digitadas não coincidem.</p>
+                      <p className="text-[10px] text-red-500">As senhas digitadas não coincidem.</p>
                     )}
                   </div>
                 </div>
               )}
 
               {editingId && !showPasswordChange && (
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   A senha do usuário permanece a mesma cadastrada atualmente. Clique em
                   &quot;Alterar Senha&quot; se desejar redefinir.
                 </p>
@@ -953,15 +981,15 @@ export const UsersPage: React.FC = () => {
 
             {/* MODULE PERMISSIONS MATRIX */}
             <div className="space-y-3 pt-1">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <SlidersHorizontal className="w-4 h-4 text-blue-400" />
-                    <h4 className="text-xs font-semibold text-slate-200">
+                    <SlidersHorizontal className="w-4 h-4 text-blue-500" />
+                    <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                       Matriz de Permissões por Módulo
                     </h4>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Controle granular de acesso para cada módulo do sistema
                   </p>
                 </div>
@@ -973,7 +1001,7 @@ export const UsersPage: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={handleApplyRoleDefaults}
-                      className="h-6 px-2 text-[10px] text-slate-400 hover:text-white"
+                      className="h-6 px-2 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       title="Restaurar valores padrão da função selecionada"
                     >
                       Padrão da Função
@@ -983,7 +1011,7 @@ export const UsersPage: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={handleGrantAll}
-                      className="h-6 px-2 text-[10px] text-emerald-400 hover:bg-emerald-950/20"
+                      className="h-6 px-2 text-[10px] text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                     >
                       Marcar Tudo
                     </Button>
@@ -992,7 +1020,7 @@ export const UsersPage: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={handleClearAll}
-                      className="h-6 px-2 text-[10px] text-red-400 hover:bg-red-950/20"
+                      className="h-6 px-2 text-[10px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                       Limpar
                     </Button>
@@ -1001,22 +1029,22 @@ export const UsersPage: React.FC = () => {
               </div>
 
               {!canEditPermissions && (
-                <div className="p-2.5 rounded-lg bg-amber-950/30 border border-amber-900/50 text-[11px] text-amber-300 flex items-center gap-2">
-                  <Lock className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
                   Apenas Administradores e Gestores podem alterar permissões de acesso.
                 </div>
               )}
 
               {/* Permissions Table / Card List */}
-              <div className="border border-slate-800 rounded-lg overflow-hidden bg-slate-950/40">
-                <div className="grid grid-cols-12 gap-2 p-2.5 bg-slate-950 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider items-center">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50/50 dark:bg-slate-950/40">
+                <div className="grid grid-cols-12 gap-2 p-2.5 bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider items-center">
                   <div className="col-span-6 sm:col-span-6">Módulo</div>
                   <div className="col-span-2 text-center">Leitura</div>
                   <div className="col-span-2 text-center">Edição</div>
                   <div className="col-span-2 text-center">Exclusão</div>
                 </div>
 
-                <div className="divide-y divide-slate-800/80">
+                <div className="divide-y divide-slate-200 dark:divide-slate-800/80">
                   {SYSTEM_MODULES.map((mod) => {
                     const Icon = mod.icon
                     const modPerm = permissions[mod.key] || {
@@ -1028,17 +1056,17 @@ export const UsersPage: React.FC = () => {
                     return (
                       <div
                         key={mod.key}
-                        className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-slate-900/50 transition-colors"
+                        className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-slate-100/60 dark:hover:bg-slate-900/50 transition-colors"
                       >
                         <div className="col-span-6 sm:col-span-6 flex items-start gap-2.5 pr-2">
-                          <div className="p-1.5 rounded-md bg-slate-900 border border-slate-800 text-blue-400 shrink-0 mt-0.5">
+                          <div className="p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
                             <Icon className="w-3.5 h-3.5" />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs font-medium text-slate-200 truncate">
+                            <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
                               {mod.label}
                             </div>
-                            <div className="text-[10px] text-slate-400 line-clamp-1">
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
                               {mod.description}
                             </div>
                           </div>
@@ -1053,9 +1081,11 @@ export const UsersPage: React.FC = () => {
                               onCheckedChange={(checked) =>
                                 handlePermissionToggle(mod.key, 'read', !!checked)
                               }
-                              className="border-slate-700 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                              className="border-slate-300 dark:border-slate-700 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                             />
-                            <span className="text-[9px] text-slate-400 sm:hidden">Ler</span>
+                            <span className="text-[9px] text-slate-500 dark:text-slate-400 sm:hidden">
+                              Ler
+                            </span>
                           </label>
                         </div>
 
@@ -1068,9 +1098,11 @@ export const UsersPage: React.FC = () => {
                               onCheckedChange={(checked) =>
                                 handlePermissionToggle(mod.key, 'edit', !!checked)
                               }
-                              className="border-slate-700 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                              className="border-slate-300 dark:border-slate-700 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
                             />
-                            <span className="text-[9px] text-slate-400 sm:hidden">Editar</span>
+                            <span className="text-[9px] text-slate-500 dark:text-slate-400 sm:hidden">
+                              Editar
+                            </span>
                           </label>
                         </div>
 
@@ -1083,9 +1115,11 @@ export const UsersPage: React.FC = () => {
                               onCheckedChange={(checked) =>
                                 handlePermissionToggle(mod.key, 'delete', !!checked)
                               }
-                              className="border-slate-700 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                              className="border-slate-300 dark:border-slate-700 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                             />
-                            <span className="text-[9px] text-slate-400 sm:hidden">Excluir</span>
+                            <span className="text-[9px] text-slate-500 dark:text-slate-400 sm:hidden">
+                              Excluir
+                            </span>
                           </label>
                         </div>
                       </div>
@@ -1094,8 +1128,8 @@ export const UsersPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span>
                   Permissões ativadas concedem acesso aos menus e operações correspondentes.
                 </span>
@@ -1103,11 +1137,11 @@ export const UsersPage: React.FC = () => {
             </div>
           </div>
 
-          <DialogFooter className="p-4 border-t border-slate-800 bg-slate-950/80 shrink-0 flex items-center justify-end gap-2">
+          <DialogFooter className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 shrink-0 flex items-center justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="border-slate-800 bg-slate-900 text-slate-300 text-xs hover:bg-slate-800"
+              className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               Cancelar
             </Button>
