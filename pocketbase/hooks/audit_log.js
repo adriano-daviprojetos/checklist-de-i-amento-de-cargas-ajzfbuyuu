@@ -77,7 +77,150 @@ routerAdd(
   $apis.requireAuth(),
 )
 
-// 2. Hook on users update to detect permission changes
+// 1.1 Endpoint for recording custom audit events (e.g. checklist_reopened)
+routerAdd(
+  'POST',
+  '/api/audit/custom-event',
+  (e) => {
+    let body = {}
+    try {
+      const info = e.requestInfo()
+      body = info && info.body ? info.body : {}
+    } catch (_) {
+      body = {}
+    }
+
+    const action = body.action || ''
+    const moduleName = body.module || 'checklists'
+    const details = body.details || ''
+    const metadata = body.metadata || {}
+
+    if (!action) {
+      return e.json(400, { error: 'action é obrigatória' })
+    }
+
+    let userId = ''
+    let userName = 'Usuário'
+    let companyId = body.company || ''
+
+    if (e.auth) {
+      userId = e.auth.id
+      userName = e.auth.get('name') || e.auth.get('username') || e.auth.get('email') || 'Usuário'
+      if (!companyId) {
+        companyId = e.auth.get('company_id') || ''
+      }
+    }
+
+    try {
+      const auditLogsCollection = $app.findCollectionByNameOrId('audit_logs')
+      const record = new Record(auditLogsCollection)
+
+      if (companyId) {
+        record.set('company', companyId)
+      }
+      if (userId) {
+        record.set('user', userId)
+      }
+      record.set('user_name', userName)
+      record.set('action', action)
+      record.set('module', moduleName)
+      record.set('details', details)
+      record.set('metadata', {
+        ...metadata,
+        timestamp: new Date().toISOString(),
+      })
+
+      $app.save(record)
+
+      return e.json(200, { success: true, id: record.id })
+    } catch (err) {
+      console.error('Error recording custom audit log:', err)
+      return e.json(500, { error: 'Failed to record audit log: ' + (err ? err.message : '') })
+    }
+  },
+  $apis.requireAuth(),
+)
+// 2. Hook on checklists update to detect reopen events and log audit automatically
+onRecordAfterUpdateSuccess((e) => {
+  try {
+    const originalRec = e.record.original()
+    if (!originalRec) return
+
+    const prevStatus = String(originalRec.get('status') || '')
+      .toLowerCase()
+      .trim()
+    const newStatus = String(e.record.get('status') || '')
+      .toLowerCase()
+      .trim()
+
+    const wasFinalized =
+      prevStatus === 'concluído' ||
+      prevStatus === 'concluido' ||
+      prevStatus === 'completed' ||
+      prevStatus === 'concluded' ||
+      prevStatus === 'reprovado' ||
+      prevStatus === 'rejected' ||
+      prevStatus === 'finalizado'
+
+    const isNowInProgress = newStatus === 'em andamento' || newStatus === 'pendente'
+
+    // Se passou de finalizado para em andamento / pendente => evento de Reabertura
+    if (wasFinalized && isNowInProgress) {
+      const checklistCode = e.record.get('code') || e.record.id
+      const checklistTitle = e.record.get('title') || 'Checklist'
+      const companyId = e.record.get('company_id') || ''
+
+      // Tentar obter dados do usuário que executou a ação
+      let userId = ''
+      let userName = 'Administrador'
+      try {
+        const info = e.requestInfo()
+        if (info && info.auth) {
+          userId = info.auth.id
+          userName =
+            info.auth.get('name') ||
+            info.auth.get('username') ||
+            info.auth.get('email') ||
+            'Administrador'
+        }
+      } catch (_) {
+        // Sem request info (execução direta ou transação)
+      }
+
+      const details = `Checklist ${checklistCode} ("${checklistTitle}") foi reaberto para edição pelo Admin`
+
+      const auditLogsCollection = $app.findCollectionByNameOrId('audit_logs')
+      const logRecord = new Record(auditLogsCollection)
+
+      if (companyId) {
+        logRecord.set('company', companyId)
+      }
+      if (userId) {
+        logRecord.set('user', userId)
+      }
+      logRecord.set('user_name', userName)
+      logRecord.set('action', 'checklist_reopened')
+      logRecord.set('module', 'checklists')
+      logRecord.set('details', details)
+      logRecord.set('metadata', {
+        checklist_id: e.record.id,
+        checklist_code: checklistCode,
+        checklist_title: checklistTitle,
+        previous_status: originalRec.get('status'),
+        new_status: e.record.get('status'),
+        reopened_at: new Date().toISOString(),
+      })
+
+      $app.save(logRecord)
+    }
+  } catch (err) {
+    console.error('Error logging checklist_reopened audit log:', err)
+  }
+
+  e.next()
+}, 'checklists')
+
+// 3. Hook on users update to detect permission changes
 onRecordAfterUpdateSuccess((e) => {
   try {
     const originalPermissions = e.record.original().get('permissions')
@@ -122,7 +265,7 @@ onRecordAfterUpdateSuccess((e) => {
   e.next()
 }, 'users')
 
-// 3. Hooks on deletion for key collections
+// 4. Hooks on deletion for key collections
 onRecordAfterDeleteSuccess(
   (e) => {
     try {

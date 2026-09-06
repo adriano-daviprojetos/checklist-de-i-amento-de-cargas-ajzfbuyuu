@@ -21,6 +21,7 @@ import {
   User,
   Building,
   CheckCircle,
+  RotateCcw,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -142,6 +143,13 @@ export const AuditLogPage: React.FC = () => {
             Permissão Alterada
           </Badge>
         )
+      case 'checklist_reopened':
+        return (
+          <Badge className="bg-amber-500/20 text-amber-500 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/30 font-medium flex items-center gap-1">
+            <RotateCcw className="w-3 h-3" />
+            Checklist Reaberto
+          </Badge>
+        )
       case 'user_created':
         return (
           <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30 font-medium flex items-center gap-1">
@@ -188,6 +196,8 @@ export const AuditLogPage: React.FC = () => {
 
   const getActionLabel = (action: string) => {
     switch (action) {
+      case 'checklist_reopened':
+        return 'Checklist Reaberto'
       case 'access_denied':
         return 'Acesso Negado'
       case 'permission_changed':
@@ -320,6 +330,7 @@ export const AuditLogPage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
                   <SelectItem value="all">Todas as ações</SelectItem>
+                  <SelectItem value="checklist_reopened">Checklist Reaberto</SelectItem>
                   <SelectItem value="access_denied">Acesso Negado</SelectItem>
                   <SelectItem value="permission_changed">Permissão Alterada</SelectItem>
                   <SelectItem value="checklist_deleted">Checklist Excluído</SelectItem>

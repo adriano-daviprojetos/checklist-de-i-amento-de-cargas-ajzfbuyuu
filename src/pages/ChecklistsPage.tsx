@@ -50,6 +50,8 @@ import {
   CloudOff,
   AlertTriangle,
   HelpCircle,
+  RotateCcw,
+  Unlock,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
@@ -77,6 +79,11 @@ export const ChecklistsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('todos')
   const [exportingId, setExportingId] = useState<string | null>(null)
+
+  // Reopen Modal States
+  const [checklistToReopen, setChecklistToReopen] = useState<Checklist | null>(null)
+  const [isReopenModalOpen, setIsReopenModalOpen] = useState(false)
+  const [isReopening, setIsReopening] = useState(false)
 
   // Report Modal States
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
@@ -186,6 +193,38 @@ export const ChecklistsPage: React.FC = () => {
       toast.error('Erro ao gerar relatório PDF: ' + (err?.message || 'Erro desconhecido'))
     } finally {
       setExportingId(null)
+    }
+  }
+
+  const handleOpenReopenModal = (e: React.MouseEvent, chk: Checklist) => {
+    e.stopPropagation()
+    setChecklistToReopen(chk)
+    setIsReopenModalOpen(true)
+  }
+
+  const handleConfirmReopen = async () => {
+    if (!checklistToReopen) return
+
+    setIsReopening(true)
+    try {
+      const reopened = await AppDataService.reopenChecklist(checklistToReopen.id, isOnline, {
+        id: company?.id, // fallback
+      })
+
+      setChecklists((prev) =>
+        prev.map((c) => (c.id === checklistToReopen.id ? { ...c, ...reopened } : c)),
+      )
+
+      setIsReopenModalOpen(false)
+      setChecklistToReopen(null)
+      toast.success(
+        `Checklist ${checklistToReopen.code || checklistToReopen.title} reaberto com sucesso!`,
+      )
+    } catch (err: any) {
+      console.error('Erro ao reabrir checklist:', err)
+      toast.error('Erro ao reabrir checklist: ' + (err?.message || 'Erro desconhecido'))
+    } finally {
+      setIsReopening(false)
     }
   }
 
@@ -616,6 +655,21 @@ export const ChecklistsPage: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                {/* Botão Reabrir: Visível apenas para Administrador em checklists finalizados */}
+                {(chk.status === 'Concluído' || chk.status === 'Reprovado') && isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => handleOpenReopenModal(e, chk)}
+                    disabled={isReopening && checklistToReopen?.id === chk.id}
+                    title="Reabrir Checklist para Edição"
+                    className="bg-amber-50 dark:bg-amber-950/40 border-amber-500/50 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    Reabrir
+                  </Button>
+                )}
+
                 {(chk.status === 'Concluído' || chk.status === 'Reprovado') && (
                   <Button
                     size="sm"
@@ -697,6 +751,84 @@ export const ChecklistsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Reopen Confirmation Modal (Listagem - Apenas Admin) */}
+      <Dialog open={isReopenModalOpen} onOpenChange={setIsReopenModalOpen}>
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <RotateCcw className="w-5 h-5 text-amber-500" />
+              Reabrir Checklist para Edição
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
+              Ação restrita a Administradores do sistema.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2 text-xs text-slate-600 dark:text-slate-300">
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 rounded-lg space-y-2">
+              <p className="font-semibold text-amber-900 dark:text-amber-200">
+                Atenção às regras de auditoria e conformidade:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-amber-800 dark:text-amber-300/90 text-[11px]">
+                <li>
+                  O status retornará para <strong>"Em Andamento"</strong>.
+                </li>
+                <li>O checklist voltará a ser editável para novas avaliações de itens.</li>
+                <li>
+                  A assinatura do responsável será <strong>limpa</strong>, exigindo nova assinatura
+                  digital para concluir.
+                </li>
+                <li>
+                  A reabertura será registrada no <strong>Log de Auditoria</strong>.
+                </li>
+              </ul>
+            </div>
+            {checklistToReopen && (
+              <p>
+                Deseja confirmar a reabertura do checklist{' '}
+                <strong className="text-slate-900 dark:text-white font-mono">
+                  {checklistToReopen.code || checklistToReopen.title}
+                </strong>
+                ?
+              </p>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsReopenModalOpen(false)
+                setChecklistToReopen(null)
+              }}
+              disabled={isReopening}
+              className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmReopen}
+              disabled={isReopening}
+              className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-md shadow-amber-600/20 flex items-center gap-1.5"
+            >
+              {isReopening ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Reabrindo...
+                </>
+              ) : (
+                <>
+                  <Unlock className="w-3.5 h-3.5" />
+                  Confirmar Reabertura
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Consolidated Report Modal */}
       <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>

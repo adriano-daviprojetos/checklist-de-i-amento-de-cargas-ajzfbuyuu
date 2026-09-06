@@ -91,4 +91,24 @@ export const auditLogService = {
       console.warn('Could not register access_denied audit log:', error)
     }
   },
+
+  /**
+   * Sends a custom audit event (e.g. reopen) to the backend
+   */
+  async logCustomEvent(params: {
+    action: string
+    module?: string
+    details: string
+    company?: string
+    metadata?: Record<string, any>
+  }): Promise<void> {
+    try {
+      await pb.send('/api/audit/custom-event', {
+        method: 'POST',
+        body: params,
+      })
+    } catch (error) {
+      console.warn('Could not register custom audit log event:', error)
+    }
+  },
 }

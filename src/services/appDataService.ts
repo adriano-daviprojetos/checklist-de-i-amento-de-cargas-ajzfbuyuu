@@ -388,6 +388,46 @@ export class AppDataService {
     }
   }
 
+  /**
+   * Reabre um checklist previamente concluído/reprovado:
+   * Retorna o status para 'Em Andamento', limpa dados de finalização e assinaturas,
+   * sincroniza (online ou enfileira offline) e registra na auditoria.
+   */
+  static async reopenChecklist(
+    checklistId: string,
+    isOnline: boolean,
+    user?: { id?: string; name?: string; company_id?: string },
+  ): Promise<Checklist> {
+    const reopened = await syncService.reopenChecklist(checklistId, isOnline)
+
+    // Se estiver online, registra log de auditoria
+    if (isOnline && pb.authStore.isValid) {
+      try {
+        const { auditLogService } = await import('@/services/auditLogService')
+        const checklistCode = reopened.code || reopened.id
+        const checklistTitle = reopened.title || 'Checklist'
+        await auditLogService.logCustomEvent({
+          action: 'checklist_reopened',
+          module: 'checklists',
+          company: reopened.company_id || user?.company_id,
+          details: `Checklist ${checklistCode} ("${checklistTitle}") foi reaberto para edição pelo Admin`,
+          metadata: {
+            checklist_id: checklistId,
+            checklist_code: checklistCode,
+            checklist_title: checklistTitle,
+            reopened_by_user_id: user?.id,
+            reopened_by_name: user?.name,
+            reopened_at: new Date().toISOString(),
+          },
+        })
+      } catch (err) {
+        console.warn('Falha ao registrar auditoria de reabertura:', err)
+      }
+    }
+
+    return reopened
+  }
+
   // --- Equipment ---
   static async getEquipment(companyId?: string, isOnline = true): Promise<Equipment[]> {
     const local = await dbGetAll<Equipment>('equipment')

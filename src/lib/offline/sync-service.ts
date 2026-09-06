@@ -1281,6 +1281,77 @@ class SyncService {
     const queue = await dbGetAll<OfflineSyncQueueItem>('sync_queue')
     return queue.length
   }
+
+  /**
+   * Reabre um checklist finalizado:
+   * 1. Altera status para 'Em Andamento'
+   * 2. Limpa campos de finalização (completed_at, signature_data, filled_by_name, filled_by_signature)
+   * 3. Se online, envia update imediatamente para o PocketBase
+   * 4. Se offline ou falhar, salva localmente e enfileira na fila de sync
+   */
+  public async reopenChecklist(checklistId: string, isOnline: boolean): Promise<Checklist> {
+    if (!checklistId) throw new Error('ID do checklist é obrigatório')
+
+    const localChk = await dbGetById<Checklist>('checklists', checklistId)
+    const updatePayload: Record<string, any> = {
+      status: 'Em Andamento',
+      completed_at: null,
+      signature_data: '',
+      filled_by_name: '',
+      filled_by_signature: '',
+    }
+
+    const updatedChk: Checklist = {
+      ...(localChk || ({ id: checklistId } as Checklist)),
+      status: 'Em Andamento',
+      completed_at: undefined,
+      signature_data: undefined,
+      filled_by_name: undefined,
+      filled_by_signature: undefined,
+      sync_status: isOnline ? 'synced' : 'pending_sync',
+      updated: new Date().toISOString(),
+    }
+
+    // Persiste imediatamente no IndexedDB local para refletir na UI sem delay
+    await dbPut('checklists', updatedChk)
+
+    // Se estiver online e for ID real remoto do PocketBase
+    if (isOnline && pb.authStore.isValid && !this.isLocalId(checklistId)) {
+      try {
+        const serverChk = await pb
+          .collection('checklists')
+          .update<Checklist>(checklistId, updatePayload)
+        const finalSynced = {
+          ...updatedChk,
+          ...serverChk,
+          sync_status: 'synced' as const,
+        }
+        await dbPut('checklists', finalSynced)
+        this.notify()
+        return finalSynced
+      } catch (err) {
+        console.warn(
+          '[SyncService] Falha ao atualizar reabertura online, enfileirando para retry offline:',
+          err,
+        )
+        updatedChk.sync_status = 'pending_sync'
+        await dbPut('checklists', updatedChk)
+        await this.enqueueSync('checklists', 'update', {
+          id: checklistId,
+          ...updatePayload,
+        })
+      }
+    } else {
+      // Offline ou ID local: enfileira para sincronizar quando online
+      await this.enqueueSync('checklists', 'update', {
+        id: checklistId,
+        ...updatePayload,
+      })
+    }
+
+    this.notify()
+    return updatedChk
+  }
 }
 
 export const syncService = new SyncService()
