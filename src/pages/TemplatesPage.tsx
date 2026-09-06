@@ -636,11 +636,11 @@ export const TemplatesPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <FileSpreadsheet className="w-6 h-6 text-blue-500" />
             Modelos de Checklist (Templates)
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Padronize os itens e grupos de verificação para guindastes, muncks, lingadas e rigging.
           </p>
         </div>
@@ -665,7 +665,7 @@ export const TemplatesPage: React.FC = () => {
               placeholder="Buscar modelos..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-slate-900 border-slate-800 text-white text-xs"
+              className="pl-9 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
             />
           </div>
 
@@ -676,8 +676,8 @@ export const TemplatesPage: React.FC = () => {
                 onClick={() => handleSelectTemplate(tpl)}
                 className={`p-3.5 rounded-xl border transition cursor-pointer select-none ${
                   selectedTemplate?.id === tpl.id
-                    ? 'bg-blue-950/40 border-blue-500/60 shadow-sm'
-                    : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                    ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500/60 shadow-sm'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -751,19 +751,22 @@ export const TemplatesPage: React.FC = () => {
         {/* Selected Template Details View */}
         <div className="lg:col-span-2">
           {selectedTemplate ? (
-            <Card className="bg-slate-900 border-slate-800">
-              <CardHeader className="pb-3 border-b border-slate-800 flex flex-row items-center justify-between">
+            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
+              <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800 flex flex-row items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-blue-950 text-blue-400 border border-blue-800 text-xs">
+                    <Badge className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-xs">
                       {selectedTemplate.category}
                     </Badge>
-                    <Badge variant="outline" className="border-slate-700 text-slate-400 text-xs">
+                    <Badge
+                      variant="outline"
+                      className="border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-xs"
+                    >
                       Alvo: {selectedTemplate.target_role || 'Todos'}
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="text-xs bg-slate-950 border-slate-800 text-slate-300"
+                      className="text-xs bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
                     >
                       {companies.find((comp) => comp.id === selectedTemplate.company_id)
                         ?.trade_name ||
@@ -772,11 +775,11 @@ export const TemplatesPage: React.FC = () => {
                         'Empresa'}
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg text-white mt-2">
+                  <CardTitle className="text-lg text-slate-900 dark:text-white mt-2">
                     {selectedTemplate.title}
                   </CardTitle>
                   {selectedTemplate.description && (
-                    <CardDescription className="text-slate-400 text-xs mt-1">
+                    <CardDescription className="text-slate-500 dark:text-slate-400 text-xs mt-1">
                       {selectedTemplate.description}
                     </CardDescription>
                   )}
@@ -861,27 +864,27 @@ export const TemplatesPage: React.FC = () => {
                   {displayGroups.map((displayGrp, gIdx) => (
                     <div
                       key={displayGrp.id}
-                      className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60 transition shadow-sm"
+                      className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-950/60 transition shadow-sm"
                     >
                       {/* Group Header */}
-                      <div className="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between gap-3">
+                      <div className="p-3 bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
-                          <Folder className="w-4 h-4 text-blue-400 shrink-0" />
+                          <Folder className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                           <div>
-                            <span className="font-semibold text-sm text-white flex items-center gap-2">
+                            <span className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2">
                               {displayGrp.groupNumber !== null
                                 ? `${displayGrp.groupNumber}. ${displayGrp.name}`
                                 : displayGrp.name}
                               {displayGrp.group === null && (
                                 <Badge
                                   variant="outline"
-                                  className="text-[10px] border-slate-700 text-slate-400 font-normal"
+                                  className="text-[10px] border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-normal"
                                 >
                                   Padrão
                                 </Badge>
                               )}
                             </span>
-                            <span className="text-[11px] text-slate-400">
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
                               {displayGrp.items.length}{' '}
                               {displayGrp.items.length === 1 ? 'item' : 'itens'}
                             </span>
@@ -949,11 +952,11 @@ export const TemplatesPage: React.FC = () => {
                       </div>
 
                       {/* Items List in Group */}
-                      <div className="divide-y divide-slate-800/80">
+                      <div className="divide-y divide-slate-200 dark:divide-slate-800/80">
                         {displayGrp.items.map((item, itemIdx) => (
                           <div
                             key={item.id}
-                            className="p-3 hover:bg-slate-900/40 transition flex items-center justify-between gap-3 text-xs"
+                            className="p-3 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition flex items-center justify-between gap-3 text-xs"
                           >
                             <div className="space-y-1 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -962,7 +965,9 @@ export const TemplatesPage: React.FC = () => {
                                     ? `${displayGrp.groupNumber}.${itemIdx + 1}`
                                     : `${itemIdx + 1}.`}
                                 </span>
-                                <span className="font-medium text-white text-xs">{item.title}</span>
+                                <span className="font-medium text-slate-900 dark:text-white text-xs">
+                                  {item.title}
+                                </span>
                                 {item.is_critical && (
                                   <Badge className="bg-red-950 text-red-400 border border-red-800 text-[10px] px-1.5 py-0">
                                     Crítico

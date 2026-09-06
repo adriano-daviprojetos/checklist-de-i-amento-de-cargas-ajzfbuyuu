@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = () => {
   const { login } = useAuth()
@@ -39,11 +40,16 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden transition-colors">
+      {/* Theme Toggle Top Right */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle className="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm" />
+      </div>
+
       {/* Background visual accents with brand colors (Navy, Red & Gold) */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-700/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 -translate-y-1/2 -left-20 w-80 h-80 bg-red-800/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-700/10 dark:bg-blue-700/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 -translate-y-1/2 -left-20 w-80 h-80 bg-red-800/5 dark:bg-red-800/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-amber-500/10 dark:bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md z-10 space-y-6">
         {/* Brand Header */}
@@ -71,10 +77,10 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           </div>
 
           <div>
-            <p className="text-sm text-slate-300 font-medium">
+            <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
               Checklist e Gestão de Içamento de Cargas Pesadas
             </p>
-            <p className="text-xs text-amber-400/90 font-medium mt-0.5 tracking-wide">
+            <p className="text-xs text-amber-600 dark:text-amber-400/90 font-medium mt-0.5 tracking-wide">
               Comemorando 10 Anos de Excelência em Rigging (2016 - 2026)
             </p>
           </div>
@@ -82,19 +88,19 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
             <Badge
               variant="outline"
-              className="border-blue-500/40 bg-blue-950/40 text-blue-300 text-xs"
+              className="border-blue-500/40 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs"
             >
               Offline-First
             </Badge>
             <Badge
               variant="outline"
-              className="border-amber-500/40 bg-amber-950/40 text-amber-300 text-xs"
+              className="border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs"
             >
               10 Anos de Rigging
             </Badge>
             <Badge
               variant="outline"
-              className="border-emerald-500/40 bg-emerald-950/40 text-emerald-300 text-xs"
+              className="border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs"
             >
               NR-11 & NR-12
             </Badge>
@@ -102,11 +108,13 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
         </div>
 
         {/* Login Card */}
-        <Card className="border-slate-800/80 bg-slate-900/95 backdrop-blur shadow-2xl relative overflow-hidden">
+        <Card className="border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-blue-600 to-amber-500" />
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl text-white">Acessar Sistema</CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardTitle className="text-xl text-slate-900 dark:text-white">
+              Acessar Sistema
+            </CardTitle>
+            <CardDescription className="text-slate-500 dark:text-slate-400">
               Entre com seu e-mail, CPF ou Nome de Usuário
             </CardDescription>
           </CardHeader>
@@ -121,7 +129,7 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="identifier" className="text-slate-200">
+                <Label htmlFor="identifier" className="text-slate-700 dark:text-slate-200">
                   E-mail, CPF ou Nome de Usuário
                 </Label>
                 <Input
@@ -132,12 +140,12 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
                   onChange={(e) => setIdentifier(e.target.value)}
                   required
                   autoComplete="username"
-                  className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 focus:border-blue-500"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-200">
+                <Label htmlFor="password" className="text-slate-700 dark:text-slate-200">
                   Senha
                 </Label>
                 <Input
@@ -148,7 +156,7 @@ export const LoginModal: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 focus:border-blue-500"
+                  className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500"
                 />
               </div>
             </CardContent>

@@ -72,14 +72,14 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !saving && !open && onClose()}>
-      <DialogContent className="max-w-xl bg-slate-900 border-slate-800 text-white p-6 max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white p-6 max-h-[92vh] overflow-y-auto">
         <DialogHeader className="space-y-2">
           <div className="flex items-center gap-2">
             <Badge
               className={
                 isCompleted
-                  ? 'bg-emerald-950/90 text-emerald-400 border border-emerald-700'
-                  : 'bg-red-950/90 text-red-400 border border-red-700'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/90 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700'
+                  : 'bg-red-50 dark:bg-red-950/90 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700'
               }
             >
               {isCompleted ? (
@@ -92,13 +92,15 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
                 </span>
               )}
             </Badge>
-            <span className="text-xs font-mono text-slate-400">{checklistCode}</span>
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+              {checklistCode}
+            </span>
           </div>
 
-          <DialogTitle className="text-xl font-bold text-white tracking-tight">
+          <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
             {isCompleted ? 'Finalizar & Liberar Operação' : 'Encerrar & Reprovar Checklist'}
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-400">
+          <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
             {isCompleted
               ? 'Confirme o parecer técnico para finalizar o checklist e liberar a operação de içamento.'
               : 'Ao reprovar a operação, o status é registrado para fins de auditoria e segurança.'}
@@ -106,23 +108,29 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
         </DialogHeader>
 
         {/* Operational Summary */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-slate-50 dark:bg-slate-950/80 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
           <div>
             <span className="text-slate-500 block text-[11px]">Itens Respondidos</span>
-            <strong className="text-slate-200">
+            <strong className="text-slate-800 dark:text-slate-200">
               {answeredCount} / {totalItems}
             </strong>
           </div>
           <div>
             <span className="text-slate-500 block text-[11px]">Não-Conformidades</span>
-            <strong className={nonConformingCount > 0 ? 'text-red-400' : 'text-emerald-400'}>
+            <strong
+              className={
+                nonConformingCount > 0
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-emerald-600 dark:text-emerald-400'
+              }
+            >
               {nonConformingCount}{' '}
               {criticalFailsCount > 0 ? `(${criticalFailsCount} críticas)` : ''}
             </strong>
           </div>
           <div className="col-span-2 sm:col-span-1">
             <span className="text-slate-500 block text-[11px]">Data de Finalização</span>
-            <strong className="text-slate-200">
+            <strong className="text-slate-800 dark:text-slate-200">
               {currentDate.toLocaleDateString('pt-BR')} às{' '}
               {currentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </strong>
@@ -163,16 +171,16 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
               </span>
             </Label>
 
-            <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-3 flex items-center justify-between gap-3">
+            <div className="bg-slate-50 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold text-sm shrink-0">
+                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/40 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm shrink-0">
                   {authenticatedName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-white leading-tight">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
                     {authenticatedName}
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
                     <span className="capitalize">{authenticatedRole}</span>
                     {user?.cpf && <span>• CPF: {user.cpf}</span>}
                     {user?.email && <span className="hidden sm:inline">• {user.email}</span>}
@@ -183,9 +191,9 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
               <div className="text-right shrink-0">
                 <Badge
                   variant="outline"
-                  className="bg-slate-900 border-slate-700 text-slate-300 text-[10px] flex items-center gap-1"
+                  className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] flex items-center gap-1"
                 >
-                  <Fingerprint className="w-3 h-3 text-blue-400" />
+                  <Fingerprint className="w-3 h-3 text-blue-500 dark:text-blue-400" />
                   ID: {authenticatedUserId ? authenticatedUserId.slice(0, 8) : 'Sessão'}
                 </Badge>
               </div>
@@ -202,12 +210,11 @@ export const FinalizeChecklistModal: React.FC<FinalizeChecklistModalProps> = ({
             type="button"
             variant="outline"
             onClick={onClose}
-            disabled={saving}
-            className="border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 text-xs"
+            disabled={isSaving}
+            className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
           >
             Voltar à Edição
           </Button>
-
           <Button
             type="button"
             onClick={handleConfirm}

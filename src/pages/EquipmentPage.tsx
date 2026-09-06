@@ -178,12 +178,12 @@ export const EquipmentPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Truck className="w-6 h-6 text-blue-500" />
-            Equipamentos de Içamento
+            Frota de Equipamentos & Guindastes
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Cadastro de guindastes telescópicos, muncks (guindautos), empilhadeiras e caminhões.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Gestão operacional de guindastes telescópicos, articulados (Muncks) e carretas.
           </p>
         </div>
 
@@ -198,23 +198,23 @@ export const EquipmentPage: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 bg-slate-900 p-4 rounded-xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
             placeholder="Buscar por modelo, fabricante ou placa..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-slate-950 border-slate-800 text-white text-xs"
+            className="pl-9 bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
           />
         </div>
 
         <div className="w-full sm:w-52">
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs">
+            <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs">
               <SelectValue placeholder="Tipo de Equipamento" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
               <SelectItem value="todos">Todos os Tipos</SelectItem>
               <SelectItem value="Guindaste">Guindaste</SelectItem>
               <SelectItem value="Munck">Munck</SelectItem>
@@ -231,8 +231,9 @@ export const EquipmentPage: React.FC = () => {
         {filtered.map((eq) => (
           <Card
             key={eq.id}
-            className="bg-slate-900 border-slate-800 hover:border-slate-700 transition"
+            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm"
           >
+            {' '}
             <CardContent className="p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1">
@@ -331,7 +332,7 @@ export const EquipmentPage: React.FC = () => {
 
       {/* Modal: Add / Edit Equipment */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-lg">
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-white text-base">
               {editingId ? 'Editar Equipamento' : 'Cadastrar Equipamento de Içamento'}

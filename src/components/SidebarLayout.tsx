@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { OfflineSyncBar } from './OfflineSyncBar'
 import { MobileBottomNav } from './MobileBottomNav'
+import { ThemeToggle } from './ThemeToggle'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import {
   LayoutDashboard,
@@ -150,24 +151,24 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     switch (r) {
       case 'superadmin':
       case 'admin':
-        return 'bg-blue-600/20 text-blue-400 border-blue-500/30'
+        return 'bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-500/30'
       case 'gestor':
-        return 'bg-purple-600/20 text-purple-400 border-purple-500/30'
+        return 'bg-purple-600/10 text-purple-700 dark:text-purple-400 border-purple-500/30'
       case 'supervisor':
-        return 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30'
+        return 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
       case 'rigger':
-        return 'bg-amber-600/20 text-amber-400 border-amber-500/30'
+        return 'bg-amber-600/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
       case 'cliente':
-        return 'bg-teal-600/20 text-teal-400 border-teal-500/30'
+        return 'bg-teal-600/10 text-teal-700 dark:text-teal-400 border-teal-500/30'
       default:
-        return 'bg-slate-800 text-slate-300 border-slate-700'
+        return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row antialiased">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row antialiased">
       {/* Mobile Topbar */}
-      <header className="md:hidden flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
+      <header className="md:hidden flex items-center justify-between px-4 py-2.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors">
         <div className="flex items-center gap-2">
           <img
             src="/logo.png"
@@ -186,13 +187,14 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
             className="h-7 w-7 object-contain drop-shadow"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <ThemeToggle />
           <OfflineSyncBar />
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-slate-300"
+            className="text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </Button>
@@ -202,11 +204,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       {/* Sidebar Navigation */}
       <aside
         className={`${
-          mobileMenuOpen ? 'fixed inset-0 z-50 bg-slate-950 flex flex-col' : 'hidden'
-        } md:flex md:w-64 md:flex-col md:shrink-0 bg-slate-900 border-r border-slate-800 select-none`}
+          mobileMenuOpen
+            ? 'fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 flex flex-col'
+            : 'hidden'
+        } md:flex md:w-64 md:flex-col md:shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 select-none transition-colors`}
       >
         {/* Brand / Company Header */}
-        <div className="p-4 border-b border-slate-800">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between mb-3">
             <Link to="/" className="block w-full focus:outline-none group">
               <div className="flex flex-col items-center gap-2">
@@ -221,13 +225,13 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                   }}
                   className="w-full h-auto max-h-16 object-contain rounded-lg shadow-sm transition group-hover:scale-[1.02]"
                 />
-                <div className="flex items-center justify-center gap-1.5 w-full bg-slate-950/70 border border-amber-500/20 rounded-md py-1 px-2">
+                <div className="flex items-center justify-center gap-1.5 w-full bg-slate-100 dark:bg-slate-950/70 border border-amber-500/30 rounded-md py-1 px-2">
                   <img
                     src="/seal-10-years.svg"
                     alt="10 Anos"
                     className="w-5 h-5 object-contain shrink-0"
                   />
-                  <span className="text-[11px] font-semibold text-amber-300 tracking-tight">
+                  <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 tracking-tight">
                     10 ANOS (2016-2026)
                   </span>
                 </div>
@@ -238,7 +242,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 variant="ghost"
                 size="icon"
                 onClick={() => setMobileMenuOpen(false)}
-                className="md:hidden text-slate-400 shrink-0 ml-2"
+                className="md:hidden text-slate-500 dark:text-slate-400 shrink-0 ml-2"
               >
                 <X className="w-5 h-5" />
               </Button>
@@ -247,7 +251,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
 
           {/* Multi-Tenant Switcher */}
           <div className="pt-2">
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
               {canManageCompanies ? 'Ambiente / Empresa' : 'Empresa Vinculada'}
             </label>
             {canManageCompanies ? (
@@ -255,33 +259,35 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-950/80 hover:bg-slate-950 border border-slate-800 text-left transition"
+                    className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-950/80 hover:bg-slate-200 dark:hover:bg-slate-950 border border-slate-200 dark:border-slate-800 text-left transition"
                   >
                     <div className="min-w-0 pr-2">
-                      <div className="text-xs font-medium text-slate-200 truncate">
+                      <div className="text-xs font-medium text-slate-900 dark:text-slate-200 truncate">
                         {company?.trade_name || company?.name || 'Selecione a Empresa'}
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                         CNPJ: {company?.cnpj || 'Não informado'}
                       </div>
                     </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-60 bg-slate-900 border-slate-800 text-slate-200"
+                  className="w-60 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200"
                 >
-                  <DropdownMenuLabel className="text-xs text-slate-400">
+                  <DropdownMenuLabel className="text-xs text-slate-500 dark:text-slate-400">
                     Alternar Empresa (Multi-tenant)
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-slate-800" />
+                  <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-800" />
                   {companies.map((c) => (
                     <DropdownMenuItem
                       key={c.id}
                       onClick={() => switchCompany(c.id)}
                       className={`text-xs cursor-pointer ${
-                        company?.id === c.id ? 'bg-blue-600/20 text-blue-400 font-semibold' : ''
+                        company?.id === c.id
+                          ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold'
+                          : ''
                       }`}
                     >
                       <Building className="w-3.5 h-3.5 mr-2 shrink-0" />
@@ -291,12 +297,12 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 text-left cursor-default">
+              <div className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 text-left cursor-default">
                 <div className="min-w-0 pr-2">
-                  <div className="text-xs font-medium text-slate-200 truncate">
+                  <div className="text-xs font-medium text-slate-900 dark:text-slate-200 truncate">
                     {company?.trade_name || company?.name || 'Empresa Padrão'}
                   </div>
-                  <div className="text-[10px] text-slate-400 truncate">
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                     CNPJ: {company?.cnpj || 'Não informado'}
                   </div>
                 </div>
@@ -320,11 +326,11 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
                   isActive
                     ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                 }`}
               >
                 <Icon
-                  className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`}
+                  className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'}`}
                 />
                 <span>{item.title}</span>
               </Link>
@@ -333,15 +339,15 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
         </nav>
 
         {/* User Card & Logout */}
-        <div className="p-3 border-t border-slate-800 bg-slate-900/50">
-          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mb-2">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+          <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 mb-2">
             <Link
               to="/meu-perfil"
               onClick={() => setMobileMenuOpen(false)}
               className="min-w-0 pr-2 group block flex-1 hover:opacity-90 transition"
               title="Acessar Meu Perfil"
             >
-              <div className="text-xs font-semibold text-slate-200 truncate group-hover:text-blue-400 transition-colors">
+              <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
                 {user?.name || 'Operador'}
               </div>
               <div className="flex items-center gap-1 mt-0.5">
@@ -358,8 +364,10 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 to="/meu-perfil"
                 onClick={() => setMobileMenuOpen(false)}
                 title="Meu Perfil & Senha"
-                className={`p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition ${
-                  location.pathname === '/meu-perfil' ? 'text-blue-400 bg-blue-600/20' : ''
+                className={`p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition ${
+                  location.pathname === '/meu-perfil'
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/20'
+                    : ''
                 }`}
               >
                 <User className="w-4 h-4" />
@@ -369,7 +377,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 size="icon"
                 onClick={logout}
                 title="Sair do sistema"
-                className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-950/20"
+                className="h-8 w-8 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -396,20 +404,21 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           </div>
         )}
         {/* Desktop Header */}
-        <header className="hidden md:flex items-center justify-between px-6 py-3.5 bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
+        <header className="hidden md:flex items-center justify-between px-6 py-3.5 bg-white/90 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 transition-colors">
           <div className="flex items-center gap-3">
-            <h2 className="text-base font-semibold text-white">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               {navItems.find((n) => n.path === location.pathname)?.title || 'Checklist de Içamento'}
             </h2>
             <Badge
               variant="secondary"
-              className="bg-slate-800 text-slate-300 border-slate-700 text-xs"
+              className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 text-xs"
             >
               {company?.trade_name || company?.name || 'GEB Rigging'}
             </Badge>
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <OfflineSyncBar />
 
             {/* User Profile dropdown/button on desktop */}
@@ -418,22 +427,24 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 gap-2 bg-slate-950/60 border border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800 text-xs px-2.5"
+                  className="h-8 gap-2 bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 text-xs px-2.5"
                 >
-                  <div className="w-5 h-5 rounded-full bg-blue-600/30 text-blue-400 flex items-center justify-center font-bold text-[10px]">
+                  <div className="w-5 h-5 rounded-full bg-blue-600/20 dark:bg-blue-600/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[10px]">
                     {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </div>
                   <span className="max-w-[120px] truncate">{user?.name || 'Usuário'}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-56 bg-slate-900 border-slate-800 text-slate-200"
+                className="w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200"
               >
                 <DropdownMenuLabel className="text-xs">
-                  <div className="font-medium text-white truncate">{user?.name || 'Usuário'}</div>
-                  <div className="text-[10px] text-slate-400 font-normal truncate">
+                  <div className="font-medium text-slate-900 dark:text-white truncate">
+                    {user?.name || 'Usuário'}
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal truncate">
                     {user?.email}
                   </div>
                   <Badge
@@ -443,20 +454,20 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                     {getRoleLabel(role)}
                   </Badge>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-slate-800" />
+                <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-800" />
                 <DropdownMenuItem
                   asChild
-                  className="cursor-pointer text-xs focus:bg-slate-800 focus:text-white"
+                  className="cursor-pointer text-xs focus:bg-slate-100 dark:focus:bg-slate-800 focus:text-slate-900 dark:focus:text-white"
                 >
                   <Link to="/meu-perfil" className="flex items-center gap-2 w-full">
-                    <User className="w-3.5 h-3.5 text-blue-400" />
+                    <User className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
                     <span>Meu Perfil & Senha</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-slate-800" />
+                <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-800" />
                 <DropdownMenuItem
                   onClick={logout}
-                  className="cursor-pointer text-xs text-red-400 focus:bg-red-950/30 focus:text-red-300 flex items-center gap-2"
+                  className="cursor-pointer text-xs text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 focus:text-red-700 dark:focus:text-red-300 flex items-center gap-2"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sair do sistema</span>
@@ -467,7 +478,9 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
         </header>
 
         {/* Dynamic Page Container */}
-        <div className="p-4 md:p-6 flex-1 bg-slate-950">{children}</div>
+        <div className="p-4 md:p-6 flex-1 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+          {children}
+        </div>
 
         {/* Fixed Mobile Bottom Navigation for Quick In-Field Access */}
         <MobileBottomNav />

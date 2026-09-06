@@ -745,33 +745,33 @@ export const ChecklistDetailPage: React.FC = () => {
             variant="outline"
             size="icon"
             onClick={() => navigate('/checklists')}
-            className="border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 shrink-0"
+            className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs font-bold text-blue-400">
+              <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
                 {code || 'chk-novo'}
               </span>
               <Badge
                 variant="outline"
                 className={`text-xs ${
                   status === 'Concluído'
-                    ? 'border-emerald-500 text-emerald-400'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
                     : status === 'Reprovado'
-                      ? 'border-red-500 text-red-400'
-                      : 'border-blue-500 text-blue-400'
+                      ? 'border-red-500 text-red-600 dark:text-red-400'
+                      : 'border-blue-500 text-blue-600 dark:text-blue-400'
                 }`}
               >
                 {status}
               </Badge>
               {completedAt ? (
-                <span className="text-xs text-slate-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>
                     Finalizado em{' '}
-                    <strong className="text-slate-200 font-medium">
+                    <strong className="text-slate-800 dark:text-slate-200 font-medium">
                       {new Date(completedAt).toLocaleDateString('pt-BR')} às{' '}
                       {new Date(completedAt).toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
@@ -781,11 +781,11 @@ export const ChecklistDetailPage: React.FC = () => {
                   </span>
                 </span>
               ) : createdAt ? (
-                <span className="text-xs text-slate-400 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                   <span>
                     Criado em{' '}
-                    <strong className="text-slate-200 font-medium">
+                    <strong className="text-slate-800 dark:text-slate-200 font-medium">
                       {new Date(createdAt).toLocaleDateString('pt-BR')} às{' '}
                       {new Date(createdAt).toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
@@ -796,12 +796,15 @@ export const ChecklistDetailPage: React.FC = () => {
                 </span>
               ) : null}
               {!isOnline && (
-                <Badge variant="outline" className="border-amber-500 text-amber-400 text-xs">
+                <Badge
+                  variant="outline"
+                  className="border-amber-500 text-amber-600 dark:text-amber-400 text-xs"
+                >
                   Modo Campo (Offline)
                 </Badge>
               )}
             </div>
-            <h1 className="text-xl font-bold text-white tracking-tight mt-1">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
               {title || 'Execução de Checklist de Içamento'}
             </h1>
           </div>
@@ -813,12 +816,12 @@ export const ChecklistDetailPage: React.FC = () => {
               variant="outline"
               onClick={handleExportPdf}
               disabled={exportingPdf || saving}
-              className="border-blue-600 bg-blue-950/40 text-blue-300 hover:bg-blue-900/60 text-xs font-semibold shadow-sm"
+              className="border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-semibold shadow-sm"
             >
               {exportingPdf ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
               ) : (
-                <FileDown className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+                <FileDown className="w-3.5 h-3.5 mr-1.5 text-blue-600 dark:text-blue-400" />
               )}
               Exportar PDF
             </Button>
@@ -831,9 +834,10 @@ export const ChecklistDetailPage: React.FC = () => {
                   variant="outline"
                   onClick={handleSaveResponses}
                   disabled={saving || exportingPdf}
-                  className="border-blue-700 bg-blue-950/40 text-blue-300 hover:bg-blue-900/60 hover:text-blue-200 text-xs font-semibold"
+                  className="border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 hover:text-blue-700 dark:hover:text-blue-200 text-xs font-semibold"
                 >
-                  <Save className="w-3.5 h-3.5 mr-1.5 text-blue-400" /> Salvar Respostas
+                  <Save className="w-3.5 h-3.5 mr-1.5 text-blue-600 dark:text-blue-400" /> Salvar
+                  Respostas
                 </Button>
               )}
 
@@ -841,7 +845,7 @@ export const ChecklistDetailPage: React.FC = () => {
                 variant="outline"
                 onClick={handleSaveDraft}
                 disabled={saving || exportingPdf}
-                className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800 text-xs"
+                className="border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
               >
                 <Save className="w-3.5 h-3.5 mr-1.5" /> Salvar Rascunho
               </Button>
@@ -869,45 +873,53 @@ export const ChecklistDetailPage: React.FC = () => {
 
       {/* Progress & Alert Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-xs text-slate-400">Progresso do Checklist</span>
-              <div className="text-lg font-bold text-white">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Progresso do Checklist
+              </span>
+              <div className="text-lg font-bold text-slate-900 dark:text-white">
                 {answeredCount} de {totalItems} itens (
                 {totalItems > 0 ? Math.round((answeredCount / totalItems) * 100) : 0}%)
               </div>
             </div>
-            <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400">
+            <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
               <FileCheck className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-xs text-slate-400">Nível de Risco da Operação</span>
-              <div className="text-lg font-bold text-amber-400">{riskLevel}</div>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Nível de Risco da Operação
+              </span>
+              <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                {riskLevel}
+              </div>
             </div>
-            <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400">
+            <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-600 dark:text-amber-400">
               <AlertTriangle className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-xs text-slate-400">Itens Críticos Reprovados</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Itens Críticos Reprovados
+              </span>
               <div
-                className={`text-lg font-bold ${criticalFailsCount > 0 ? 'text-red-400' : 'text-emerald-400'}`}
+                className={`text-lg font-bold ${criticalFailsCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}
               >
                 {criticalFailsCount} {criticalFailsCount > 0 ? '(Bloqueante)' : '(Conforme)'}
               </div>
             </div>
             <div
-              className={`p-2.5 rounded-xl ${criticalFailsCount > 0 ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}
+              className={`p-2.5 rounded-xl ${criticalFailsCount > 0 ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}
             >
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -916,10 +928,12 @@ export const ChecklistDetailPage: React.FC = () => {
       </div>
 
       {/* Main Checklist Header Details */}
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader className="pb-3 border-b border-slate-800">
-          <CardTitle className="text-base text-white">Dados da Operação e Equipamentos</CardTitle>
-          <CardDescription className="text-slate-400 text-xs">
+      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
+        <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
+          <CardTitle className="text-base text-slate-900 dark:text-white">
+            Dados da Operação e Equipamentos
+          </CardTitle>
+          <CardDescription className="text-slate-500 dark:text-slate-400 text-xs">
             Associação de modelo de inspeção, obra, guindaste ou acessório de içamento
           </CardDescription>
         </CardHeader>
@@ -938,16 +952,18 @@ export const ChecklistDetailPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Modelo de Checklist *</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Modelo de Checklist *
+              </Label>
               <Select
                 value={selectedTemplateId}
                 onValueChange={(val) => handleSelectTemplate(val)}
                 disabled={!canEdit}
               >
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o modelo" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                   {templates.map((tpl) => (
                     <SelectItem key={tpl.id} value={tpl.id} className="text-xs">
                       [{tpl.category}] {tpl.title}
@@ -958,36 +974,42 @@ export const ChecklistDetailPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Título / Descrição da Manobra *</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Título / Descrição da Manobra *
+              </Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={!canEdit}
                 placeholder="Ex: Içamento de Transformador 40t"
-                className="bg-slate-950 border-slate-800 text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Local / Obra / Canteiro</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Local / Obra / Canteiro
+              </Label>
               <Input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 disabled={!canEdit}
                 placeholder="Ex: Refinaria RPBC - Setor U-20"
-                className="bg-slate-950 border-slate-800 text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
+                className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Cliente / Contratante</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Cliente / Contratante
+              </Label>
               <Select value={clientId} onValueChange={setClientId} disabled={!canEdit}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o cliente" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                   <SelectItem value="none">Nenhum / Não vinculado</SelectItem>
                   {clientsList.map((c) => (
                     <SelectItem key={c.id} value={c.id} className="text-xs">
@@ -999,12 +1021,14 @@ export const ChecklistDetailPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Guindaste / Munck</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Guindaste / Munck
+              </Label>
               <Select value={equipmentId} onValueChange={setEquipmentId} disabled={!canEdit}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o equipamento" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                   <SelectItem value="none">Nenhum equipamento</SelectItem>
                   {equipmentList.map((e) => (
                     <SelectItem key={e.id} value={e.id} className="text-xs">
@@ -1016,12 +1040,14 @@ export const ChecklistDetailPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Acessório / TAG de Rigging</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Acessório / TAG de Rigging
+              </Label>
               <Select value={materialId} onValueChange={setMaterialId} disabled={!canEdit}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Selecione o material" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                   <SelectItem value="none">Nenhum acessório</SelectItem>
                   {materialsList.map((m) => (
                     <SelectItem key={m.id} value={m.id} className="text-xs">
@@ -1033,16 +1059,16 @@ export const ChecklistDetailPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-300">Grau de Risco</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">Grau de Risco</Label>
               <Select
                 value={riskLevel}
                 onValueChange={(val: any) => setRiskLevel(val)}
                 disabled={!canEdit}
               >
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs disabled:opacity-70 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Nível de risco" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
                   <SelectItem value="Baixo">Baixo (Operação Padrão)</SelectItem>
                   <SelectItem value="Médio">Médio (Içamento Monitorado)</SelectItem>
                   <SelectItem value="Alto">Alto (Içamento Crítico)</SelectItem>
@@ -1060,7 +1086,7 @@ export const ChecklistDetailPage: React.FC = () => {
               if (!selectedEq) return null
 
               return (
-                <div className="mt-2 p-3.5 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-2 animate-in fade-in-50 duration-200">
+                <div className="mt-2 p-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-xl space-y-2 animate-in fade-in-50 duration-200">
                   <div className="flex items-center justify-between gap-2 border-b border-slate-800/60 pb-2">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-blue-400 shrink-0" />
@@ -1135,19 +1161,19 @@ export const ChecklistDetailPage: React.FC = () => {
         {displayGroups.map((displayGrp) => (
           <Card
             key={displayGrp.id}
-            className="bg-slate-900 border-slate-800 overflow-hidden shadow-sm"
+            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm"
           >
-            <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+            <div className="bg-slate-50 dark:bg-slate-950 px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Folder className="w-4 h-4 text-blue-400 shrink-0" />
-                <span className="font-semibold text-xs text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                <Folder className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <span className="font-semibold text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
                   {displayGrp.groupNumber !== null
                     ? `${displayGrp.groupNumber}. ${displayGrp.name}`
                     : displayGrp.name}
                   {displayGrp.group === null && (
                     <Badge
                       variant="outline"
-                      className="text-[10px] border-slate-700 text-slate-400 font-normal lowercase"
+                      className="text-[10px] border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-normal lowercase"
                     >
                       geral
                     </Badge>
@@ -1159,7 +1185,7 @@ export const ChecklistDetailPage: React.FC = () => {
               </span>
             </div>
 
-            <CardContent className="p-0 divide-y divide-slate-800">
+            <CardContent className="p-0 divide-y divide-slate-200 dark:divide-slate-800">
               {displayGrp.items.map((item, itemIdx) => {
                 const currentResp = responsesMap[item.id] || {}
                 const currentStatus = currentResp.status || 'PENDENTE'
@@ -1378,16 +1404,18 @@ export const ChecklistDetailPage: React.FC = () => {
       </div>
 
       {/* General Observations & Sign-off */}
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader className="pb-3 border-b border-slate-800">
-          <CardTitle className="text-base text-white">Observações e Parecer Técnico</CardTitle>
-          <CardDescription className="text-slate-400 text-xs">
+      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
+        <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
+          <CardTitle className="text-base text-slate-900 dark:text-white">
+            Observações e Parecer Técnico
+          </CardTitle>
+          <CardDescription className="text-slate-500 dark:text-slate-400 text-xs">
             Observações finais do rigger / operador e parecer técnico da operação
           </CardDescription>
         </CardHeader>
         <CardContent className="p-5 space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs text-slate-300">
+            <Label className="text-xs text-slate-700 dark:text-slate-300">
               Observações Gerais / Recomendações de Rigging
             </Label>
             <Textarea
@@ -1396,7 +1424,7 @@ export const ChecklistDetailPage: React.FC = () => {
               disabled={!canEdit}
               placeholder="Ex: Velocidade do vento aferida em 14 km/h. Isolamento de área verificado e aprovado com raio de 25 metros."
               rows={3}
-              className="bg-slate-950 border-slate-800 text-white text-xs placeholder:text-slate-500 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 disabled:opacity-70 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -1446,26 +1474,28 @@ export const ChecklistDetailPage: React.FC = () => {
       </Card>
 
       {/* Card: Responsável pelo Preenchimento e Assinatura Digital (Final do Formulário) */}
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader className="pb-3 border-b border-slate-800">
-          <CardTitle className="text-base text-white flex items-center gap-2">
+      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
+        <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
+          <CardTitle className="text-base text-slate-900 dark:text-white flex items-center gap-2">
             <UserCheck className="w-5 h-5 text-blue-500" />
             Responsável pelo Preenchimento e Assinatura
           </CardTitle>
-          <CardDescription className="text-slate-400 text-xs">
+          <CardDescription className="text-slate-500 dark:text-slate-400 text-xs">
             Identificação e assinatura digital do profissional responsável após o preenchimento dos
             itens e observações
           </CardDescription>
         </CardHeader>
         <CardContent className="p-5 space-y-4">
           <div className="space-y-1.5 max-w-md">
-            <Label className="text-xs text-slate-300">Nome do Responsável</Label>
+            <Label className="text-xs text-slate-700 dark:text-slate-300">
+              Nome do Responsável
+            </Label>
             <Input
               value={filledByName}
               onChange={(e) => setFilledByName(e.target.value)}
               disabled={!canEdit}
               placeholder="Nome completo do responsável pelo preenchimento"
-              className="bg-slate-950 border-slate-800 text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
+              className="bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs disabled:opacity-70 disabled:cursor-not-allowed"
             />
           </div>
 

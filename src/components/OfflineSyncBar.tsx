@@ -77,8 +77,8 @@ export const OfflineSyncBar: React.FC = () => {
             onClick={toggleSimulateOffline}
             className={`h-8 text-xs font-normal border transition-all active:scale-95 ${
               simulatedOffline || !isOnline
-                ? 'bg-amber-950/40 text-amber-400 border-amber-800/80 hover:bg-amber-900/50'
-                : 'bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-slate-800'
+                ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/40 hover:bg-amber-500/20'
+                : 'bg-slate-100 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800'
             }`}
           >
             {simulatedOffline || !isOnline ? (
@@ -122,7 +122,7 @@ export const OfflineSyncBar: React.FC = () => {
           </span>
         </Button>
       ) : (
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-800/40 px-2.5 py-1 rounded-md">
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-950/30 border border-emerald-500/30 dark:border-emerald-800/40 px-2.5 py-1 rounded-md">
           <Database className="w-3.5 h-3.5" />
           <span>Dados Salvos Localmente</span>
         </div>

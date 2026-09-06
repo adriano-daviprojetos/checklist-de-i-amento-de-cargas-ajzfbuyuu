@@ -570,14 +570,14 @@ export const UsersPage: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
             placeholder="Buscar por nome, e-mail, CPF ou perfil..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-slate-950 border-slate-800 text-white text-xs"
+            className="pl-9 bg-slate-50 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs"
           />
         </div>
       </div>
@@ -587,7 +587,7 @@ export const UsersPage: React.FC = () => {
         {filtered.map((u) => (
           <Card
             key={u.id}
-            className="bg-slate-900 border-slate-800 hover:border-slate-700 transition"
+            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-sm"
           >
             <CardContent className="p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
@@ -694,9 +694,9 @@ export const UsersPage: React.FC = () => {
 
       {/* Modal: Add / Edit User */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="p-5 pb-3 border-b border-slate-800 shrink-0">
-            <DialogTitle className="text-white text-base flex items-center gap-2">
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-5 pb-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+            <DialogTitle className="text-slate-900 dark:text-white text-base flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-500" />
               {editingId ? 'Editar Usuário e Permissões' : 'Cadastrar Novo Usuário'}
             </DialogTitle>

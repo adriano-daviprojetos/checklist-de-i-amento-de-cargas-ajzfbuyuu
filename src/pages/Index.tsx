@@ -10,7 +10,7 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white p-4">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-800 dark:text-white p-4">
         <div className="flex flex-col items-center gap-5 max-w-sm text-center">
           <div className="flex items-center justify-center gap-3">
             <img
