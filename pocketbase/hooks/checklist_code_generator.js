@@ -12,109 +12,129 @@
  */
 
 onRecordCreate((e) => {
-  const existingCode = (e.record.get('code') || '').toString().trim()
+  try {
+    const existingCode = (e.record.get('code') || '').toString().trim()
 
-  // Reconhece o formato oficial "chk-YYYY-NNNNNN"
-  const officialPattern = /^chk-(\d{4})-(\d{6})$/i
-  const match = existingCode.match(officialPattern)
+    // Reconhece o formato oficial "chk-YYYY-NNNNNN"
+    const officialPattern = /^chk-(\d{4})-(\d{6})$/i
+    const match = existingCode.match(officialPattern)
 
-  let needsNewCode = true
-  let targetYear = new Date().getFullYear()
+    let needsNewCode = true
+    let targetYear = new Date().getFullYear()
 
-  if (match) {
-    const codeYear = parseInt(match[1], 10)
-    if (!isNaN(codeYear)) {
-      targetYear = codeYear
-    }
-
-    // Verificar se já não existe outro registro com este mesmo código
-    try {
-      const checkRow = $app
-        .db()
-        .newQuery('SELECT id FROM checklists WHERE LOWER(code) = {:code} AND id != {:id} LIMIT 1')
-        .bind({
-          code: existingCode.toLowerCase(),
-          id: e.record.id || '',
-        })
-        .one()
-
-      if (!checkRow) {
-        // Código válido e sem colisão -> HONRAR código enviado pelo mobile/cliente
-        e.record.set('code', existingCode.toLowerCase())
-        needsNewCode = false
+    if (match) {
+      const codeYear = parseInt(match[1], 10)
+      if (!isNaN(codeYear)) {
+        targetYear = codeYear
       }
-    } catch (_) {
-      // Nenhum registro encontrado com esse código -> é único no servidor
-      e.record.set('code', existingCode.toLowerCase())
-      needsNewCode = false
-    }
-  }
 
-  if (needsNewCode) {
-    const yearPrefix = 'chk-' + targetYear + '-'
-    let nextSeq = 1
-
-    try {
-      // Buscar os códigos existentes para o ano alvo para determinar o maior sequencial
-      const rows = $app
-        .db()
-        .newQuery(
-          'SELECT code FROM checklists WHERE LOWER(code) LIKE {:prefix} ORDER BY code DESC LIMIT 100',
+      // Verificar se já não existe outro registro com este mesmo código
+      try {
+        const collisions = $app.findRecordsByFilter(
+          'checklists',
+          `code = '${existingCode.toLowerCase()}'`,
+          '',
+          1,
+          0,
         )
-        .bind({
-          prefix: yearPrefix.toLowerCase() + '%',
-        })
-        .all()
 
-      if (rows && rows.length > 0) {
-        let maxNum = 0
-        for (let i = 0; i < rows.length; i++) {
-          const c = String(rows[i].code || '').toLowerCase()
-          if (c.startsWith(yearPrefix.toLowerCase())) {
-            const numPart = parseInt(c.slice(yearPrefix.length), 10)
-            if (!isNaN(numPart) && numPart > maxNum) {
-              maxNum = numPart
-            }
-          }
+        const existingRecordId = e.record.id || ''
+        const hasCollision =
+          collisions &&
+          collisions.length > 0 &&
+          (!existingRecordId || collisions[0].id !== existingRecordId)
+
+        if (!hasCollision) {
+          // Código válido e sem colisão -> HONRAR código enviado pelo mobile/cliente
+          e.record.set('code', existingCode.toLowerCase())
+          needsNewCode = false
         }
-        nextSeq = maxNum + 1
+      } catch (checkErr) {
+        console.warn('[checklist_code_generator] Error checking existing code collision:', checkErr)
+        // Se falhou ao checar, assume que precisa de um código novo seguro
       }
-    } catch (err) {
-      console.warn('[checklist_code_generator] Error querying max sequence:', err)
-      nextSeq = 1
     }
 
-    // Garantir que o código gerado seja rigorosamente único
-    let generatedCode = ''
-    let isUnique = false
-    let attempts = 0
-
-    while (!isUnique && attempts < 1000) {
-      const seqStr = String(nextSeq).padStart(6, '0')
-      generatedCode = yearPrefix + seqStr
+    if (needsNewCode) {
+      const yearPrefix = 'chk-' + targetYear + '-'
+      let nextSeq = 1
 
       try {
-        const collision = $app
-          .db()
-          .newQuery('SELECT id FROM checklists WHERE LOWER(code) = {:code} LIMIT 1')
-          .bind({
-            code: generatedCode.toLowerCase(),
-          })
-          .one()
+        // Buscar registros do ano via findRecordsByFilter com sort -code (ou -created)
+        const recentRecords = $app.findRecordsByFilter(
+          'checklists',
+          `code ~ '${yearPrefix}'`,
+          '-code',
+          50,
+          0,
+        )
 
-        if (collision) {
-          nextSeq++
-          attempts++
-        } else {
+        if (recentRecords && recentRecords.length > 0) {
+          let maxNum = 0
+          for (let i = 0; i < recentRecords.length; i++) {
+            const c = String(recentRecords[i].get('code') || '')
+              .toLowerCase()
+              .trim()
+            if (c.startsWith(yearPrefix.toLowerCase())) {
+              const numPart = parseInt(c.slice(yearPrefix.length), 10)
+              if (!isNaN(numPart) && numPart > maxNum) {
+                maxNum = numPart
+              }
+            }
+          }
+          if (maxNum > 0) {
+            nextSeq = maxNum + 1
+          }
+        }
+      } catch (err) {
+        console.warn('[checklist_code_generator] Error querying max sequence:', err)
+        nextSeq = 1
+      }
+
+      // Garantir que o código gerado seja rigorosamente único
+      let generatedCode = ''
+      let isUnique = false
+      let attempts = 0
+
+      while (!isUnique && attempts < 100) {
+        const seqStr = String(nextSeq).padStart(6, '0')
+        generatedCode = yearPrefix + seqStr
+
+        try {
+          const collisions = $app.findRecordsByFilter(
+            'checklists',
+            `code = '${generatedCode.toLowerCase()}'`,
+            '',
+            1,
+            0,
+          )
+
+          if (collisions && collisions.length > 0) {
+            nextSeq++
+            attempts++
+          } else {
+            isUnique = true
+          }
+        } catch (_) {
           isUnique = true
         }
-      } catch (_) {
-        // no row found -> unique
-        isUnique = true
+      }
+
+      if (generatedCode) {
+        e.record.set('code', generatedCode.toLowerCase())
       }
     }
-
-    e.record.set('code', generatedCode.toLowerCase())
+  } catch (globalHookErr) {
+    // RESILIÊNCIA: a geração de código NUNCA deve derrubar a criação do checklist
+    console.warn(
+      '[checklist_code_generator] Unhandled error in hook, continuing without throwing:',
+      globalHookErr,
+    )
+    if (!e.record.get('code')) {
+      const fallbackYear = new Date().getFullYear()
+      const fallbackTimestamp = Date.now().toString().slice(-6)
+      e.record.set('code', 'chk-' + fallbackYear + '-' + fallbackTimestamp)
+    }
   }
 
   e.next()

@@ -24,7 +24,7 @@ onRecordUpdateRequest((e) => {
       const originalStatus =
         (originalRec ? originalRec.get('status') : e.record.get('status')) || ''
       const s = String(originalStatus).toLowerCase().trim()
-      const isFinalized =
+      const isOriginalFinalized =
         s === 'concluído' ||
         s === 'concluido' ||
         s === 'completed' ||
@@ -33,10 +33,37 @@ onRecordUpdateRequest((e) => {
         s === 'rejected' ||
         s === 'finalizado'
 
-      if (isFinalized) {
-        throw new ForbiddenError(
-          'Checklists finalizados e assinados não podem ser alterados por Operador, Rigger, Sinaleiro, Supervisor ou Gestor. Apenas Administradores possuem permissão de edição.',
+      // Se o checklist no banco JÁ estava finalizado:
+      if (isOriginalFinalized) {
+        const authUserId = e.auth.id
+        const recordUserId =
+          (originalRec ? originalRec.get('user_id') : e.record.get('user_id')) || ''
+        const authUserName = (e.auth.get('name') || '').toLowerCase().trim()
+        const inspectorName = String(
+          (originalRec ? originalRec.get('inspector_name') : e.record.get('inspector_name')) || '',
         )
+          .toLowerCase()
+          .trim()
+        const filledByName = String(
+          (originalRec ? originalRec.get('filled_by_name') : e.record.get('filled_by_name')) || '',
+        )
+          .toLowerCase()
+          .trim()
+
+        const isAuthor =
+          (authUserId && recordUserId && authUserId === recordUserId) ||
+          (authUserName && inspectorName && authUserName === inspectorName) ||
+          (authUserName && filledByName && authUserName === filledByName)
+
+        // Se NÃO for o próprio autor, bloqueia a edição de checklist alheio já finalizado
+        if (!isAuthor) {
+          throw new ForbiddenError(
+            'Checklists finalizados e assinados não podem ser alterados por Operador, Rigger, Sinaleiro, Supervisor ou Gestor. Apenas Administradores possuem permissão de edição.',
+          )
+        }
+
+        // Se for o próprio autor sincronizando (ex.: retry de sync de assinatura, preenchimento, status final):
+        // Permitir a sincronização legítima de conclusão/atualização do seu próprio checklist.
       }
     }
   }
