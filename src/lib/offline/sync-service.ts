@@ -838,6 +838,8 @@ class SyncService {
                     id: res.id,
                     status: originalTargetStatus,
                     completed_at: item.payload?.completed_at || new Date().toISOString(),
+                    // Preserva a data/hora de início do preenchimento no sync (nunca vira data do servidor/sync)
+                    started_at: item.payload?.started_at,
                     signature_data: item.payload?.signature_data,
                     filled_by_name: item.payload?.filled_by_name,
                     filled_by_signature: item.payload?.filled_by_signature,
@@ -1034,6 +1036,7 @@ class SyncService {
       location: checklist.location || '',
       operation_type: checklist.operation_type || '',
       scheduled_date: checklist.scheduled_date || new Date().toISOString(),
+      // Data/hora de INÍCIO do preenchimento: preservada se já existir (nunca muda ao salvar/finalizar/sincronizar).
       started_at: checklist.started_at || new Date().toISOString(),
       completed_at: checklist.completed_at,
       status: targetFinalStatus,
@@ -1098,6 +1101,11 @@ class SyncService {
 
           // Criar inicialmente como "Em Andamento" para que o checklist_id passe a existir
           createPayload.status = isFinalizing ? 'Em Andamento' : targetFinalStatus
+          // Envia a data/hora de início do preenchimento capturada no dispositivo (offline-first),
+          // não a data de criação no servidor.
+          if (!createPayload.started_at) {
+            createPayload.started_at = new Date().toISOString()
+          }
 
           const createdChk = await pb.collection('checklists').create(createPayload)
           serverChkId = createdChk.id
@@ -1206,6 +1214,7 @@ class SyncService {
             id: targetChkId,
             status: targetFinalStatus,
             completed_at: fullChecklist.completed_at || new Date().toISOString(),
+            started_at: fullChecklist.started_at,
             signature_data: fullChecklist.signature_data,
             filled_by_name: fullChecklist.filled_by_name,
             filled_by_signature: fullChecklist.filled_by_signature,
@@ -1249,6 +1258,7 @@ class SyncService {
           id: checklistId,
           status: targetFinalStatus,
           completed_at: fullChecklist.completed_at || new Date().toISOString(),
+          started_at: fullChecklist.started_at,
           signature_data: fullChecklist.signature_data,
           filled_by_name: fullChecklist.filled_by_name,
           filled_by_signature: fullChecklist.filled_by_signature,
