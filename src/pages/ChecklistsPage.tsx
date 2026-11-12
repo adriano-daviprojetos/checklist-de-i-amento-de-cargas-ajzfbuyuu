@@ -282,8 +282,8 @@ export const ChecklistsPage: React.FC = () => {
           }
         }
 
-        // Check date in range
-        const rawDate = chk.completed_at || chk.created || chk.scheduled_date
+        // Check date in range (data/hora do checklist = início do preenchimento)
+        const rawDate = chk.started_at || chk.created || chk.scheduled_date
         if (!rawDate) return false
         const chkDate = new Date(rawDate)
         if (isNaN(chkDate.getTime())) return false
@@ -316,6 +316,7 @@ export const ChecklistsPage: React.FC = () => {
           code: chk.code || 'chk-pendente',
           title: chk.title || 'Checklist',
           status: chk.status || 'Pendente',
+          started_at: chk.started_at,
           completed_at: chk.completed_at,
           created: chk.created,
           location: chk.location || '-',
@@ -605,35 +606,30 @@ export const ChecklistsPage: React.FC = () => {
                   )}
 
                   <div className="flex items-center gap-1.5">
-                    {chk.status === 'Concluído' || chk.status === 'Reprovado' ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                        <span>
-                          <span className="text-slate-400 dark:text-slate-500">Finalizado em:</span>{' '}
-                          <strong className="text-slate-700 dark:text-slate-300 font-normal">
-                            {chk.completed_at
-                              ? `${new Date(chk.completed_at).toLocaleDateString('pt-BR')} às ${new Date(chk.completed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-                              : chk.updated
-                                ? `${new Date(chk.updated).toLocaleDateString('pt-BR')} às ${new Date(chk.updated).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-                                : `${new Date(chk.created || Date.now()).toLocaleDateString('pt-BR')} às ${new Date(chk.created || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
-                          </strong>
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                        <span>
-                          <span className="text-slate-400 dark:text-slate-500">Criado em:</span>{' '}
-                          <strong className="text-slate-700 dark:text-slate-300 font-normal">
-                            {chk.created
-                              ? `${new Date(chk.created).toLocaleDateString('pt-BR')} às ${new Date(chk.created).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-                              : chk.scheduled_date
-                                ? new Date(chk.scheduled_date).toLocaleDateString('pt-BR')
+                    {/* Regra de produto: data/hora do checklist = início do preenchimento (fallback: created) */}
+                    {(() => {
+                      const displayDate = chk.started_at || chk.created
+                      const finalizado = chk.status === 'Concluído' || chk.status === 'Reprovado'
+                      return (
+                        <>
+                          {finalizado ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                          ) : (
+                            <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                          )}
+                          <span>
+                            <span className="text-slate-400 dark:text-slate-500">
+                              Início do preenchimento:{' '}
+                            </span>
+                            <strong className="text-slate-700 dark:text-slate-300 font-normal">
+                              {displayDate
+                                ? `${new Date(displayDate).toLocaleDateString('pt-BR')} às ${new Date(displayDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
                                 : `${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
-                          </strong>
-                        </span>
-                      </>
-                    )}
+                            </strong>
+                          </span>
+                        </>
+                      )
+                    })()}
                   </div>
 
                   {chk.filled_by_name && (

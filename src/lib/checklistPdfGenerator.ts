@@ -643,11 +643,12 @@ export async function generateChecklistPdf({
     const row1Y = startY + 9.5
     const row2Y = startY + 18.5
 
+    // Regra de produto: data/hora do checklist = início do preenchimento (fallback: created)
     drawField(
       leftColX,
       row1Y,
       'DATA / HORA PROG.',
-      formatDateTime(checklist?.scheduled_date || checklist?.created),
+      formatDateTime(checklist?.started_at || checklist?.scheduled_date || checklist?.created),
       22,
     )
     drawField(leftColX + opSubColW, row1Y, 'LOCAL / FRENTE', checklist?.location || '—', 24)
@@ -944,8 +945,8 @@ export async function generateChecklistPdf({
       align: 'center',
     },
   )
-  if (checklist?.completed_at || checklist?.created) {
-    const sigDate = checklist.completed_at || checklist.created
+  if (checklist?.started_at || checklist?.completed_at || checklist?.created) {
+    const sigDate = checklist.started_at || checklist.completed_at || checklist.created
     doc.text(`Data / Hora: ${formatDateTime(sigDate)}`, box1X + sigBoxW / 2, line1Y + 9.2, {
       align: 'center',
     })

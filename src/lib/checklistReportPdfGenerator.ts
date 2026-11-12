@@ -7,6 +7,7 @@ export interface ChecklistReportItem {
   code: string
   title: string
   status: string
+  started_at?: string
   completed_at?: string
   created?: string
   location?: string
@@ -449,7 +450,8 @@ export async function generateChecklistReportPdf({
     checklists.length > 0
       ? checklists.map((chk) => {
           const code = chk.code || '-'
-          const dateToFormat = chk.completed_at || chk.created
+          // Regra de produto: data/hora do checklist = início do preenchimento
+          const dateToFormat = chk.started_at || chk.created
           const dateStr = formatDateTime(dateToFormat)
           const statusText = getStatusLabel(chk.status)
           const client = chk.clientName || 'Não informado'

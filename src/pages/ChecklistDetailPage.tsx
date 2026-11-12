@@ -103,6 +103,9 @@ export const ChecklistDetailPage: React.FC = () => {
   const [filledByName, setFilledByName] = useState(user?.name || '')
   const [filledBySignature, setFilledBySignature] = useState<string | undefined>(undefined)
   const [completedAt, setCompletedAt] = useState<string | undefined>(undefined)
+  // Regra de produto: a data/hora do checklist é a do INÍCIO do preenchimento.
+  // Capturada na montagem (checklist novo) ou lida do registro (existente) e nunca mais alterada.
+  const [startedAt, setStartedAt] = useState<string | undefined>(undefined)
   const filledByPadRef = useRef<DigitalSignaturePadRef>(null)
 
   const isFinalized = status === 'Concluído' || status === 'Reprovado'
@@ -181,6 +184,8 @@ export const ChecklistDetailPage: React.FC = () => {
         setTitle('Checklist Operacional de Içamento')
         setFilledByName(user?.name || '')
         setFilledBySignature(undefined)
+        // Data/hora do início do preenchimento: capturada uma única vez na montagem
+        setStartedAt((prev) => prev || new Date().toISOString())
       } else if (id) {
         // Load existing checklist
         const { checklist, responses } = await AppDataService.getChecklistById(id, isOnline)
@@ -202,6 +207,7 @@ export const ChecklistDetailPage: React.FC = () => {
           setStatus(checklist.status)
           setCompletedAt(checklist.completed_at)
           setCreatedAt(checklist.created)
+          setStartedAt(checklist.started_at || checklist.created)
           setSelectedTemplateId(checklist.template_id)
 
           // Load template items and groups
@@ -411,6 +417,7 @@ export const ChecklistDetailPage: React.FC = () => {
         filled_by_signature: currentSignature,
         notes,
         completed_at: data.completedAt,
+        started_at: startedAt ?? new Date().toISOString(),
       }
 
       // Prepare complete responses list for saving
@@ -510,6 +517,7 @@ export const ChecklistDetailPage: React.FC = () => {
         location,
         operation_type: operationType,
         scheduled_date: createdAt,
+        started_at: startedAt || createdAt,
         completed_at: completedAt,
         status,
         risk_level: riskLevel,
@@ -600,6 +608,7 @@ export const ChecklistDetailPage: React.FC = () => {
         filled_by_signature: currentSignature,
         notes,
         completed_at: completedAt,
+        started_at: startedAt ?? new Date().toISOString(),
       }
 
       const responsesList = Object.entries(responsesMap).map(([itemId, r]) => ({
@@ -671,6 +680,7 @@ export const ChecklistDetailPage: React.FC = () => {
         filled_by_signature: currentSignature,
         notes,
         completed_at: completedAt,
+        started_at: startedAt ?? new Date().toISOString(),
       }
 
       const responsesList = Object.entries(responsesMap).map(([itemId, r]) => ({
@@ -760,6 +770,9 @@ export const ChecklistDetailPage: React.FC = () => {
     return status === 'NC' || status === 'NAO'
   }).length
 
+  // Data/hora exibida do checklist: sempre o início do preenchimento (fallback: created)
+  const displayStartedAt = startedAt || createdAt
+
   const pendingCount = templateItems.filter((item) => {
     const r = responsesMap[item.id]
     const status = r?.status
@@ -810,28 +823,14 @@ export const ChecklistDetailPage: React.FC = () => {
               >
                 {status}
               </Badge>
-              {completedAt ? (
-                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>
-                    Finalizado em{' '}
-                    <strong className="text-slate-800 dark:text-slate-200 font-medium">
-                      {new Date(completedAt).toLocaleDateString('pt-BR')} às{' '}
-                      {new Date(completedAt).toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </strong>
-                  </span>
-                </span>
-              ) : createdAt ? (
+              {displayStartedAt ? (
                 <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                   <span>
-                    Criado em{' '}
+                    Início do preenchimento em{' '}
                     <strong className="text-slate-800 dark:text-slate-200 font-medium">
-                      {new Date(createdAt).toLocaleDateString('pt-BR')} às{' '}
-                      {new Date(createdAt).toLocaleTimeString('pt-BR', {
+                      {new Date(displayStartedAt).toLocaleDateString('pt-BR')} às{' '}
+                      {new Date(displayStartedAt).toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
